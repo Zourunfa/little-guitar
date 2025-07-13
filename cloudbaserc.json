@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "envId": "{{env.ENV_ID}}",
+  "envId": "cloud1-8g1pwz868e1c211b",
   "$schema": "https://framework-1258016615.tcloudbaseapp.com/schema/latest.json",
   "framework": {
     "name": "cloudbase-react-template",

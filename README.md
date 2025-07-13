@@ -1,5 +1,5 @@
 # Little Guitar
-
+访问地址：https://www.bilibili.com/video/BV1Rp37zDESt/?spm_id_from=333.1387.homepage.video_card.click&vd_source=4d02eb2bf982719b42a36b66d95fc9af
 Little Guitar是一款为吉他爱好者设计的Web应用，提供实用的吉他工具，包括调音器和和弦查找器。
 
 [![Powered by CloudBase](https://7463-tcb-advanced-a656fc-1257967285.tcb.qcloud.la/mcp/powered-by-cloudbase-badge.svg)](https://github.com/TencentCloudBase/CloudBase-AI-ToolKit)  
@@ -49,7 +49,7 @@ npm install
 ### 配置云开发环境
 
 1. 打开 `src/utils/cloudbase.js` 文件
-2. 将 `ENV_ID` 变量的值修改为您的云开发环境 ID
+2. 将 `ENV_ID` 变量的值修改为您的云开发环境 ID（当前项目使用的环境ID为：`cloud1-8g1pwz868e1c211b`）
 
 ### 本地开发
 
@@ -67,10 +67,30 @@ npm run build
 
 ### 部署到云开发静态网站托管
 
+#### 方法一：使用CloudBase MCP工具（推荐）
+
+1. 构建项目：`npm run build`
+2. 使用CloudBase MCP工具登录：
+   ```bash
+   npx @cloudbase/cli login
+   ```
+3. 上传文件到静态托管：
+   ```bash
+   npx @cloudbase/cli hosting:deploy ./dist -e cloud1-8g1pwz868e1c211b
+   ```
+
+#### 方法二：通过控制台手动上传
+
 1. 构建项目：`npm run build`
 2. 登录腾讯云开发控制台
 3. 进入您的环境 -> 静态网站托管
 4. 上传 `dist` 目录中的文件
+
+### 已部署版本
+
+当前应用已部署在以下地址：
+- **访问地址**: [https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app](https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app)
+- **环境ID**: cloud1-8g1pwz868e1c211b
 
 ## 目录结构
 
