@@ -15,6 +15,16 @@ const TunerPage = () => {
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [adjustModalData, setAdjustModalData] = useState({ semitones: 0, stringIndex: 0 });
   const oscillatorRef = useRef(null);
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
+  const [waveformData, setWaveformData] = useState(new Uint8Array(256));
+  const pitchCanvasRef = useRef(null);
+  const [pitchHistory, setPitchHistory] = useState([]);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [peakLevel, setPeakLevel] = useState(0);
+  const volumeAnimationRef = useRef(null);
+  const [debugInfo, setDebugInfo] = useState({ rms: 0, pitch1: 0, pitch2: 0 });
+  const [rawAudioData, setRawAudioData] = useState({ sum: 0, max: 0, nonZero: 0 });
 
   // 调音模式配置
   const tuningModes = {
@@ -86,26 +96,122 @@ const TunerPage = () => {
   // 启动调音器
   const startTuner = async () => {
     try {
-      const context = new (window.AudioContext || window.webkitAudioContext)();
+      // 更好的 AudioContext 配置
+      const context = new (window.AudioContext || window.webkitAudioContext)({
+        sampleRate: 44100,
+        latencyHint: 'interactive'
+      });
+      
+      // 确保 AudioContext 处于运行状态
+      if (context.state === 'suspended') {
+        await context.resume();
+      }
+      
       setAudioContext(context);
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // 先尝试简单配置（和测试麦克风一样）
+      let stream;
+      try {
+        console.log('尝试简单麦克风配置...');
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('简单配置成功');
+      } catch (err) {
+        console.log('简单配置失败，尝试详细配置...', err);
+        // 如果简单配置失败，尝试详细配置
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: false,  // 关闭回声消除
+            noiseSuppression: false,  // 关闭噪音抑制
+            autoGainControl: false,   // 关闭自动增益控制
+            sampleRate: 44100,        // 设置采样率
+            channelCount: 1,          // 单声道
+            volume: 1.0               // 最大音量
+          }
+        });
+      }
+      
+      console.log('麦克风流获取成功:', stream);
+      console.log('音频轨道:', stream.getAudioTracks());
       
       const analyserNode = context.createAnalyser();
       analyserNode.fftSize = 4096;
-      analyserNode.smoothingTimeConstant = 0.8;
+      analyserNode.smoothingTimeConstant = 0.3;  // 降低平滑度以提高响应性
+      analyserNode.minDecibels = -90;            // 设置最小分贝
+      analyserNode.maxDecibels = -10;            // 设置最大分贝
       setAnalyzer(analyserNode);
 
       const microphone = context.createMediaStreamSource(stream);
+      
+      // 先试试直接连接（不用增益节点）
+      console.log('直接连接麦克风到分析器...');
       microphone.connect(analyserNode);
+      
+      // 验证连接
+      console.log('音频节点连接信息:', {
+        microphone: microphone,
+        analyser: analyserNode,
+        context: context,
+        contextState: context.state,
+        sampleRate: context.sampleRate
+      });
 
       setListening(true);
       setError(null);
       
+      console.log('开始音频分析...');
       analyzeAudio(analyserNode, context);
+      startVisualization(analyserNode);
+      startVolumeMonitoring(analyserNode);
+      
+      // 测试音频输入 - 多次测试
+      let testCount = 0;
+      const testAudioInput = () => {
+        const freqArray = new Uint8Array(analyserNode.frequencyBinCount);
+        const timeArray = new Float32Array(analyserNode.fftSize);
+        
+        analyserNode.getByteFrequencyData(freqArray);
+        analyserNode.getFloatTimeDomainData(timeArray);
+        
+        const freqSum = freqArray.reduce((a, b) => a + b, 0);
+        let rms = 0;
+        for (let i = 0; i < timeArray.length; i++) {
+          rms += timeArray[i] * timeArray[i];
+        }
+        rms = Math.sqrt(rms / timeArray.length);
+        
+        console.log(`音频测试 ${testCount + 1}:`, {
+          freqSum: freqSum,
+          freqAvg: (freqSum / freqArray.length).toFixed(2),
+          rms: rms.toFixed(6),
+          maxFreq: Math.max(...freqArray),
+          maxTime: Math.max(...timeArray.map(Math.abs))
+        });
+        
+        testCount++;
+        if (testCount < 5) {
+          setTimeout(testAudioInput, 500);
+        } else {
+          console.log('音频测试完成。如果所有值都是0，说明音频流有问题。');
+        }
+      };
+      
+      setTimeout(testAudioInput, 500);
+      
     } catch (err) {
-      console.error('Error accessing microphone:', err);
-      setError('无法访问麦克风。您的设备拒绝了我获取音频权限的请求。');
+      console.error('麦克风访问错误:', err);
+      let errorMessage = '无法访问麦克风。';
+      
+      if (err.name === 'NotAllowedError') {
+        errorMessage = '麦克风权限被拒绝。请允许网站访问麦克风权限。';
+      } else if (err.name === 'NotFoundError') {
+        errorMessage = '未找到麦克风设备。请检查您的麦克风连接。';
+      } else if (err.name === 'NotSupportedError') {
+        errorMessage = '您的浏览器不支持麦克风功能。';
+      } else {
+        errorMessage = `麦克风错误: ${err.message}`;
+      }
+      
+      setError(errorMessage);
       setListening(false);
     }
   };
@@ -117,26 +223,87 @@ const TunerPage = () => {
       setAudioContext(null);
       setAnalyzer(null);
     }
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+    if (volumeAnimationRef.current) {
+      cancelAnimationFrame(volumeAnimationRef.current);
+      volumeAnimationRef.current = null;
+    }
     setListening(false);
     setCurrentNote(null);
     setFrequency(0);
     setCents(0);
+    setPitchHistory([]);
+    setAudioLevel(0);
+    setPeakLevel(0);
+    setDebugInfo({ rms: 0, pitch1: 0, pitch2: 0 });
   };
 
   // 分析音频并检测音高
   const analyzeAudio = (analyserNode, context) => {
     const bufferLength = analyserNode.fftSize;
-    const dataArray = new Float32Array(bufferLength);
+    const timeData = new Float32Array(bufferLength);
+    const freqData = new Uint8Array(analyserNode.frequencyBinCount);
     
     const detectPitch = () => {
       if (!listening) return;
       
-      analyserNode.getFloatTimeDomainData(dataArray);
+      // 获取时域和频域数据
+      analyserNode.getFloatTimeDomainData(timeData);
+      analyserNode.getByteFrequencyData(freqData);
       
-      // 使用YIN算法的简化版本
-      const pitch = detectPitchYIN(dataArray, context.sampleRate);
+      // 检查是否有足够的音频信号
+      let rmsLevel = 0;
+      for (let i = 0; i < timeData.length; i++) {
+        rmsLevel += timeData[i] * timeData[i];
+      }
+      rmsLevel = Math.sqrt(rmsLevel / timeData.length);
       
-      if (pitch > 0) {
+      // 如果信号太弱，跳过音高检测
+      if (rmsLevel < 0.01) {
+        console.log('信号太弱，跳过音高检测, RMS:', rmsLevel);
+        requestAnimationFrame(detectPitch);
+        return;
+      }
+      
+      // 使用多种方法检测音高
+      const pitch1 = detectPitchFFT(freqData, context.sampleRate, analyserNode.frequencyBinCount);
+      const pitch2 = detectPitchAutocorrelation(timeData, context.sampleRate);
+      
+      // 选择最可靠的音高
+      let pitch = 0;
+      if (pitch1 > 0 && pitch2 > 0) {
+        // 如果两个结果相近，取平均值
+        const ratio = Math.max(pitch1, pitch2) / Math.min(pitch1, pitch2);
+        if (ratio < 1.1) { // 相差不超过10%
+          pitch = (pitch1 + pitch2) / 2;
+        } else {
+          pitch = pitch1; // FFT方法通常更准确
+        }
+      } else if (pitch1 > 0) {
+        pitch = pitch1;
+      } else if (pitch2 > 0) {
+        pitch = pitch2;
+      }
+      
+      // 更新调试信息
+      setDebugInfo({
+        rms: rmsLevel,
+        pitch1: pitch1 || 0,
+        pitch2: pitch2 || 0
+      });
+      
+      console.log('音高检测结果:', {
+        rms: rmsLevel.toFixed(4),
+        fft: pitch1 ? pitch1.toFixed(2) : 'none',
+        autocorr: pitch2 ? pitch2.toFixed(2) : 'none',
+        final: pitch ? pitch.toFixed(2) : 'none'
+      });
+      
+      // 音高范围过滤 (吉他音高范围: 80-400Hz)
+      if (pitch > 70 && pitch < 500) {
         setFrequency(Math.round(pitch * 100) / 100);
         
         // 自动识别最接近的弦
@@ -149,6 +316,25 @@ const TunerPage = () => {
         // 计算音分差异
         const centsOff = 1200 * Math.log2(pitch / currentString.frequency);
         setCents(Math.round(centsOff * 10) / 10);
+        
+        console.log('更新音高信息:', {
+          frequency: pitch.toFixed(2),
+          note: currentString.note,
+          cents: centsOff.toFixed(1)
+        });
+        
+        // 添加到音高历史记录
+        setPitchHistory(prev => {
+          const newHistory = [...prev, { 
+            frequency: pitch, 
+            cents: centsOff, 
+            targetFreq: currentString.frequency,
+            stringIndex: closestStringIndex,
+            timestamp: Date.now()
+          }];
+          // 只保留最近50个数据点
+          return newHistory.slice(-50);
+        });
       }
       
       requestAnimationFrame(detectPitch);
@@ -157,42 +343,68 @@ const TunerPage = () => {
     detectPitch();
   };
 
-  // YIN算法简化版本
-  const detectPitchYIN = (buffer, sampleRate) => {
-    const threshold = 0.1;
-    const yinBuffer = new Float32Array(buffer.length / 2);
+  // FFT 方法检测音高（找到最强的频率峰值）
+  const detectPitchFFT = (freqData, sampleRate, freqBinCount) => {
+    // 找到最大峰值
+    let maxIndex = 0;
+    let maxValue = 0;
     
-    // 计算差异函数
-    yinBuffer[0] = 1;
-    for (let t = 1; t < yinBuffer.length; t++) {
-      yinBuffer[t] = 0;
-      for (let i = 0; i < yinBuffer.length; i++) {
-        const delta = buffer[i] - buffer[i + t];
-        yinBuffer[t] += delta * delta;
+    // 只检查吉他频率范围对应的bin (大约80-500Hz)
+    const minBin = Math.floor(80 * freqBinCount / (sampleRate / 2));
+    const maxBin = Math.floor(500 * freqBinCount / (sampleRate / 2));
+    
+    for (let i = minBin; i < Math.min(maxBin, freqData.length); i++) {
+      if (freqData[i] > maxValue) {
+        maxValue = freqData[i];
+        maxIndex = i;
       }
     }
     
-    // 累积平均标准化差异函数
-    let runningSum = 0;
-    yinBuffer[0] = 1;
-    for (let t = 1; t < yinBuffer.length; t++) {
-      runningSum += yinBuffer[t];
-      yinBuffer[t] *= t / runningSum;
+    // 如果峰值不够强，返回0
+    if (maxValue < 50) { // 阈值可以调整
+      return 0;
     }
     
-    // 寻找第一个小于阈值的点
-    let tau = -1;
-    for (let t = 2; t < yinBuffer.length; t++) {
-      if (yinBuffer[t] < threshold) {
-        while (t + 1 < yinBuffer.length && yinBuffer[t + 1] < yinBuffer[t]) {
-          t++;
-        }
-        tau = t;
-        break;
+    // 转换bin索引到频率
+    const frequency = maxIndex * sampleRate / 2 / freqBinCount;
+    return frequency;
+  };
+
+  // 自相关方法检测音高
+  const detectPitchAutocorrelation = (buffer, sampleRate) => {
+    // 寻找周期性模式
+    const bufferSize = buffer.length;
+    const autocorrelation = new Array(bufferSize);
+    
+    // 计算自相关
+    for (let t = 0; t < bufferSize; t++) {
+      let sum = 0;
+      for (let i = 0; i < bufferSize - t; i++) {
+        sum += buffer[i] * buffer[i + t];
+      }
+      autocorrelation[t] = sum;
+    }
+    
+    // 找到第一个局部最大值（跳过t=0）
+    const minT = Math.floor(sampleRate / 500); // 对应500Hz
+    const maxT = Math.floor(sampleRate / 80);  // 对应80Hz
+    
+    let maxValue = autocorrelation[minT];
+    let maxIndex = minT;
+    
+    for (let t = minT; t < Math.min(maxT, autocorrelation.length); t++) {
+      if (autocorrelation[t] > maxValue) {
+        maxValue = autocorrelation[t];
+        maxIndex = t;
       }
     }
     
-    return tau !== -1 ? sampleRate / tau : -1;
+    // 检查是否找到了清晰的周期
+    if (maxValue < autocorrelation[0] * 0.3) { // 相关性阈值
+      return 0;
+    }
+    
+    return sampleRate / maxIndex;
   };
 
   // 找到最接近的弦
@@ -210,6 +422,238 @@ const TunerPage = () => {
     
     return closestIndex;
   };
+
+  // 开始音频可视化
+  const startVisualization = (analyserNode) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const bufferLength = analyserNode.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const draw = () => {
+      if (!listening) return;
+
+      animationRef.current = requestAnimationFrame(draw);
+      
+      analyserNode.getByteFrequencyData(dataArray);
+      setWaveformData(new Uint8Array(dataArray));
+
+      // 清空画布
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 绘制频谱
+      const barWidth = canvas.width / bufferLength * 2.5;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
+        
+        // 根据频率范围设置颜色
+        const hue = (i / bufferLength) * 360;
+        ctx.fillStyle = `hsl(${hue}, 70%, 60%)`;
+        
+        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + 1;
+      }
+
+      // 绘制波形
+      analyserNode.getByteTimeDomainData(dataArray);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#00ff88';
+      ctx.beginPath();
+
+      const sliceWidth = canvas.width / bufferLength;
+      x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = v * canvas.height / 2;
+
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+
+        x += sliceWidth;
+      }
+
+      ctx.stroke();
+    };
+
+    draw();
+  };
+
+  // 开始音量监测（简化版，和测试麦克风相同的方法）
+  const startVolumeMonitoring = (analyserNode) => {
+    const bufferLength = analyserNode.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const monitorVolume = () => {
+      if (!listening) return;
+
+      volumeAnimationRef.current = requestAnimationFrame(monitorVolume);
+      
+      // 使用和测试麦克风相同的方法
+      analyserNode.getByteFrequencyData(dataArray);
+      const sum = dataArray.reduce((a, b) => a + b, 0);
+      const average = sum / bufferLength;
+      const currentLevel = (average / 255) * 100;
+      
+      // 更新原始音频数据状态
+      setRawAudioData({
+        sum: sum,
+        max: Math.max(...dataArray),
+        nonZero: dataArray.filter(x => x > 0).length
+      });
+      
+      // 调试输出 - 每秒输出一次
+      if (Math.random() < 0.02) { // 大约每秒输出一次
+        console.log('音量监测数据:', {
+          sum: sum,
+          average: average.toFixed(2),
+          level: currentLevel.toFixed(2),
+          maxValue: Math.max(...dataArray),
+          nonZeroCount: dataArray.filter(x => x > 0).length
+        });
+      }
+      
+      // 更新当前音量
+      setAudioLevel(currentLevel);
+      
+      // 更新峰值音量（逐渐衰减）
+      setPeakLevel(prev => {
+        if (currentLevel > prev) {
+          return currentLevel;
+        } else {
+          return Math.max(0, prev - 0.3);
+        }
+      });
+    };
+
+    monitorVolume();
+  };
+
+  // 绘制音高和调音关系图
+  const drawPitchVisualization = () => {
+    const canvas = pitchCanvasRef.current;
+    if (!canvas || pitchHistory.length === 0) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // 清空画布
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, width, height);
+
+    // 绘制背景网格
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    
+    // 水平网格线 (音分刻度)
+    for (let i = -50; i <= 50; i += 10) {
+      const y = height/2 - (i * height/100);
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+      
+      // 标记音分值
+      ctx.fillStyle = '#64748b';
+      ctx.font = '12px sans-serif';
+      ctx.fillText(`${i > 0 ? '+' : ''}${i}分`, 5, y - 5);
+    }
+
+    // 绘制6根弦的目标频率线
+    currentStrings.forEach((string, index) => {
+      const color = index === selectedString ? '#ef4444' : '#94a3b8';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = index === selectedString ? 3 : 1;
+      
+      // 计算弦的y位置 (基于标准调音)
+      const baseFreq = 82.41; // E2 最低弦
+      const semitones = Math.log2(string.frequency / baseFreq) * 12;
+      const y = height - (semitones / 30 * height);
+      
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+      
+      // 标记弦信息
+      ctx.fillStyle = color;
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText(`${string.note} (${string.frequency}Hz)`, width - 120, y - 5);
+    });
+
+    // 绘制当前音高历史曲线
+    if (pitchHistory.length > 1) {
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+
+      pitchHistory.forEach((point, index) => {
+        const x = (index / (pitchHistory.length - 1)) * width;
+        const y = height/2 - (point.cents * height/100);
+        
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      
+      ctx.stroke();
+
+      // 绘制当前音高点
+      const lastPoint = pitchHistory[pitchHistory.length - 1];
+      const lastX = width - 10;
+      const lastY = height/2 - (lastPoint.cents * height/100);
+      
+      ctx.fillStyle = Math.abs(lastPoint.cents) < 10 ? '#10b981' : 
+                      Math.abs(lastPoint.cents) < 30 ? '#f59e0b' : '#ef4444';
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 8, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // 显示当前频率和音分信息
+      ctx.fillStyle = '#1f2937';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText(`${lastPoint.frequency.toFixed(2)} Hz`, lastX - 70, lastY - 15);
+      ctx.fillText(`${lastPoint.cents > 0 ? '+' : ''}${lastPoint.cents.toFixed(1)} 音分`, lastX - 70, lastY + 25);
+    }
+
+    // 绘制中心线 (完美调音线)
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(0, height/2);
+    ctx.lineTo(width, height/2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 绘制标题和说明
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('实时音高调音图', 20, 30);
+    
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('绿色曲线: 当前音高  |  红色线: 当前选中弦  |  灰色线: 其他弦', 20, 50);
+    ctx.fillText('绿色虚线: 完美调音 (0音分)  |  上方: 音高偏高  |  下方: 音高偏低', 20, 65);
+  };
+
+  // 更新音高可视化
+  useEffect(() => {
+    if (listening && pitchHistory.length > 0) {
+      drawPitchVisualization();
+    }
+  }, [pitchHistory, selectedString, tuningMode, listening]);
 
   // 播放参考音
   const playReferenceNote = () => {
@@ -258,6 +702,129 @@ const TunerPage = () => {
     setShowAdjustModal(false);
   };
 
+  // 测试麦克风功能
+  const testMicrophone = async () => {
+    try {
+      console.log('开始麦克风测试...');
+      
+      // 检查浏览器支持
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('您的浏览器不支持麦克风访问功能');
+        return;
+      }
+      
+      // 获取可用的音频设备
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices.filter(device => device.kind === 'audioinput');
+      console.log('可用音频输入设备:', audioInputs);
+      
+      if (audioInputs.length === 0) {
+        alert('未找到任何麦克风设备');
+        return;
+      }
+      
+      // 测试基本麦克风访问
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('麦克风权限获取成功');
+      
+      // 创建简单的音频分析器
+      const testContext = new AudioContext();
+      const testAnalyser = testContext.createAnalyser();
+      const testSource = testContext.createMediaStreamSource(stream);
+      testSource.connect(testAnalyser);
+      
+      // 测试音频数据
+      const testData = new Uint8Array(testAnalyser.frequencyBinCount);
+      
+      let testCount = 0;
+      const testInterval = setInterval(() => {
+        testAnalyser.getByteFrequencyData(testData);
+        const sum = testData.reduce((a, b) => a + b, 0);
+        console.log(`测试 ${testCount + 1}: 音频数据总和 = ${sum}`);
+        
+        testCount++;
+        if (testCount >= 5) {
+          clearInterval(testInterval);
+          stream.getTracks().forEach(track => track.stop());
+          testContext.close();
+          
+          if (sum > 0) {
+            alert('麦克风测试成功！检测到音频输入。');
+          } else {
+            alert('麦克风测试失败：未检测到音频输入。请检查麦克风设置或尝试说话。');
+          }
+        }
+      }, 500);
+      
+    } catch (error) {
+      console.error('麦克风测试失败:', error);
+      alert(`麦克风测试失败: ${error.message}`);
+    }
+  };
+
+  // 即时诊断音频流（只在调音器运行时可用）
+  const diagnoseAudioStream = () => {
+    if (!analyzer || !listening) {
+      alert('请先启动调音器');
+      return;
+    }
+
+    console.log('=== 即时音频流诊断 ===');
+    
+    // 检查分析器状态
+    console.log('分析器状态:', {
+      fftSize: analyzer.fftSize,
+      frequencyBinCount: analyzer.frequencyBinCount,
+      sampleRate: audioContext.sampleRate,
+      state: audioContext.state
+    });
+
+    // 获取实时数据
+    const freqData = new Uint8Array(analyzer.frequencyBinCount);
+    const timeData = new Float32Array(analyzer.fftSize);
+    
+    analyzer.getByteFrequencyData(freqData);
+    analyzer.getFloatTimeDomainData(timeData);
+    
+    const freqSum = freqData.reduce((a, b) => a + b, 0);
+    const freqMax = Math.max(...freqData);
+    const freqNonZero = freqData.filter(x => x > 0).length;
+    
+    const timeMax = Math.max(...timeData.map(Math.abs));
+    let timeRms = 0;
+    for (let i = 0; i < timeData.length; i++) {
+      timeRms += timeData[i] * timeData[i];
+    }
+    timeRms = Math.sqrt(timeRms / timeData.length);
+
+    const diagnosis = {
+      频域数据: {
+        总和: freqSum,
+        最大值: freqMax,
+        非零数量: freqNonZero,
+        平均值: (freqSum / freqData.length).toFixed(2)
+      },
+      时域数据: {
+        RMS: timeRms.toFixed(6),
+        最大幅度: timeMax.toFixed(6),
+        样本数: timeData.length
+      },
+      状态: {
+        音频上下文: audioContext.state,
+        采样率: audioContext.sampleRate,
+        当前时间: audioContext.currentTime.toFixed(2)
+      }
+    };
+
+    console.log('诊断结果:', diagnosis);
+    
+    if (freqSum === 0 && timeRms < 0.0001) {
+      alert('❌ 没有检测到音频信号！\n\n可能原因：\n1. 麦克风静音\n2. 音频流连接问题\n3. 分析器配置问题\n\n请检查控制台的详细信息。');
+    } else {
+      alert('✅ 检测到音频信号！\n\n频域总和: ' + freqSum + '\nRMS: ' + timeRms.toFixed(6) + '\n\n请查看控制台的详细信息。');
+    }
+  };
+
   // 清理函数
   useEffect(() => {
     return () => {
@@ -266,6 +833,12 @@ const TunerPage = () => {
       }
       if (oscillatorRef.current) {
         oscillatorRef.current.stop();
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      if (volumeAnimationRef.current) {
+        cancelAnimationFrame(volumeAnimationRef.current);
       }
     };
   }, [audioContext]);
@@ -306,6 +879,150 @@ const TunerPage = () => {
               </div>
             </div>
 
+            {/* 音频可视化 */}
+            {listening && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-center mb-4 text-gray-700">音频可视化</h3>
+                <div className="flex justify-center">
+                  <div className="bg-black rounded-lg p-4 shadow-lg">
+                    <canvas
+                      ref={canvasRef}
+                      width={600}
+                      height={200}
+                      className="rounded border-2 border-gray-600"
+                    />
+                    <div className="text-center mt-2">
+                      <p className="text-white text-sm">
+                        彩色条形图: 频谱分析 | 绿色波形: 时域波形
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 音高调音关系图 */}
+            {listening && pitchHistory.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-center mb-4 text-gray-700">实时音高与调音关系图</h3>
+                <div className="flex justify-center">
+                  <div className="bg-white rounded-lg p-4 shadow-lg border-2 border-gray-200">
+                    <canvas
+                      ref={pitchCanvasRef}
+                      width={800}
+                      height={300}
+                      className="rounded"
+                    />
+                    <div className="text-center mt-2">
+                      <div className="flex justify-center space-x-6 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <div className="w-4 h-1 bg-green-500 mr-2"></div>
+                          <span>当前音高曲线</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-4 h-1 bg-red-500 mr-2"></div>
+                          <span>选中弦目标</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-4 h-1 bg-gray-400 mr-2"></div>
+                          <span>其他弦</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-4 h-1 bg-green-500 border-dashed border-t-2 border-green-500 mr-2"></div>
+                          <span>完美调音</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 麦克风音量监测 */}
+            {listening && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-center mb-4 text-gray-700">麦克风音量监测</h3>
+                <div className="max-w-md mx-auto">
+                  {/* 音量条 */}
+                  <div className="relative h-8 bg-gray-200 rounded-full overflow-hidden mb-2">
+                    {/* 当前音量条 */}
+                    <div 
+                      className={`h-full transition-all duration-100 ${
+                        audioLevel > 50 ? 'bg-red-500' : 
+                        audioLevel > 25 ? 'bg-yellow-500' : 
+                        audioLevel > 10 ? 'bg-green-500' : 'bg-gray-400'
+                      }`}
+                      style={{ width: `${Math.min(100, audioLevel)}%` }}
+                    ></div>
+                    {/* 峰值指示器 */}
+                    <div 
+                      className="absolute top-0 w-1 h-full bg-white border-l-2 border-gray-800 transition-all duration-200"
+                      style={{ left: `${Math.min(99, peakLevel)}%` }}
+                    ></div>
+                  </div>
+                  
+                  {/* 音量数值显示 */}
+                  <div className="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>当前: {audioLevel.toFixed(1)}%</span>
+                    <span>峰值: {peakLevel.toFixed(1)}%</span>
+                  </div>
+                  
+                  {/* 音量状态提示 */}
+                  <div className="text-center">
+                    {audioLevel < 5 ? (
+                      <p className="text-red-600 font-semibold">
+                        🔇 检测不到声音 - 请检查麦克风或弹奏吉他
+                      </p>
+                    ) : audioLevel < 15 ? (
+                      <p className="text-yellow-600 font-semibold">
+                        🔉 音量较低 - 可以弹奏得更用力一些
+                      </p>
+                    ) : audioLevel < 50 ? (
+                      <p className="text-green-600 font-semibold">
+                        🔊 音量良好 - 适合进行调音
+                      </p>
+                    ) : (
+                      <p className="text-red-600 font-semibold">
+                        📢 音量过大 - 可能影响调音精度
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* 音量刻度 */}
+                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                    <span>0%</span>
+                    <span>25%</span>
+                    <span>50%</span>
+                    <span>75%</span>
+                    <span>100%</span>
+                  </div>
+                  
+                  {/* 调试信息 */}
+                  <div className="mt-4 p-3 bg-gray-100 rounded text-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-semibold">调试信息:</h4>
+                      <button 
+                        onClick={diagnoseAudioStream}
+                        className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                      >
+                        深度诊断
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>信号强度: {(debugInfo.rms * 1000).toFixed(1)}</div>
+                      <div>FFT音高: {debugInfo.pitch1 ? debugInfo.pitch1.toFixed(1) + 'Hz' : '无'}</div>
+                      <div>相关性音高: {debugInfo.pitch2 ? debugInfo.pitch2.toFixed(1) + 'Hz' : '无'}</div>
+                      <div>检测状态: {debugInfo.rms > 0.01 ? '正在分析' : '信号太弱'}</div>
+                      <div>数据总和: {rawAudioData.sum}</div>
+                      <div>最大值: {rawAudioData.max}</div>
+                      <div>非零数: {rawAudioData.nonZero}</div>
+                      <div>状态: {rawAudioData.sum > 0 ? '有数据' : '无数据'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 状态和控制 */}
             <div className="text-center mb-8">
               {error && (
@@ -323,21 +1040,31 @@ const TunerPage = () => {
                 </p>
               </div>
 
-              {listening ? (
-                <button 
-                  className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
-                  onClick={stopTuner}
-                >
-                  停止调音
-                </button>
-              ) : (
-                <button 
-                  className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
-                  onClick={startTuner}
-                >
-                  立即开始
-                </button>
-              )}
+              <div className="flex gap-4 justify-center">
+                {listening ? (
+                  <button 
+                    className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                    onClick={stopTuner}
+                  >
+                    停止调音
+                  </button>
+                ) : (
+                  <>
+                    <button 
+                      className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                      onClick={startTuner}
+                    >
+                      立即开始
+                    </button>
+                    <button 
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                      onClick={testMicrophone}
+                    >
+                      测试麦克风
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* 调音状态显示 */}
