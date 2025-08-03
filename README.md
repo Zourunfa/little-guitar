@@ -1,5 +1,5 @@
 # Little Guitar
-访问地址：https://www.bilibili.com/video/BV1Rp37zDESt/?spm_id_from=333.1387.homepage.video_card.click&vd_source=4d02eb2bf982719b42a36b66d95fc9af
+访问地址(https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app/#/tuner
 Little Guitar是一款为吉他爱好者设计的Web应用，提供实用的吉他工具，包括调音器和和弦查找器。
 
 [![Powered by CloudBase](https://7463-tcb-advanced-a656fc-1257967285.tcb.qcloud.la/mcp/powered-by-cloudbase-badge.svg)](https://github.com/TencentCloudBase/CloudBase-AI-ToolKit)  
