@@ -1,3 +1,64 @@
+# CLAUDE.md
+
+此文件为 Claude Code (claude.ai/code) 在此代码库中工作时提供指导。
+
+## 开发命令
+
+**安装依赖:**
+```bash
+npm install
+```
+
+**启动开发服务器:**
+```bash
+npm run dev
+```
+
+**构建生产版本:**
+```bash
+npm run build
+```
+
+**代码检查:**
+```bash
+npm run lint
+```
+
+**预览生产构建:**
+```bash
+npm run preview
+```
+
+**使用 live-server 预览构建文件 (替代预览方式):**
+```bash
+cd dist && npx live-server
+```
+
+## 项目架构 & 关键组件
+
+### 项目结构
+- **前端**: React 18 + Vite 应用，源码在 `src/` 目录
+- **云函数**: Node.js 函数在 `cloudfunctions/` 目录
+- **静态资源**: 构建后输出到 `dist/` 用于部署
+- **环境**: 腾讯云开发环境 `cloud1-8g1pwz868e1c211b`
+
+### 核心功能
+1. **吉他调音器** (`TunerPage.jsx`): 使用 Web Audio API 进行实时频率分析和音高检测
+2. **和弦查找器** (`ChordFinderPage.jsx`): 交互式和弦图表，支持筛选功能
+
+### 关键技术细节
+- **路由**: 使用 HashRouter 避免静态托管时的 404 问题
+- **云开发集成**: 在 `src/utils/cloudbase.js` 中配置，支持匿名身份验证
+- **样式系统**: Tailwind CSS + DaisyUI 组件 + Framer Motion 动画
+- **音频处理**: 使用 AudioContext 和 FFT 进行吉他调音的自定义频率分析
+
+### 云开发配置
+- 环境 ID: `cloud1-8g1pwz868e1c211b`
+- 默认启用匿名身份验证
+- 静态托管部署在 `cloudbaserc.json` 中配置
+- Vite 配置相对路径 (`base: './'`) 以兼容 CDN
+
+所有的回答和代码注释必须都给我用中文
 ---
 description: web 全栈项目和微信小程序开发
 globs: 
