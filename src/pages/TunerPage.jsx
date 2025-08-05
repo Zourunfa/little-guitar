@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import teoria from 'teoria';
+import { PitchDetector } from 'pitchy';
+import * as Tone from 'tone';
 
 const TunerPage = () => {
   const [listening, setListening] = useState(false);
@@ -25,52 +28,42 @@ const TunerPage = () => {
   const volumeAnimationRef = useRef(null);
   const [debugInfo, setDebugInfo] = useState({ rms: 0, pitch1: 0, pitch2: 0 });
   const [rawAudioData, setRawAudioData] = useState({ sum: 0, max: 0, nonZero: 0 });
+  
+  // 新增状态用于精确调音
+  const [pitchDetector, setPitchDetector] = useState(null);
+  const [correctProgress, setCorrectProgress] = useState(0);
+  const [firstCorrectTimestamp, setFirstCorrectTimestamp] = useState(0);
+  const [sampler, setSampler] = useState(null);
 
-  // 调音模式配置
+  // 使用 teoria 库计算精确频率的调音模式配置
+  const createTuningMode = (noteNames) => {
+    return noteNames.map((noteName, index) => {
+      const note = teoria.note(noteName);
+      return {
+        note: noteName,
+        frequency: parseFloat(note.fq().toFixed(2)),
+        fret: index * 5, // 简化的品格位置
+        teoriaNote: note // 保存 teoria 音符对象用于播放
+      };
+    });
+  };
+
   const tuningModes = {
     'standard': {
       name: '标准调音',
-      strings: [
-        { note: 'E2', frequency: 82.41, fret: 0 },
-        { note: 'A2', frequency: 110.00, fret: 5 },
-        { note: 'D3', frequency: 146.83, fret: 10 },
-        { note: 'G3', frequency: 196.00, fret: 15 },
-        { note: 'B3', frequency: 246.94, fret: 19 },
-        { note: 'E4', frequency: 329.63, fret: 24 }
-      ]
+      strings: createTuningMode(['E2', 'A2', 'D3', 'G3', 'B3', 'E4'])
     },
     'dropD': {
       name: 'Drop D',
-      strings: [
-        { note: 'D2', frequency: 73.42, fret: 0 },
-        { note: 'A2', frequency: 110.00, fret: 5 },
-        { note: 'D3', frequency: 146.83, fret: 10 },
-        { note: 'G3', frequency: 196.00, fret: 15 },
-        { note: 'B3', frequency: 246.94, fret: 19 },
-        { note: 'E4', frequency: 329.63, fret: 24 }
-      ]
+      strings: createTuningMode(['D2', 'A2', 'D3', 'G3', 'B3', 'E4'])
     },
     'halfStepDown': {
       name: '全音降半音',
-      strings: [
-        { note: 'D#2', frequency: 77.78, fret: 0 },
-        { note: 'G#2', frequency: 103.83, fret: 5 },
-        { note: 'C#3', frequency: 138.59, fret: 10 },
-        { note: 'F#3', frequency: 185.00, fret: 15 },
-        { note: 'A#3', frequency: 233.08, fret: 19 },
-        { note: 'D#4', frequency: 311.13, fret: 24 }
-      ]
+      strings: createTuningMode(['Eb2', 'Ab2', 'Db3', 'Gb3', 'Bb3', 'Eb4'])
     },
     'openG': {
       name: 'Open G',
-      strings: [
-        { note: 'D2', frequency: 73.42, fret: 0 },
-        { note: 'G2', frequency: 98.00, fret: 5 },
-        { note: 'D3', frequency: 146.83, fret: 10 },
-        { note: 'G3', frequency: 196.00, fret: 15 },
-        { note: 'B3', frequency: 246.94, fret: 19 },
-        { note: 'D4', frequency: 293.66, fret: 24 }
-      ]
+      strings: createTuningMode(['D2', 'G2', 'D3', 'G3', 'B3', 'D4'])
     }
   };
 
@@ -134,10 +127,10 @@ const TunerPage = () => {
       console.log('音频轨道:', stream.getAudioTracks());
       
       const analyserNode = context.createAnalyser();
-      analyserNode.fftSize = 4096;
-      analyserNode.smoothingTimeConstant = 0.3;  // 降低平滑度以提高响应性
-      analyserNode.minDecibels = -90;            // 设置最小分贝
-      analyserNode.maxDecibels = -10;            // 设置最大分贝
+      analyserNode.fftSize = 2048;              // 适中的FFT大小
+      analyserNode.smoothingTimeConstant = 0.1; // 低平滑度提高响应性
+      analyserNode.minDecibels = -100;          // 更敏感的最小分贝
+      analyserNode.maxDecibels = -10;           // 设置最大分贝
       setAnalyzer(analyserNode);
 
       const microphone = context.createMediaStreamSource(stream);
@@ -241,70 +234,64 @@ const TunerPage = () => {
     setDebugInfo({ rms: 0, pitch1: 0, pitch2: 0 });
   };
 
-  // 分析音频并检测音高
+  // 使用 pitchy 库进行精确音高检测
   const analyzeAudio = (analyserNode, context) => {
-    const bufferLength = analyserNode.fftSize;
-    const timeData = new Float32Array(bufferLength);
-    const freqData = new Uint8Array(analyserNode.frequencyBinCount);
+    // 创建 pitchy 检测器
+    const detector = PitchDetector.forFloat32Array(analyserNode.fftSize);
+    const inputArray = new Float32Array(detector.inputLength);
+    setPitchDetector(detector);
     
-    const detectPitch = () => {
+    console.log('Pitchy 音高检测器已初始化:', {
+      fftSize: analyserNode.fftSize,
+      inputLength: detector.inputLength,
+      sampleRate: context.sampleRate
+    });
+    
+    const updatePitch = () => {
       if (!listening) return;
       
-      // 获取时域和频域数据
-      analyserNode.getFloatTimeDomainData(timeData);
-      analyserNode.getByteFrequencyData(freqData);
+      // 获取音频数据
+      analyserNode.getFloatTimeDomainData(inputArray);
       
-      // 检查是否有足够的音频信号
-      let rmsLevel = 0;
-      for (let i = 0; i < timeData.length; i++) {
-        rmsLevel += timeData[i] * timeData[i];
+      // 计算 RMS 音量
+      let rms = 0;
+      for (let i = 0; i < inputArray.length; i++) {
+        rms += inputArray[i] * inputArray[i];
       }
-      rmsLevel = Math.sqrt(rmsLevel / timeData.length);
+      rms = Math.sqrt(rms / inputArray.length);
       
-      // 如果信号太弱，跳过音高检测
-      if (rmsLevel < 0.01) {
-        console.log('信号太弱，跳过音高检测, RMS:', rmsLevel);
-        requestAnimationFrame(detectPitch);
+      // 设置 RMS 阈值
+      const rmsThreshold = 0.005; // 适中的阈值
+      
+      if (rms < rmsThreshold) {
+        // 信号太弱，继续下一次检测
+        setTimeout(() => updatePitch(), 100);
         return;
       }
       
-      // 使用多种方法检测音高
-      const pitch1 = detectPitchFFT(freqData, context.sampleRate, analyserNode.frequencyBinCount);
-      const pitch2 = detectPitchAutocorrelation(timeData, context.sampleRate);
-      
-      // 选择最可靠的音高
-      let pitch = 0;
-      if (pitch1 > 0 && pitch2 > 0) {
-        // 如果两个结果相近，取平均值
-        const ratio = Math.max(pitch1, pitch2) / Math.min(pitch1, pitch2);
-        if (ratio < 1.1) { // 相差不超过10%
-          pitch = (pitch1 + pitch2) / 2;
-        } else {
-          pitch = pitch1; // FFT方法通常更准确
-        }
-      } else if (pitch1 > 0) {
-        pitch = pitch1;
-      } else if (pitch2 > 0) {
-        pitch = pitch2;
-      }
+      // 使用 pitchy 检测音高
+      const [pitch, clarity] = detector.findPitch(inputArray, context.sampleRate);
       
       // 更新调试信息
       setDebugInfo({
-        rms: rmsLevel,
-        pitch1: pitch1 || 0,
-        pitch2: pitch2 || 0
+        rms: rms,
+        pitch1: pitch || 0,
+        pitch2: clarity || 0
       });
       
-      console.log('音高检测结果:', {
-        rms: rmsLevel.toFixed(4),
-        fft: pitch1 ? pitch1.toFixed(2) : 'none',
-        autocorr: pitch2 ? pitch2.toFixed(2) : 'none',
-        final: pitch ? pitch.toFixed(2) : 'none'
-      });
+      // 调试输出
+      if (Math.random() < 0.05) { // 5%概率输出
+        console.log('Pitchy 检测结果:', {
+          pitch: pitch ? pitch.toFixed(2) + 'Hz' : 'none',
+          clarity: clarity ? clarity.toFixed(3) : 'none',
+          rms: rms.toFixed(6)
+        });
+      }
       
-      // 音高范围过滤 (吉他音高范围: 80-400Hz)
-      if (pitch > 70 && pitch < 500) {
-        setFrequency(Math.round(pitch * 100) / 100);
+      // 检查音高是否有效且在吉他频率范围内
+      if (pitch && pitch > 70 && pitch < 500 && clarity > 0.8) {
+        const roundedPitch = Math.round(pitch * 100) / 100;
+        setFrequency(roundedPitch);
         
         // 自动识别最接近的弦
         const closestStringIndex = findClosestString(pitch);
@@ -315,59 +302,132 @@ const TunerPage = () => {
         
         // 计算音分差异
         const centsOff = 1200 * Math.log2(pitch / currentString.frequency);
-        setCents(Math.round(centsOff * 10) / 10);
-        
-        console.log('更新音高信息:', {
-          frequency: pitch.toFixed(2),
-          note: currentString.note,
-          cents: centsOff.toFixed(1)
-        });
+        const roundedCents = Math.round(centsOff * 10) / 10;
+        setCents(roundedCents);
         
         // 添加到音高历史记录
         setPitchHistory(prev => {
           const newHistory = [...prev, { 
-            frequency: pitch, 
-            cents: centsOff, 
+            frequency: roundedPitch, 
+            cents: roundedCents, 
             targetFreq: currentString.frequency,
             stringIndex: closestStringIndex,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            clarity: clarity
           }];
-          // 只保留最近50个数据点
-          return newHistory.slice(-50);
+          return newHistory.slice(-50); // 保留最近50个数据点
         });
+        
+        // 调音准确性判断
+        const delta = Math.abs(pitch - currentString.frequency);
+        if (delta < 2) { // 频率差值小于2Hz
+          if (firstCorrectTimestamp === 0) {
+            setFirstCorrectTimestamp(Date.now());
+          } else {
+            const elapsed = (Date.now() - firstCorrectTimestamp) / 1000;
+            const progress = Math.min(100, (elapsed / 2) * 100); // 2秒达到100%
+            setCorrectProgress(progress);
+            
+            if (progress >= 100) {
+              console.log(`🎯 ${currentString.note} 弦调音完成！`);
+              // 可以在这里添加成功提示或自动切换到下一根弦
+            }
+          }
+        } else {
+          setFirstCorrectTimestamp(0);
+          setCorrectProgress(0);
+        }
+      } else {
+        // 没有检测到有效音高，重置一些状态
+        if (Math.random() < 0.01) { // 降低日志频率
+          console.log('未检测到有效音高:', {
+            pitch: pitch ? pitch.toFixed(2) : 'none',
+            clarity: clarity ? clarity.toFixed(3) : 'none',
+            pitchInRange: pitch ? (pitch > 70 && pitch < 500) : false,
+            clarityGood: clarity ? clarity > 0.8 : false
+          });
+        }
       }
       
-      requestAnimationFrame(detectPitch);
+      // 继续下一次检测 (200ms间隔，如文章建议)
+      setTimeout(() => updatePitch(), 200);
     };
     
-    detectPitch();
+    // 开始音高检测
+    updatePitch();
   };
 
-  // FFT 方法检测音高（找到最强的频率峰值）
+  // 改进的FFT音高检测算法
   const detectPitchFFT = (freqData, sampleRate, freqBinCount) => {
-    // 找到最大峰值
-    let maxIndex = 0;
-    let maxValue = 0;
+    // 定义吉他频率范围 (80-1000Hz，扩大范围以包含泛音)
+    const minFreq = 80;
+    const maxFreq = 1000;
+    const minBin = Math.floor(minFreq * freqBinCount / (sampleRate / 2));
+    const maxBin = Math.floor(maxFreq * freqBinCount / (sampleRate / 2));
     
-    // 只检查吉他频率范围对应的bin (大约80-500Hz)
-    const minBin = Math.floor(80 * freqBinCount / (sampleRate / 2));
-    const maxBin = Math.floor(500 * freqBinCount / (sampleRate / 2));
+    // 寻找频谱峰值
+    const peaks = [];
+    const threshold = Math.max(20, Math.max(...freqData) * 0.1); // 动态阈值
     
-    for (let i = minBin; i < Math.min(maxBin, freqData.length); i++) {
-      if (freqData[i] > maxValue) {
-        maxValue = freqData[i];
-        maxIndex = i;
+    for (let i = minBin + 1; i < Math.min(maxBin - 1, freqData.length - 1); i++) {
+      // 检测局部峰值
+      if (freqData[i] > freqData[i-1] && 
+          freqData[i] > freqData[i+1] && 
+          freqData[i] > threshold) {
+        
+        // 使用抛物线插值提高精度
+        const y1 = freqData[i-1];
+        const y2 = freqData[i];
+        const y3 = freqData[i+1];
+        
+        const a = (y1 - 2*y2 + y3) / 2;
+        const b = (y3 - y1) / 2;
+        
+        let peakIndex = i;
+        if (a !== 0) {
+          const offset = -b / (2 * a);
+          peakIndex = i + offset;
+        }
+        
+        const frequency = peakIndex * sampleRate / 2 / freqBinCount;
+        const magnitude = y2;
+        
+        peaks.push({ frequency, magnitude, bin: i });
       }
     }
     
-    // 如果峰值不够强，返回0
-    if (maxValue < 50) { // 阈值可以调整
-      return 0;
+    if (peaks.length === 0) return 0;
+    
+    // 排序峰值按幅度
+    peaks.sort((a, b) => b.magnitude - a.magnitude);
+    
+    // 寻找基频（最强的低频峰值）
+    let fundamentalFreq = 0;
+    
+    for (const peak of peaks) {
+      // 检查是否在吉他基频范围内 (80-400Hz)
+      if (peak.frequency >= 80 && peak.frequency <= 400) {
+        fundamentalFreq = peak.frequency;
+        break;
+      }
     }
     
-    // 转换bin索引到频率
-    const frequency = maxIndex * sampleRate / 2 / freqBinCount;
-    return frequency;
+    // 如果没找到基频，检查泛音
+    if (fundamentalFreq === 0) {
+      for (const peak of peaks) {
+        // 检查是否是某个基频的泛音
+        for (let harmonic = 2; harmonic <= 4; harmonic++) {
+          const possibleFundamental = peak.frequency / harmonic;
+          if (possibleFundamental >= 80 && possibleFundamental <= 400) {
+            fundamentalFreq = possibleFundamental;
+            break;
+          }
+        }
+        if (fundamentalFreq > 0) break;
+      }
+    }
+    
+    return fundamentalFreq;
   };
 
   // 自相关方法检测音高
@@ -423,54 +483,69 @@ const TunerPage = () => {
     return closestIndex;
   };
 
-  // 开始音频可视化
+  // 开始音频可视化 - 改进版
   const startVisualization = (analyserNode) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.error('Canvas 引用未找到');
+      return;
+    }
 
     const ctx = canvas.getContext('2d');
     const bufferLength = analyserNode.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
+    console.log('音频可视化启动，FFT大小:', analyserNode.fftSize, '频率仓数量:', bufferLength);
 
     const draw = () => {
-      if (!listening) return;
+      if (!listening) {
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = null;
+        }
+        return;
+      }
 
       animationRef.current = requestAnimationFrame(draw);
       
-      analyserNode.getByteFrequencyData(dataArray);
-      setWaveformData(new Uint8Array(dataArray));
+      // 获取实时音频数据
+      const freqData = new Uint8Array(bufferLength);
+      const timeData = new Float32Array(analyserNode.fftSize);
+      
+      analyserNode.getByteFrequencyData(freqData);
+      analyserNode.getFloatTimeDomainData(timeData);
 
       // 清空画布
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 绘制频谱
-      const barWidth = canvas.width / bufferLength * 2.5;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
+      // 1. 绘制频谱 (条形图)
+      const barWidth = canvas.width / (bufferLength * 0.3); // 只显示前30%的频率
+      const maxBars = Math.floor(bufferLength * 0.3);
+      
+      for (let i = 0; i < maxBars; i++) {
+        const barHeight = (freqData[i] / 255) * canvas.height * 0.7;
         
-        // 根据频率范围设置颜色
-        const hue = (i / bufferLength) * 360;
-        ctx.fillStyle = `hsl(${hue}, 70%, 60%)`;
-        
-        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-        x += barWidth + 1;
+        if (barHeight > 1) {
+          // 彩虹渐变色
+          const hue = (i / maxBars) * 280; // 从紫色到红色
+          const saturation = 70 + (freqData[i] / 255) * 30;
+          const lightness = 40 + (freqData[i] / 255) * 40;
+          
+          ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+          ctx.fillRect(i * barWidth, canvas.height - barHeight, barWidth - 1, barHeight);
+        }
       }
 
-      // 绘制波形
-      analyserNode.getByteTimeDomainData(dataArray);
+      // 2. 绘制时域波形
       ctx.lineWidth = 2;
       ctx.strokeStyle = '#00ff88';
       ctx.beginPath();
 
-      const sliceWidth = canvas.width / bufferLength;
-      x = 0;
+      const sliceWidth = canvas.width / timeData.length;
+      let x = 0;
 
-      for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = v * canvas.height / 2;
+      for (let i = 0; i < timeData.length; i++) {
+        // 将音频数据从 [-1, 1] 映射到画布高度
+        const y = ((timeData[i] + 1) / 2) * canvas.height;
 
         if (i === 0) {
           ctx.moveTo(x, y);
@@ -482,8 +557,43 @@ const TunerPage = () => {
       }
 
       ctx.stroke();
+
+      // 3. 添加中线参考
+      ctx.strokeStyle = '#333333';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height / 2);
+      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.stroke();
+
+      // 4. 显示当前音量和频率信息
+      const rms = Math.sqrt(timeData.reduce((sum, val) => sum + val * val, 0) / timeData.length);
+      const volume = Math.min(100, rms * 1000);
+      
+      if (volume > 1) {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px monospace';
+        ctx.fillText(`音量: ${volume.toFixed(1)}%`, 10, 20);
+        
+        if (frequency > 0) {
+          ctx.fillText(`频率: ${frequency.toFixed(1)}Hz`, 10, 35);
+          ctx.fillText(`音分: ${cents > 0 ? '+' : ''}${cents.toFixed(1)}`, 10, 50);
+        }
+      }
+
+      // 调试信息（减少频率）
+      if (Math.random() < 0.01) {
+        const freqSum = freqData.reduce((a, b) => a + b, 0);
+        console.log('可视化数据:', {
+          volume: volume.toFixed(1),
+          freqSum: freqSum,
+          maxFreq: Math.max(...freqData),
+          rms: rms.toFixed(6)
+        });
+      }
     };
 
+    // 启动绘制循环
     draw();
   };
 
@@ -655,32 +765,65 @@ const TunerPage = () => {
     }
   }, [pitchHistory, selectedString, tuningMode, listening]);
 
-  // 播放参考音
-  const playReferenceNote = () => {
-    if (!audioContext || isPlayingReference) return;
+  // 使用 tone.js 播放参考音
+  const playReferenceNote = async () => {
+    if (isPlayingReference) return;
     
-    setIsPlayingReference(true);
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = targetString.frequency;
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5);
-    
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 1.5);
-    
-    oscillatorRef.current = oscillator;
-    
-    setTimeout(() => {
+    try {
+      setIsPlayingReference(true);
+      
+      // 确保 Tone.js 音频上下文已启动
+      if (Tone.context.state !== 'running') {
+        await Tone.start();
+        console.log('Tone.js 音频上下文已启动');
+      }
+      
+      // 如果还没有创建采样器，创建一个
+      if (!sampler) {
+        // 创建一个简单的合成器代替采样器（因为我们没有音频文件）
+        const synth = new Tone.Synth({
+          oscillator: {
+            type: 'triangle' // 使用三角波获得更温暖的音色
+          },
+          envelope: {
+            attack: 0.1,
+            decay: 0.2,
+            sustain: 0.7,
+            release: 1.2
+          }
+        }).toDestination();
+        
+        setSampler(synth);
+        
+        // 播放音符
+        const noteString = targetString.teoriaNote.toString();
+        console.log('播放参考音:', noteString, targetString.frequency + 'Hz');
+        
+        synth.triggerAttackRelease(noteString, '1.5n');
+        
+        // 1.5秒后停止播放状态
+        setTimeout(() => {
+          setIsPlayingReference(false);
+        }, 1500);
+        
+      } else {
+        // 如果采样器已存在，直接播放
+        const noteString = targetString.teoriaNote.toString();
+        console.log('播放参考音:', noteString, targetString.frequency + 'Hz');
+        
+        if (sampler.triggerAttackRelease) {
+          sampler.triggerAttackRelease(noteString, '1.5n');
+        }
+        
+        setTimeout(() => {
+          setIsPlayingReference(false);
+        }, 1500);
+      }
+      
+    } catch (error) {
+      console.error('播放参考音失败:', error);
       setIsPlayingReference(false);
-    }, 1500);
+    }
   };
 
   // 调整目标音高
@@ -844,96 +987,280 @@ const TunerPage = () => {
   }, [audioContext]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="container mx-auto px-4 py-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="max-w-4xl mx-auto"
+          className="max-w-5xl mx-auto"
         >
-          {/* 标题 */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">吉他调音器网页版</h1>
-            <p className="text-blue-600 cursor-pointer hover:underline">更多乐器点此访问</p>
-          </div>
-
-          {/* 主要调音界面 */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            {/* 钢琴键盘 */}
-            <div className="mb-8">
-              <div className="flex justify-center items-end h-32 mb-4">
-                {pianoKeys.map((key, index) => (
-                  <div
-                    key={index}
-                    className={`relative ${key.isBlack ? 'w-8 h-20 bg-gray-900 -mx-1 z-10' : 'w-12 h-32 bg-white border border-gray-300'} 
-                    ${currentNote && currentNote.includes(key.note) ? 'bg-green-400' : ''}`}
-                  >
-                    {!key.isBlack && (
-                      <div className="absolute bottom-2 w-full text-center text-xs text-gray-600">
-                        {key.note}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+          {/* 主调音界面 - 顶部集中设计 */}
+          <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6">
+            {/* 标题栏 */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                吉他调音器
+              </h1>
+              <p className="text-gray-600">专业级在线调音工具</p>
             </div>
 
-            {/* 音频可视化 */}
-            {listening && (
+            {/* 核心调音区域 */}
+            <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6 mb-6">
+              {/* 圆形调音指示器 */}
+              {listening && currentNote ? (
+                <div className="text-center mb-8">
+                  <div className="flex justify-center items-center gap-8">
+                    {/* 左侧音符信息 */}
+                    <div className="text-center">
+                      <div className="text-6xl font-bold text-gray-800 mb-2">{currentNote}</div>
+                      <div className="text-xl text-gray-600 mb-1">{frequency} Hz</div>
+                      <div className="text-sm text-blue-600 font-medium">第{selectedString + 1}弦</div>
+                    </div>
+                    
+                    {/* 中间圆形调音表 */}
+                    <div className="relative">
+                      <svg width="200" height="200" className="transform -rotate-90">
+                        {/* 外圈背景 */}
+                        <circle
+                          cx="100"
+                          cy="100"
+                          r="90"
+                          fill="none"
+                          stroke="#e5e7eb"
+                          strokeWidth="8"
+                        />
+                        
+                        {/* 调音区域指示 */}
+                        <circle
+                          cx="100"
+                          cy="100"
+                          r="90"
+                          fill="none"
+                          stroke="#10b981"
+                          strokeWidth="12"
+                          strokeLinecap="round"
+                          strokeDasharray={`${Math.PI * 2 * 90 * 0.1} ${Math.PI * 2 * 90 * 0.9}`}
+                          strokeDashoffset={-Math.PI * 2 * 90 * 0.45}
+                          opacity="0.3"
+                        />
+                        
+                        {/* 当前音高位置 */}
+                        <circle
+                          cx="100"
+                          cy="100"
+                          r="90"
+                          fill="none"
+                          stroke={Math.abs(cents) < 5 ? '#10b981' : Math.abs(cents) < 15 ? '#f59e0b' : '#ef4444'}
+                          strokeWidth="6"
+                          strokeLinecap="round"
+                          strokeDasharray={`${Math.PI * 2 * 90 * 0.02} ${Math.PI * 2 * 90 * 0.98}`}
+                          strokeDashoffset={-Math.PI * 2 * 90 * (0.5 + Math.max(-0.25, Math.min(0.25, cents / 200)))}
+                          className="transition-all duration-300"
+                        />
+                        
+                        {/* 中心点 */}
+                        <circle cx="100" cy="100" r="4" fill="#374151" />
+                      </svg>
+                      
+                      {/* 指针 */}
+                      <div 
+                        className="absolute top-1/2 left-1/2 w-1 h-16 bg-gray-800 origin-bottom transition-transform duration-300"
+                        style={{
+                          transform: `translate(-50%, -100%) rotate(${Math.max(-45, Math.min(45, cents * 0.9))}deg)`
+                        }}
+                      />
+                      
+                      {/* 中心圆点 */}
+                      <div className="absolute top-1/2 left-1/2 w-3 h-3 bg-gray-800 rounded-full transform -translate-x-1/2 -translate-y-1/2" />
+                      
+                      {/* 刻度标记 */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="absolute text-xs text-gray-500 font-medium" style={{transform: 'translateY(-85px)'}}>0</div>
+                        <div className="absolute text-xs text-gray-400" style={{transform: 'translateX(-85px)'}}>-50</div>
+                        <div className="absolute text-xs text-gray-400" style={{transform: 'translateX(85px)'}}>+50</div>
+                      </div>
+                    </div>
+                    
+                    {/* 右侧状态信息 */}
+                    <div className="text-center">
+                      <div className={`text-4xl font-bold mb-2 ${
+                        Math.abs(cents) < 5 ? 'text-green-500' :
+                        Math.abs(cents) < 15 ? 'text-yellow-500' : 'text-red-500'
+                      }`}>
+                        {cents > 0 ? `+${cents.toFixed(1)}` : cents.toFixed(1)}
+                      </div>
+                      <div className="text-lg text-gray-600 mb-2">音分</div>
+                      <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-4 ${
+                        Math.abs(cents) < 5 ? 'bg-green-100 text-green-800' :
+                        Math.abs(cents) < 15 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {Math.abs(cents) < 5 ? '✓ 已调准' :
+                         Math.abs(cents) < 15 ? '接近调准' : 
+                         cents > 0 ? '音高偏高' : '音高偏低'}
+                      </div>
+                      
+                      {/* 调音准确性进度条 */}
+                      <div className="mt-4">
+                        <div className="relative w-20 h-20 mx-auto">
+                          {/* 背景圆环 */}
+                          <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80">
+                            <circle
+                              cx="40"
+                              cy="40"
+                              r="32"
+                              stroke="#e5e7eb"
+                              strokeWidth="8"
+                              fill="none"
+                            />
+                            {/* 进度圆环 */}
+                            <circle
+                              cx="40"
+                              cy="40"
+                              r="32"
+                              stroke={correctProgress > 80 ? '#10b981' : correctProgress > 40 ? '#f59e0b' : '#6b7280'}
+                              strokeWidth="8"
+                              fill="none"
+                              strokeLinecap="round"
+                              strokeDasharray={`${Math.PI * 2 * 32}`}
+                              strokeDashoffset={`${Math.PI * 2 * 32 * (1 - correctProgress / 100)}`}
+                              className="transition-all duration-300"
+                            />
+                          </svg>
+                          {/* 中心文字 */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-gray-800">
+                                {Math.round(correctProgress)}%
+                              </div>
+                              {correctProgress >= 100 && (
+                                <div className="text-green-600 text-xs font-medium">完成</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2">
+                          {correctProgress > 0 ? '保持稳定中...' : '调音精度检测'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center bg-white rounded-2xl px-8 py-6 shadow-lg border border-dashed border-gray-300">
+                    <div className="text-gray-400">
+                      <div className="text-4xl mb-2">🎸</div>
+                      <div className="text-lg">请弹奏吉他弦</div>
+                      <div className="text-sm">目标：{targetString.note} ({targetString.frequency}Hz)</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 弦选择区域 */}
               <div className="mb-8">
-                <h3 className="text-lg font-semibold text-center mb-4 text-gray-700">音频可视化</h3>
+                <h3 className="text-xl font-bold text-center mb-6 text-gray-800">选择要调的弦</h3>
+                <div className="grid grid-cols-6 gap-4">
+                  {currentStrings.map((string, index) => (
+                    <motion.div
+                      key={index}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`relative p-6 rounded-2xl cursor-pointer transition-all duration-200 ${
+                        selectedString === index 
+                          ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-2xl transform scale-105' 
+                          : 'bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200 hover:border-blue-300 shadow-lg hover:shadow-xl'
+                      }`}
+                      onClick={() => setSelectedString(index)}
+                    >
+                      <div className="text-center">
+                        <div className="text-3xl font-bold mb-2">{string.note}</div>
+                        <div className={`text-sm mb-1 ${selectedString === index ? 'text-blue-100' : 'text-gray-600'}`}>
+                          {string.frequency}Hz
+                        </div>
+                        <div className={`text-xs ${selectedString === index ? 'text-blue-200' : 'text-gray-500'}`}>
+                          第{index + 1}弦
+                        </div>
+                      </div>
+                      {selectedString === index && (
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                          <span className="text-sm text-gray-800">✓</span>
+                        </div>
+                      )}
+                      {listening && selectedString === index && (
+                        <div className="absolute inset-0 rounded-2xl border-2 border-yellow-400 animate-pulse" />
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+                <p className="text-center text-gray-600 mt-4">
+                  点击上方的弦按钮选择要调音的弦，系统也会自动识别你弹奏的弦
+                </p>
+              </div>
+
+            {/* 简化音频可视化 */}
+            {listening && (
+              <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold text-gray-800">音频波形</h3>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                      <span className="text-gray-600">音频信号</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                      <span className="text-gray-600">频谱</span>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex justify-center">
-                  <div className="bg-black rounded-lg p-4 shadow-lg">
+                  <div className="bg-gradient-to-br from-gray-900 to-black rounded-xl p-4 shadow-inner">
                     <canvas
                       ref={canvasRef}
                       width={600}
-                      height={200}
-                      className="rounded border-2 border-gray-600"
+                      height={120}
+                      className="rounded-lg"
                     />
-                    <div className="text-center mt-2">
-                      <p className="text-white text-sm">
-                        彩色条形图: 频谱分析 | 绿色波形: 时域波形
-                      </p>
-                    </div>
                   </div>
+                </div>
+                <div className="text-center mt-3">
+                  <p className="text-xs text-gray-500">
+                    实时音频频谱分析 · 波形显示
+                  </p>
                 </div>
               </div>
             )}
 
-            {/* 音高调音关系图 */}
-            {listening && pitchHistory.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-center mb-4 text-gray-700">实时音高与调音关系图</h3>
-                <div className="flex justify-center">
-                  <div className="bg-white rounded-lg p-4 shadow-lg border-2 border-gray-200">
-                    <canvas
-                      ref={pitchCanvasRef}
-                      width={800}
-                      height={300}
-                      className="rounded"
-                    />
-                    <div className="text-center mt-2">
-                      <div className="flex justify-center space-x-6 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <div className="w-4 h-1 bg-green-500 mr-2"></div>
-                          <span>当前音高曲线</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-1 bg-red-500 mr-2"></div>
-                          <span>选中弦目标</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-1 bg-gray-400 mr-2"></div>
-                          <span>其他弦</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-1 bg-green-500 border-dashed border-t-2 border-green-500 mr-2"></div>
-                          <span>完美调音</span>
-                        </div>
-                      </div>
+            {/* 音高趋势图 */}
+            {listening && pitchHistory.length > 5 && (
+              <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold text-gray-800">调音精度趋势</h3>
+                  <div className="flex items-center space-x-3 text-xs">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                      <span className="text-gray-600">音高轨迹</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+                      <span className="text-gray-600">目标值</span>
                     </div>
                   </div>
+                </div>
+                <div className="flex justify-center">
+                  <canvas
+                    ref={pitchCanvasRef}
+                    width={700}
+                    height={150}
+                    className="rounded-lg border border-gray-200"
+                  />
+                </div>
+                <div className="text-center mt-3">
+                  <p className="text-xs text-gray-500">
+                    显示最近音高变化轨迹，帮助你更精确地调音
+                  </p>
                 </div>
               </div>
             )}
@@ -1079,18 +1406,62 @@ const TunerPage = () => {
               </div>
             )}
 
-            {/* 调音模式选择 */}
-            <div className="mb-8">
-              <label className="block text-sm font-medium text-gray-700 mb-2">调音模式</label>
-              <select 
-                value={tuningMode} 
-                onChange={(e) => setTuningMode(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
+            {/* 智能调音模式选择 */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+              <h3 className="text-xl font-bold text-center mb-6 text-gray-800">调音模式</h3>
+              
+              {/* 推荐模式提示 */}
+              {frequency > 0 && (
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <div className="flex items-center mb-2">
+                    <span className="text-blue-600 text-lg mr-2">💡</span>
+                    <span className="text-blue-800 font-semibold">智能推荐</span>
+                  </div>
+                  <p className="text-blue-700 text-sm">
+                    检测到频率 {frequency.toFixed(1)}Hz，系统推荐使用 <strong>{tuningModes[tuningMode].name}</strong> 模式
+                  </p>
+                </div>
+              )}
+              
+              {/* 模式选择网格 */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 {Object.entries(tuningModes).map(([key, mode]) => (
-                  <option key={key} value={key}>{mode.name}</option>
+                  <div
+                    key={key}
+                    className={`p-4 rounded-xl cursor-pointer transition-all duration-200 ${
+                      tuningMode === key
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-105'
+                        : 'bg-gray-50 hover:bg-gray-100 border-2 border-gray-200 hover:border-blue-300'
+                    }`}
+                    onClick={() => setTuningMode(key)}
+                  >
+                    <div className="text-center">
+                      <div className="font-bold text-lg mb-2">{mode.name}</div>
+                      <div className={`text-sm ${tuningMode === key ? 'text-blue-100' : 'text-gray-600'}`}>
+                        {mode.strings[0].note} - {mode.strings[5].note}
+                      </div>
+                    </div>
+                    {tuningMode === key && (
+                      <div className="absolute top-2 right-2 text-yellow-300">
+                        <span className="text-lg">✓</span>
+                      </div>
+                    )}
+                  </div>
                 ))}
-              </select>
+              </div>
+              
+              {/* 当前模式详情 */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-800 mb-2">当前模式：{tuningModes[tuningMode].name}</h4>
+                <div className="grid grid-cols-6 gap-2">
+                  {tuningModes[tuningMode].strings.map((string, index) => (
+                    <div key={index} className="text-center text-sm">
+                      <div className="font-medium text-gray-700">{string.note}</div>
+                      <div className="text-xs text-gray-500">{string.frequency}Hz</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* 吉他指板可视化 */}
@@ -1237,6 +1608,7 @@ const TunerPage = () => {
                 </ul>
               </div>
             </div>
+          </div>
           </div>
         </motion.div>
       </div>
