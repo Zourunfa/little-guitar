@@ -144,79 +144,63 @@ const TunerPage = () => {
 
   // 音频处理循环引用
   const animationFrameRef = useRef(null);
+  const isTuningRef = useRef(false);
+  const analyserRef = useRef(null);
+  const audioContextRef = useRef(null);
 
-  // 处理音频数据 - 使用FFT频域分析
-  const processAudio = useCallback(() => {
-    if (!analyser || !isTuning) return;
-    
-    // 使用频域数据而不是时域数据
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Float32Array(bufferLength);
-    analyser.getFloatFrequencyData(dataArray);
-    
-    // 检查是否有音频输入
-    const sum = dataArray.reduce((acc, val) => acc + Math.abs(val), 0);
-    if (sum === 0) {
-      console.log('没有音频输入');
-    } else {
-      console.log('音频输入正常，总和:', sum);
-    }
-    
-    // 使用FFT检测基频
-    const detectedFrequency = findFundamentalFrequency(dataArray, audioContext.sampleRate);
-    
-    if (detectedFrequency > 0 && detectedFrequency < 1000) {
-      console.log('检测到频率:', detectedFrequency);
-      // 更新显示
-      updateDisplay(detectedFrequency);
-    }
-    
-    // 继续处理音频（重要！）
-    if (isTuning) {
-      animationFrameRef.current = requestAnimationFrame(processAudio);
-    }
-  }, [analyser, isTuning, audioContext, updateDisplay]);
+  // 更新 refs
+  useEffect(() => {
+    isTuningRef.current = isTuning;
+  }, [isTuning]);
+
+  useEffect(() => {
+    analyserRef.current = analyser;
+  }, [analyser]);
+
+  useEffect(() => {
+    audioContextRef.current = audioContext;
+  }, [audioContext]);
 
   // 使用FFT频域分析查找基频
-  const findFundamentalFrequency = (freqData, sampleRate) => {
+  const findFundamentalFrequency = useCallback((freqData, sampleRate) => {
     const bufferLength = freqData.length;
     const nyquist = sampleRate / 2;
-    
+
     // 寻找频谱中的峰值
     let maxMagnitude = -Infinity;
     let peakIndex = -1;
-    
+
     // 只搜索可能的吉他频率范围 (50Hz - 500Hz)
     const minIndex = Math.floor(50 * bufferLength / nyquist);
     const maxIndex = Math.floor(500 * bufferLength / nyquist);
-    
+
     for (let i = minIndex; i < maxIndex; i++) {
       if (freqData[i] > maxMagnitude) {
         maxMagnitude = freqData[i];
         peakIndex = i;
       }
     }
-    
+
     // 如果找到明显的峰值
     if (peakIndex !== -1 && maxMagnitude > -100) {
       // 计算精确频率
       const detectedFrequency = peakIndex * nyquist / bufferLength;
-      
+
       // 使用谐波乘积谱方法提高基频检测精度
       return refineFrequencyWithHPS(freqData, detectedFrequency, sampleRate);
     }
-    
+
     return -1;
-  };
+  }, []);
 
   // 使用谐波乘积谱方法精炼频率
-  const refineFrequencyWithHPS = (freqData, roughFreq, sampleRate) => {
+  const refineFrequencyWithHPS = useCallback((freqData, roughFreq, sampleRate) => {
     const bufferLength = freqData.length;
     const nyquist = sampleRate / 2;
-    
+
     // 创建谐波乘积谱
     let hps = new Array(bufferLength).fill(0);
-    
+
     // 计算不同下采样率的乘积
     for (let i = 0; i < bufferLength; i++) {
       let product = 1;
@@ -230,82 +214,59 @@ const TunerPage = () => {
       }
       hps[i] = product;
     }
-    
+
     // 在粗略频率附近寻找HPS峰值
     const searchRange = Math.floor(10 * bufferLength / nyquist); // ±10Hz
     const centerIndex = Math.floor(roughFreq * bufferLength / nyquist);
     const startIndex = Math.max(0, centerIndex - searchRange);
     const endIndex = Math.min(bufferLength - 1, centerIndex + searchRange);
-    
+
     let maxHPS = 0;
     let bestIndex = centerIndex;
-    
+
     for (let i = startIndex; i <= endIndex; i++) {
       if (hps[i] > maxHPS) {
         maxHPS = hps[i];
         bestIndex = i;
       }
     }
-    
-    return bestIndex * nyquist / bufferLength;
-  };
 
-  // 更新显示
-  const updateDisplay = useCallback((detectedFrequency) => {
-    console.log('更新显示:', detectedFrequency);
-    
-    // 显示频率
-    setFrequency(parseFloat(detectedFrequency.toFixed(2)));
-    
-    // 找到最接近的音符
-    const closestNote = findClosestNote(detectedFrequency);
-    setCurrentNote(closestNote.name);
-    
-    // 计算与目标弦的偏差
-    const targetFrequency = guitarStrings[selectedString].frequency;
-    const centsOff = calculateCents(detectedFrequency, targetFrequency);
-    setCents(parseFloat(centsOff.toFixed(1)));
-    
-    // 更新调音指针
-    updateTuningNeedle(centsOff);
-    
-    // 更新精度显示
-    updateAccuracyDisplay(centsOff);
-  }, [selectedString]);
+    return bestIndex * nyquist / bufferLength;
+  }, []);
 
   // 找到最接近的音符
-  const findClosestNote = (detectedFrequency) => {
+  const findClosestNote = useCallback((detectedFrequency) => {
     // 计算C0以上的半音数
     const semitonesFromC0 = 12 * Math.log2(detectedFrequency / noteFrequencies['C']);
-    
+
     // 计算八度和音名索引
     const octave = Math.floor(semitonesFromC0 / 12);
     const noteIndex = Math.round(semitonesFromC0 % 12);
-    
+
     // 获取音名
     const noteNames = Object.keys(noteFrequencies);
     const noteName = noteNames[noteIndex];
-    
+
     return {
       name: noteName + (octave + 1), // +1 因为C0对应八度1
       frequency: noteFrequencies[noteName] * Math.pow(2, octave)
     };
-  };
+  }, []);
 
   // 计算音分偏差
-  const calculateCents = (detectedFrequency, targetFrequency) => {
+  const calculateCents = useCallback((detectedFrequency, targetFrequency) => {
     return 1200 * Math.log2(detectedFrequency / targetFrequency);
-  };
+  }, []);
 
   // 更新调音指针
-  const updateTuningNeedle = (centsOff) => {
+  const updateTuningNeedle = useCallback((centsOff) => {
     // 限制指针移动范围（±50音分）
     const limitedCents = Math.max(-50, Math.min(50, centsOff));
-    
+
     // 计算指针位置（从-50到+50音分映射到0%到100%）
     const position = 50 + (limitedCents / 50) * 50;
     setNeedlePosition(position);
-    
+
     // 根据偏差改变指针颜色
     if (Math.abs(centsOff) < 5) {
       setNeedleColor("#4CAF50"); // 绿色 - 准确
@@ -314,33 +275,100 @@ const TunerPage = () => {
     } else {
       setNeedleColor("#F44336"); // 红色 - 偏离
     }
-  };
+  }, []);
 
   // 更新精度显示
-  const updateAccuracyDisplay = (centsOff) => {
+  const updateAccuracyDisplay = useCallback((centsOff) => {
     const absCents = Math.abs(centsOff);
-    
+
+    let text = '';
+    let color = '';
+
     if (absCents < 2) {
-      setAccuracyText("完美!");
-      setAccuracyColor("#4CAF50");
+      text = "完美!";
+      color = "#4CAF50";
     } else if (absCents < 5) {
-      setAccuracyText("非常接近");
-      setAccuracyColor("#8BC34A");
+      text = "非常接近";
+      color = "#8BC34A";
     } else if (absCents < 10) {
-      setAccuracyText("接近");
-      setAccuracyColor("#FFC107");
+      text = "接近";
+      color = "#FFC107";
     } else if (absCents < 20) {
-      setAccuracyText("需要调整");
-      setAccuracyColor("#FF9800");
+      text = "需要调整";
+      color = "#FF9800";
     } else {
-      setAccuracyText("偏离太多");
-      setAccuracyColor("#F44336");
+      text = "偏离太多";
+      color = "#F44336";
     }
-    
+
     // 显示具体偏差
     const sign = centsOff > 0 ? '+' : '-';
-    setAccuracyText(prev => `${prev} (${sign}${Math.abs(centsOff).toFixed(1)}音分)`);
-  };
+    text = `${text} (${sign}${Math.abs(centsOff).toFixed(1)}音分)`;
+
+    setAccuracyText(text);
+    setAccuracyColor(color);
+  }, []);
+
+  // 更新显示
+  const updateDisplay = useCallback((detectedFrequency) => {
+    console.log('更新显示:', detectedFrequency);
+
+    // 显示频率
+    setFrequency(parseFloat(detectedFrequency.toFixed(2)));
+
+    // 找到最接近的音符
+    const closestNote = findClosestNote(detectedFrequency);
+    setCurrentNote(closestNote.name);
+
+    // 计算与目标弦的偏差
+    const targetFrequency = guitarStrings[selectedString].frequency;
+    const centsOff = calculateCents(detectedFrequency, targetFrequency);
+    setCents(parseFloat(centsOff.toFixed(1)));
+
+    // 更新调音指针
+    updateTuningNeedle(centsOff);
+
+    // 更新精度显示
+    updateAccuracyDisplay(centsOff);
+  }, [selectedString, findClosestNote, calculateCents, updateTuningNeedle, updateAccuracyDisplay]);
+
+  // 处理音频数据 - 使用FFT频域分析
+  const processAudio = useCallback(() => {
+    const currentAnalyser = analyserRef.current;
+    const currentAudioContext = audioContextRef.current;
+    const currentIsTuning = isTuningRef.current;
+
+    if (!currentAnalyser || !currentAudioContext || !currentIsTuning) {
+      return;
+    }
+
+    // 使用频域数据而不是时域数据
+    const bufferLength = currentAnalyser.frequencyBinCount;
+    const dataArray = new Float32Array(bufferLength);
+    currentAnalyser.getFloatFrequencyData(dataArray);
+
+    // 检查是否有音频输入
+    const sum = dataArray.reduce((acc, val) => acc + Math.abs(val), 0);
+    if (sum === 0) {
+      console.log('没有音频输入');
+    } else {
+      console.log('音频输入正常，总和:', sum);
+    }
+
+    // 使用FFT检测基频
+    const detectedFrequency = findFundamentalFrequency(dataArray, currentAudioContext.sampleRate);
+
+    if (detectedFrequency > 0 && detectedFrequency < 1000) {
+      console.log('检测到频率:', detectedFrequency);
+      // 更新显示
+      updateDisplay(detectedFrequency);
+    }
+
+    // 继续处理音频（重要！）
+    if (currentIsTuning) {
+      animationFrameRef.current = requestAnimationFrame(processAudio);
+    }
+  }, [findFundamentalFrequency, updateDisplay]);
 
   // 选择吉他弦
   const handleStringSelect = (stringNumber) => {
@@ -351,8 +379,17 @@ const TunerPage = () => {
   useEffect(() => {
     if (isTuning && analyser && audioContext) {
       console.log('启动音频处理循环');
-      processAudio();
+      // 启动处理循环
+      animationFrameRef.current = requestAnimationFrame(processAudio);
     }
+
+    // 清理函数：停止音频处理
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
   }, [isTuning, analyser, audioContext, processAudio]);
 
   // 清理函数
