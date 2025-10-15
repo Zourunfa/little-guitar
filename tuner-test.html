@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吉他调音工具测试</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+        }
+        
+        .note-display {
+            text-align: center;
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            height: 80px;
+        }
+        
+        .frequency-display {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        .tuning-bar {
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tuning-needle {
+            position: absolute;
+            height: 100%;
+            width: 2px;
+            background: white;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.3s ease;
+        }
+        
+        .accuracy-display {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 10px;
+            height: 30px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            margin: 10px;
+        }
+        
+        .status {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>吉他调音器测试</h1>
+    
+    <div class="container">
+        <div class="note-display" id="noteDisplay">--</div>
+        <div class="frequency-display" id="frequencyDisplay">频率: -- Hz</div>
+        
+        <div class="tuning-bar">
+            <div class="tuning-needle" id="tuningNeedle"></div>
+        </div>
+        
+        <div class="accuracy-display" id="accuracyDisplay"></div>
+        <div class="status" id="status">点击开始调音按钮</div>
+        
+        <div style="text-align: center;">
+            <button id="startButton">开始调音</button>
+        </div>
+    </div>
+
+    <script>
+        // 吉他标准调音频率（Hz）
+        const guitarStrings = {
+            '6': { note: 'E2', frequency: 82.41 }
+        };
+        
+        // 音名与频率映射
+        const noteFrequencies = {
+            'C': 16.35, 'C#': 17.32, 'D': 18.35, 'D#': 19.45,
+            'E': 20.60, 'F': 21.83, 'F#': 23.12, 'G': 24.50,
+            'G#': 25.96, 'A': 27.50, 'A#': 29.14, 'B': 30.87
+        };
+        
+        // DOM元素
+        const noteDisplay = document.getElementById('noteDisplay');
+        const frequencyDisplay = document.getElementById('frequencyDisplay');
+        const tuningNeedle = document.getElementById('tuningNeedle');
+        const accuracyDisplay = document.getElementById('accuracyDisplay');
+        const statusDisplay = document.getElementById('status');
+        const startButton = document.getElementById('startButton');
+        
+        // 状态变量
+        let audioContext = null;
+        let analyser = null;
+        let microphone = null;
+        let javascriptNode = null;
+        let isTuning = false;
+        let selectedString = '6';
+        
+        // 开始/停止调音
+        startButton.addEventListener('click', toggleTuning);
+        
+        function toggleTuning() {
+            if (!isTuning) {
+                startTuning();
+            } else {
+                stopTuning();
+            }
+        }
+        
+        async function startTuning() {
+            try {
+                console.log('开始调音...');
+                
+                // 检查浏览器支持
+                if (!navigator.mediaDevices || !window.AudioContext) {
+                    statusDisplay.textContent = "浏览器不支持调音功能";
+                    return;
+                }
+                
+                // 请求麦克风权限
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: { 
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    } 
+                });
+                
+                console.log('麦克风权限获取成功');
+                statusDisplay.textContent = "调音器已启动，请弹响吉他弦";
+                startButton.textContent = "停止调音";
+                isTuning = true;
+                
+                // 创建音频上下文
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                microphone = audioContext.createMediaStreamSource(stream);
+                
+                // 设置分析器
+                analyser.fftSize = 32768;
+                analyser.smoothingTimeConstant = 0.8;
+                microphone.connect(analyser);
+                
+                // 创建处理节点
+                javascriptNode = audioContext.createScriptProcessor(4096, 1, 1);
+                analyser.connect(javascriptNode);
+                javascriptNode.connect(audioContext.destination);
+                
+                console.log('音频节点连接完成');
+                
+                // 处理音频数据
+                javascriptNode.onaudioprocess = processAudio;
+                
+            } catch (err) {
+                console.error("调音器启动失败:", err);
+                statusDisplay.textContent = `错误: ${err.message}`;
+            }
+        }
+        
+        function stopTuning() {
+            console.log('停止调音...');
+            
+            if (javascriptNode) {
+                javascriptNode.disconnect();
+                javascriptNode = null;
+            }
+            
+            if (microphone) {
+                microphone.disconnect();
+                microphone = null;
+            }
+            
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            
+            statusDisplay.textContent = "调音器已停止";
+            startButton.textContent = "开始调音";
+            isTuning = false;
+            
+            // 重置显示
+            noteDisplay.textContent = "--";
+            frequencyDisplay.textContent = "频率: -- Hz";
+            accuracyDisplay.textContent = "";
+            tuningNeedle.style.left = "50%";
+        }
+        
+        // 处理音频数据
+        function processAudio() {
+            if (!analyser || !isTuning) return;
+            
+            console.log('处理音频数据...');
+            
+            // 使用频域数据
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Float32Array(bufferLength);
+            analyser.getFloatFrequencyData(dataArray);
+            
+            // 检测基频
+            const frequency = findFundamentalFrequency(dataArray, audioContext.sampleRate);
+            
+            console.log('检测到频率:', frequency);
+            
+            if (frequency > 0 && frequency < 1000) {
+                updateDisplay(frequency);
+            }
+        }
+        
+        // 使用FFT频域分析查找基频
+        function findFundamentalFrequency(freqData, sampleRate) {
+            const bufferLength = freqData.length;
+            const nyquist = sampleRate / 2;
+            
+            let maxMagnitude = -Infinity;
+            let peakIndex = -1;
+            
+            // 搜索吉他频率范围 (50Hz - 500Hz)
+            const minIndex = Math.floor(50 * bufferLength / nyquist);
+            const maxIndex = Math.floor(500 * bufferLength / nyquist);
+            
+            for (let i = minIndex; i < maxIndex; i++) {
+                if (freqData[i] > maxMagnitude) {
+                    maxMagnitude = freqData[i];
+                    peakIndex = i;
+                }
+            }
+            
+            if (peakIndex !== -1 && maxMagnitude > -100) {
+                const frequency = peakIndex * nyquist / bufferLength;
+                return frequency;
+            }
+            
+            return -1;
+        }
+        
+        // 更新显示
+        function updateDisplay(frequency) {
+            console.log('更新显示:', frequency);
+            
+            // 显示频率
+            frequencyDisplay.textContent = `频率: ${frequency.toFixed(2)} Hz`;
+            
+            // 找到最接近的音符
+            const closestNote = findClosestNote(frequency);
+            noteDisplay.textContent = closestNote.name;
+            
+            // 计算与目标弦的偏差
+            const targetFrequency = guitarStrings[selectedString].frequency;
+            const cents = calculateCents(frequency, targetFrequency);
+            
+            // 更新调音指针
+            updateTuningNeedle(cents);
+            
+            // 更新精度显示
+            updateAccuracyDisplay(cents);
+        }
+        
+        // 找到最接近的音符
+        function findClosestNote(frequency) {
+            const semitonesFromC0 = 12 * Math.log2(frequency / noteFrequencies['C']);
+            const octave = Math.floor(semitonesFromC0 / 12);
+            const noteIndex = Math.round(semitonesFromC0 % 12);
+            const noteNames = Object.keys(noteFrequencies);
+            const noteName = noteNames[noteIndex];
+            
+            return {
+                name: noteName + (octave + 1),
+                frequency: noteFrequencies[noteName] * Math.pow(2, octave)
+            };
+        }
+        
+        // 计算音分偏差
+        function calculateCents(frequency, targetFrequency) {
+            return 1200 * Math.log2(frequency / targetFrequency);
+        }
+        
+        // 更新调音指针
+        function updateTuningNeedle(cents) {
+            const limitedCents = Math.max(-50, Math.min(50, cents));
+            const position = 50 + (limitedCents / 50) * 50;
+            tuningNeedle.style.left = `${position}%`;
+            
+            if (Math.abs(cents) < 5) {
+                tuningNeedle.style.background = "#4CAF50";
+            } else if (Math.abs(cents) < 20) {
+                tuningNeedle.style.background = "#FFC107";
+            } else {
+                tuningNeedle.style.background = "#F44336";
+            }
+        }
+        
+        // 更新精度显示
+        function updateAccuracyDisplay(cents) {
+            const absCents = Math.abs(cents);
+            
+            if (absCents < 2) {
+                accuracyDisplay.textContent = "完美!";
+                accuracyDisplay.style.color = "#4CAF50";
+            } else if (absCents < 5) {
+                accuracyDisplay.textContent = "非常接近";
+                accuracyDisplay.style.color = "#8BC34A";
+            } else if (absCents < 10) {
+                accuracyDisplay.textContent = "接近";
+                accuracyDisplay.style.color = "#FFC107";
+            } else if (absCents < 20) {
+                accuracyDisplay.textContent = "需要调整";
+                accuracyDisplay.style.color = "#FF9800";
+            } else {
+                accuracyDisplay.textContent = "偏离太多";
+                accuracyDisplay.style.color = "#F44336";
+            }
+            
+            const sign = cents > 0 ? '+' : '-';
+            accuracyDisplay.textContent += ` (${sign}${Math.abs(cents).toFixed(1)}音分)`;
+        }
+    </script>
+</body>
+</html>
