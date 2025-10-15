@@ -19,7 +19,7 @@ const BluesPage = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentChordIndex, setCurrentChordIndex] = useState(0);
   // 当前选择的练习模式
-  const [practiceMode, setPracticeMode] = useState('scale'); // scale, chord, rhythm, improv
+  const [practiceMode, setPracticeMode] = useState('chord'); // scale, chord, rhythm, improv
 
   // 音符定义
   const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -146,8 +146,8 @@ const BluesPage = () => {
             <h2 className="text-xl md:text-2xl font-bold mb-4 text-center">选择练习模式</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {[
-                { id: 'scale', icon: '🎵', name: '音阶练习', desc: '掌握 Blues 音阶' },
                 { id: 'chord', icon: '🎹', name: '和弦进行', desc: '熟悉和弦变化' },
+                { id: 'scale', icon: '🎵', name: '音阶练习', desc: '掌握 Blues 音阶' },
                 { id: 'rhythm', icon: '🥁', name: '节奏训练', desc: '培养律动感' },
                 { id: 'improv', icon: '✨', name: '即兴创作', desc: '综合实战' }
               ].map(mode => (
@@ -253,6 +253,7 @@ const BluesPage = () => {
                   currentChordIndex={currentChordIndex}
                   setCurrentChordIndex={setCurrentChordIndex}
                   bpm={bpm}
+                  setBpm={setBpm}
                 />
               )}
 
