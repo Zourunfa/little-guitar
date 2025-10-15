@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import cloudbase from './utils/cloudbase'
 import TunerPage from './pages/TunerPage'
-import ChordFinderPage from './pages/ChordFinderPage'
+import BluesPage from './pages/BluesPage'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import './App.css'
@@ -49,7 +49,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/tuner" replace />} />
             <Route path="/tuner" element={<TunerPage />} />
-            <Route path="/chord-finder" element={<ChordFinderPage />} />
+            <Route path="/blues" element={<BluesPage />} />
             <Route path="*" element={<Navigate to="/tuner" replace />} />
           </Routes>
         </main>

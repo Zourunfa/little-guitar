@@ -9,17 +9,21 @@ const TunerPage = () => {
   const [cents, setCents] = useState(0);
   const [selectedString, setSelectedString] = useState('6'); // 默认选择第6弦E2
   const [error, setError] = useState(null);
-  
+
   // 音频相关状态
   const [audioContext, setAudioContext] = useState(null);
   const [analyser, setAnalyser] = useState(null);
   const [microphone, setMicrophone] = useState(null);
-  
+
   // 调音精度状态
   const [accuracyText, setAccuracyText] = useState('');
   const [accuracyColor, setAccuracyColor] = useState('#4CAF50');
   const [needlePosition, setNeedlePosition] = useState(50);
   const [needleColor, setNeedleColor] = useState('#ffffff');
+
+  // 音频历史数据 - 用于绘制时间轴波形
+  const [pitchHistory, setPitchHistory] = useState([]);
+  const maxHistoryLength = 100; // 最多保存100个历史数据点
 
   // 吉他标准调音频率（Hz）
   const guitarStrings = {
@@ -114,32 +118,33 @@ const TunerPage = () => {
   // 停止调音
   const stopTuning = () => {
     console.log('停止调音...');
-    
+
     setIsTuning(false);
-    
+
     // 取消动画帧
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
-    
+
     if (microphone) {
       microphone.disconnect();
       setMicrophone(null);
     }
-    
+
     if (audioContext) {
       audioContext.close();
       setAudioContext(null);
     }
-    
+
     setAnalyser(null);
-    
+
     // 重置显示
     setCurrentNote("--");
     setFrequency(0);
     setAccuracyText("");
     setNeedlePosition(50);
+    setPitchHistory([]); // 清空历史数据
   };
 
   // 音频处理循环引用
@@ -330,6 +335,20 @@ const TunerPage = () => {
 
     // 更新精度显示
     updateAccuracyDisplay(centsOff);
+
+    // 添加到历史数据
+    setPitchHistory(prev => {
+      const newHistory = [...prev, {
+        cents: centsOff,
+        frequency: detectedFrequency,
+        timestamp: Date.now()
+      }];
+      // 保持最多100个数据点
+      if (newHistory.length > maxHistoryLength) {
+        return newHistory.slice(-maxHistoryLength);
+      }
+      return newHistory;
+    });
   }, [selectedString, findClosestNote, calculateCents, updateTuningNeedle, updateAccuracyDisplay]);
 
   // 处理音频数据 - 使用FFT频域分析
@@ -423,45 +442,153 @@ const TunerPage = () => {
 
           {/* 主调音容器 */}
           <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-8 mb-8 border border-white/10">
-            {/* 调音显示区域 */}
-            <div className="bg-white/5 rounded-2xl p-6 mb-8 border border-white/10">
-              <div className="text-center mb-6">
-                <div className="text-8xl font-bold mb-4 text-yellow-400">
-                  {currentNote}
+            {/* 实时音频波形展示区域 - 扩大显示 */}
+            <div className="bg-black/50 rounded-2xl p-6 mb-8 border-2 border-green-500/30">
+              {/* 顶部信息栏 */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="text-left">
+                  <div className="text-6xl font-bold text-yellow-400 mb-2">
+                    {currentNote}
+                  </div>
+                  <div className="text-xl text-gray-300">
+                    频率: {frequency.toFixed(2)} Hz
+                  </div>
                 </div>
-                <div className="text-2xl text-gray-300 mb-2">
-                  频率: {frequency.toFixed(2)} Hz
+                <div className="text-right">
+                  <div className="text-3xl font-bold mb-2" style={{ color: accuracyColor }}>
+                    {accuracyText}
+                  </div>
+                  <div className="text-lg text-gray-400">
+                    目标: {guitarStrings[selectedString].note} ({guitarStrings[selectedString].frequency.toFixed(2)} Hz)
+                  </div>
                 </div>
               </div>
-              
-              {/* 调音指示器 */}
-              <div className="relative mb-6">
-                <div className="h-6 bg-white/20 rounded-full relative overflow-hidden">
-                  <div className="absolute top-0 left-1/2 w-1 h-full bg-green-500 transform -translate-x-1/2"></div>
-                  <div 
-                    className="absolute top-1 h-4 w-4 rounded-full transition-all duration-300 transform -translate-x-1/2"
-                    style={{ 
-                      left: `${needlePosition}%`,
-                      backgroundColor: needleColor
-                    }}
-                  ></div>
+
+              {/* 实时音高波形图 - 横轴表示音高偏差,纵轴表示时间 */}
+              <div className="relative bg-black/70 rounded-xl p-4 border border-green-500/20" style={{ height: '500px' }}>
+                {/* 中心线 - 标准音高 */}
+                <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-green-500 transform -translate-x-1/2 z-10">
+                  <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                    标准音高
+                  </div>
                 </div>
-                
-                <div className="flex justify-between mt-2 text-sm text-gray-400">
+
+                {/* 偏差区域标记 */}
+                <div className="absolute inset-0 flex">
+                  {/* 左侧偏低区域 */}
+                  <div className="flex-1 bg-red-500/5 border-r-2 border-red-500/20">
+                    <div className="absolute left-2 top-2 text-red-400 text-sm">偏低</div>
+                  </div>
+                  {/* 中央准确区域 */}
+                  <div className="w-32 bg-green-500/10">
+                    <div className="absolute left-1/2 transform -translate-x-1/2 top-2 text-green-400 text-sm">准确区域</div>
+                  </div>
+                  {/* 右侧偏高区域 */}
+                  <div className="flex-1 bg-blue-500/5 border-l-2 border-blue-500/20">
+                    <div className="absolute right-2 top-2 text-blue-400 text-sm">偏高</div>
+                  </div>
+                </div>
+
+                {/* 刻度标记 */}
+                <div className="absolute inset-x-0 top-12 flex justify-between px-4 text-xs text-gray-500">
                   <span>-50音分</span>
-                  <span className="font-semibold text-green-400">准确</span>
+                  <span>-25</span>
+                  <span className="text-green-400 font-bold">0</span>
+                  <span>+25</span>
                   <span>+50音分</span>
                 </div>
-              </div>
-              
-              {/* 精度显示 */}
-              <div className="text-center">
-                <div 
-                  className="text-2xl font-bold mb-2"
-                  style={{ color: accuracyColor }}
-                >
-                  {accuracyText}
-                </div>
+
+                {/* SVG 波形绘制 */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 20 }}>
+                  {pitchHistory.length > 1 && pitchHistory.map((point, index) => {
+                    if (index === 0) return null;
+
+                    const prevPoint = pitchHistory[index - 1];
+
+                    // 计算位置
+                    // X轴: cents 从 -50 到 +50 映射到 0% 到 100%
+                    const getX = (cents) => {
+                      const limitedCents = Math.max(-50, Math.min(50, cents));
+                      return ((limitedCents + 50) / 100) * 100; // 转换为百分比
+                    };
+
+                    // Y轴: 从底部往上,最新的数据在底部
+                    const getY = (idx) => {
+                      const progress = (pitchHistory.length - idx) / maxHistoryLength;
+                      return 100 - (progress * 90 + 5); // 5% 边距
+                    };
+
+                    const x1 = getX(prevPoint.cents);
+                    const y1 = getY(index - 1);
+                    const x2 = getX(point.cents);
+                    const y2 = getY(index);
+
+                    // 根据偏差程度设置颜色
+                    const getColor = (cents) => {
+                      const absCents = Math.abs(cents);
+                      if (absCents < 5) return '#4CAF50'; // 绿色 - 准确
+                      if (absCents < 20) return '#FFC107'; // 黄色 - 接近
+                      return '#F44336'; // 红色 - 偏离
+                    };
+
+                    return (
+                      <line
+                        key={index}
+                        x1={`${x1}%`}
+                        y1={`${y1}%`}
+                        x2={`${x2}%`}
+                        y2={`${y2}%`}
+                        stroke={getColor(point.cents)}
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        opacity="0.8"
+                      />
+                    );
+                  })}
+
+                  {/* 当前点 */}
+                  {pitchHistory.length > 0 && (() => {
+                    const lastPoint = pitchHistory[pitchHistory.length - 1];
+                    const getX = (cents) => {
+                      const limitedCents = Math.max(-50, Math.min(50, cents));
+                      return ((limitedCents + 50) / 100) * 100;
+                    };
+                    const x = getX(lastPoint.cents);
+                    const getColor = (cents) => {
+                      const absCents = Math.abs(cents);
+                      if (absCents < 5) return '#4CAF50';
+                      if (absCents < 20) return '#FFC107';
+                      return '#F44336';
+                    };
+
+                    return (
+                      <circle
+                        cx={`${x}%`}
+                        cy="95%"
+                        r="6"
+                        fill={getColor(lastPoint.cents)}
+                        stroke="white"
+                        strokeWidth="2"
+                      >
+                        <animate
+                          attributeName="r"
+                          values="6;8;6"
+                          dur="1s"
+                          repeatCount="indefinite"
+                        />
+                      </circle>
+                    );
+                  })()}
+                </svg>
+
+                {/* 无数据提示 */}
+                {pitchHistory.length === 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-gray-500 text-xl">
+                      {isTuning ? '等待音频输入...' : '点击"开始调音"查看实时波形'}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -477,40 +604,35 @@ const TunerPage = () => {
               )}
             </div>
 
-            {/* 弦选择区域 */}
+            {/* 弦选择区域 - 紧凑版 */}
             <div className="mb-8">
-              <h3 className="text-2xl font-bold text-center mb-6">选择要调的弦</h3>
-              <div className="grid grid-cols-6 gap-4">
+              <h3 className="text-xl font-bold text-center mb-4 text-gray-300">选择要调的弦</h3>
+              <div className="grid grid-cols-6 gap-3">
                 {Object.entries(guitarStrings).map(([stringNum, stringData]) => (
                   <motion.button
                     key={stringNum}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`relative p-6 rounded-2xl transition-all duration-200 ${
-                      selectedString === stringNum 
-                        ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black shadow-2xl transform scale-105' 
-                        : 'bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40'
+                    className={`relative p-4 rounded-xl transition-all duration-200 ${
+                      selectedString === stringNum
+                        ? 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg shadow-green-500/50'
+                        : 'bg-white/10 hover:bg-white/15 border border-white/20 hover:border-green-400/50'
                     }`}
                     onClick={() => handleStringSelect(stringNum)}
                   >
                     <div className="text-center">
-                      <div className="text-3xl font-bold mb-2">
-                        ① {stringData.note}
-                      </div>
-                      <div className={`text-sm mb-1 ${
-                        selectedString === stringNum ? 'text-black/70' : 'text-gray-400'
-                      }`}>
-                        {stringData.frequency}Hz
+                      <div className="text-2xl font-bold mb-1">
+                        {stringData.note}
                       </div>
                       <div className={`text-xs ${
-                        selectedString === stringNum ? 'text-black/60' : 'text-gray-500'
+                        selectedString === stringNum ? 'text-white/90' : 'text-gray-400'
                       }`}>
                         第{stringNum}弦
                       </div>
                     </div>
                     {selectedString === stringNum && (
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full flex items-center justify-center">
-                        <span className="text-sm text-black">✓</span>
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <span className="text-xs text-black font-bold">✓</span>
                       </div>
                     )}
                   </motion.button>
@@ -534,28 +656,26 @@ const TunerPage = () => {
               </motion.button>
             </div>
 
-            {/* 使用说明 */}
+            {/* 使用说明 - 简洁版 */}
             <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-              <h2 className="text-2xl font-bold mb-4 text-center">使用说明</h2>
+              <h2 className="text-xl font-bold mb-4 text-center text-yellow-400">📖 使用说明</h2>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-lg font-semibold mb-3 text-yellow-400">基本步骤</h3>
-                  <ol className="list-decimal list-inside space-y-2 text-gray-300">
-                    <li>点击"开始调音"按钮并允许浏览器访问您的麦克风</li>
-                    <li>选择要调音的吉他弦（默认选择第6弦E2）</li>
-                    <li>弹响选中的琴弦，调音器将显示检测到的音高和频率</li>
-                    <li>根据指示调整琴弦，直到指针位于中央绿色区域</li>
-                    <li>重复此过程，为所有琴弦调音</li>
+                  <h3 className="text-base font-semibold mb-3 text-green-400">🎯 调音步骤</h3>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-gray-300">
+                    <li>点击"开始调音"并允许麦克风访问</li>
+                    <li>选择要调的琴弦</li>
+                    <li>弹响琴弦,观察波形图</li>
+                    <li>调整琴弦至波形线在中央绿色区域</li>
                   </ol>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-3 text-yellow-400">技术特点</h3>
-                  <ul className="list-disc list-inside space-y-2 text-gray-300">
-                    <li>使用FFT频域分析技术，精确检测音高</li>
-                    <li>采用谐波乘积谱(HPS)算法提高检测精度</li>
-                    <li>支持±50音分的精确调音指示</li>
-                    <li>实时音频处理，响应速度快</li>
-                    <li>纯前端实现，无需服务器支持</li>
+                  <h3 className="text-base font-semibold mb-3 text-blue-400">💡 波形说明</h3>
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    <li><span className="text-green-400">●</span> 绿色波形 = 音准准确</li>
+                    <li><span className="text-yellow-400">●</span> 黄色波形 = 接近目标</li>
+                    <li><span className="text-red-400">●</span> 红色波形 = 需要调整</li>
+                    <li>波形从下往上滚动显示时间变化</li>
                   </ul>
                 </div>
               </div>
