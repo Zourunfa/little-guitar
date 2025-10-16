@@ -37,29 +37,29 @@ const ScalePractice = ({ selectedKey, bluesType, scaleNotes, fretboardPositions 
       </div>
 
       {/* 吉他指板图 */}
-      <div className="bg-black/50 rounded-xl p-4 overflow-x-auto">
-        <h3 className="text-lg font-semibold mb-3">吉他指板 (前12品)</h3>
-        <div className="relative min-w-[600px] md:min-w-0">
+      <div className="bg-black/50 rounded-xl p-12 overflow-x-auto">
+        <h3 className="text-lg font-semibold mb-3">吉他指板 (前20品)</h3>
+        <div className="relative min-w-[1400px]">
           {/* 琴弦 */}
-          <div className="space-y-8">
+          <div className="space-y-10">
             {['E', 'B', 'G', 'D', 'A', 'E'].map((stringName, stringIndex) => (
-              <div key={stringIndex} className="relative">
+              <div key={stringIndex} className="relative h-[2px]">
                 {/* 弦名 */}
-                <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 text-sm font-bold text-gray-400">
+                <div className="absolute -left-8 top-0 transform -translate-y-1/2 text-sm font-bold text-gray-400">
                   {stringName}
                 </div>
                 {/* 弦线 */}
-                <div className="h-0.5 bg-gray-600 relative">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gray-600">
                   {/* 品丝 */}
-                  {Array.from({ length: 13 }).map((_, fret) => (
+                  {Array.from({ length: 21 }).map((_, fret) => (
                     <div
                       key={fret}
-                      className="absolute top-1/2 transform -translate-y-1/2 h-8 border-l border-gray-500"
-                      style={{ left: `${(fret / 12) * 100}%` }}
+                      className="absolute top-0 transform -translate-y-1/2 h-10 border-l border-gray-500"
+                      style={{ left: `${(fret / 20) * 100}%` }}
                     >
                       {/* 品位标记 */}
                       {stringIndex === 5 && fret > 0 && (
-                        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-gray-500">
+                        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-500">
                           {fret}
                         </div>
                       )}
@@ -73,13 +73,13 @@ const ScalePractice = ({ selectedKey, bluesType, scaleNotes, fretboardPositions 
                         key={idx}
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className={`absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                        transition={{ delay: idx * 0.02 }}
+                        className={`absolute -top-3 transform -translate-y-1/2 -translate-x-1/2 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                           pos.isRoot
                             ? 'bg-yellow-500 text-black border-2 border-yellow-300'
                             : 'bg-blue-500 text-white'
                         }`}
-                        style={{ left: `${((pos.fret + 0.5) / 12) * 100}%` }}
+                        style={{ left: `${((pos.fret + 0.5) / 20) * 100}%` }}
                       >
                         {pos.note}
                       </motion.div>

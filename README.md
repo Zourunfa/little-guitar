@@ -1,44 +1,118 @@
-# Little Guitar
-访问地址(https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app/#/tuner
-Little Guitar是一款为吉他爱好者设计的Web应用，提供实用的吉他工具，包括调音器和和弦查找器。
+# 🎸 Little Guitar
 
-[![Powered by CloudBase](https://7463-tcb-advanced-a656fc-1257967285.tcb.qcloud.la/mcp/powered-by-cloudbase-badge.svg)](https://github.com/TencentCloudBase/CloudBase-AI-ToolKit)  
+**一款功能全面的吉他学习与练习Web应用**
+
+[![Powered by CloudBase](https://7463-tcb-advanced-a656fc-1257967285.tcb.qcloud.la/mcp/powered-by-cloudbase-badge.svg)](https://github.com/TencentCloudBase/CloudBase-AI-ToolKit)
+
+**访问地址**: [https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app](https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app)
 
 > 本项目基于 [**CloudBase AI ToolKit**](https://github.com/TencentCloudBase/CloudBase-AI-ToolKit) 开发，通过AI提示词和 MCP 协议+云开发，让开发更智能、更高效。
 
-## 功能特点
+---
 
-### 吉他调音器
+## ✨ 功能特点
 
-- 使用Web Audio API实现实时音频分析
-- 支持标准吉他调音(E A D G B E)
-- 提供视觉反馈，帮助用户准确调节音高
-- 显示当前检测到的音符和频率
-- 自动识别最接近的音符并指示是否需要调高或调低
+### 🎵 吉他调音器
 
-### 和弦查找器
+精准的实时调音工具，帮助你快速调好吉他：
 
-- 提供常用吉他和弦的指法图解
-- 包括大三和弦、小三和弦、七和弦等多种和弦类型
-- 交互式和弦指板显示
-- 可按和弦类型和根音进行筛选
-- 支持常见的替代指法
+- **实时音频分析**：使用Web Audio API + FFT算法精确检测音高
+- **标准调音支持**：支持6根弦标准调音 (E2, A2, D3, G3, B3, E4)
+- **可视化反馈**：
+  - 实时频率显示
+  - 音分偏差指示器（±50音分范围）
+  - 颜色编码精度提示（绿色=完美，黄色=接近，红色=偏离）
+- **智能识别**：自动识别最接近的音符并显示调整方向
+- **历史数据追踪**：记录调音过程，便于分析
 
-## 技术栈
+### 🎹 Blues 即兴练习
 
+全功能的Blues练习系统，包含完整的虚拟乐队伴奏：
+
+#### 🎼 音阶练习
+- **三种Blues音阶**：小调Blues、大调Blues、Mixolydian
+- **12个调式选择**：支持所有大调和半音调
+- **可视化指板**：实时显示音阶位置，根音高亮
+- **音符标注**：清晰显示每个音符在指板上的位置
+
+#### 🎹 和弦进行练习
+- **标准12小节Blues进行**：经典I-IV-V进行
+- **快速6小节进行**：适合快速练习
+- **实时和弦显示**：当前演奏和弦高亮提示
+- **BPM速度控制**：
+  - 滑动条调节（60-180 BPM）
+  - 6个快捷按钮（60/80/100/120/140/160）
+  - 实时节拍指示器
+  - 速度描述提示（慢速/中速/快速/极速）
+
+#### 🥁 鼓声节奏
+- **三种节奏型**：
+  - Shuffle：Blues摇摆节奏
+  - Standard：标准四四拍
+  - Slow Blues：慢板Blues
+- **音量独立控制**：0-100%可调
+- **实时拍号显示**：4拍可视化指示器
+
+#### 🎺 Blues 伴奏系统
+- **🎵 口琴伴奏**：
+  - 模拟真实口琴音色（多振荡器合成 + LFO颤音）
+  - 在强拍（1、3拍）演奏Blues Riff
+  - 独立音量控制
+- **🎸 吉他伴奏**：
+  - Karplus-Strong算法模拟拨弦音色
+  - 跟随和弦进行自动演奏
+  - 支持扫弦和闷音效果
+  - 自动生成属七和弦
+  - 独立音量控制
+
+#### 🎵 节奏训练
+- 多种Blues节奏型练习
+- 节拍器功能
+- BPM可调节
+
+#### ✨ 即兴创作
+- 综合实战练习
+- 音阶、和弦、节奏融合
+
+### 🎼 和弦查找器
+
+丰富的和弦库和指法图解：
+
+- **常用和弦指法**：大三、小三、七和弦等多种类型
+- **交互式指板显示**：清晰的可视化指法图
+- **多维度筛选**：按和弦类型和根音快速查找
+- **替代指法支持**：提供多种演奏选择
+
+## 🛠️ 技术栈
+
+### 核心技术
 - **前端框架**：React 18
 - **构建工具**：Vite
-- **路由**：React Router 6（使用 HashRouter）
-- **样式**：Tailwind CSS + DaisyUI
+- **路由**：React Router 6（HashRouter）
+- **样式**：Tailwind CSS
 - **动画**：Framer Motion
-- **后端服务**：腾讯云开发（CloudBase）
 
-## 开始使用
+### 音频技术
+- **Web Audio API**：实时音频处理和分析
+- **FFT算法**：频域分析和音高检测
+- **HPS算法**：谐波乘积谱精确检测基频
+- **音频合成**：
+  - 振荡器（Oscillator）
+  - 增益控制（Gain）
+  - 滤波器（BiquadFilter）
+  - LFO（低频振荡器）
+
+### 云服务
+- **腾讯云开发（CloudBase）**：静态网站托管
+
+---
+
+## 🚀 快速开始
 
 ### 前提条件
 
-- 安装 Node.js (版本 14 或更高)
-- 腾讯云开发账号 (可在[腾讯云开发官网](https://tcb.cloud.tencent.com/)注册)
+- Node.js 14+ 
+- npm 或 yarn
 
 ### 安装依赖
 
@@ -46,16 +120,13 @@ Little Guitar是一款为吉他爱好者设计的Web应用，提供实用的吉�
 npm install
 ```
 
-### 配置云开发环境
-
-1. 打开 `src/utils/cloudbase.js` 文件
-2. 将 `ENV_ID` 变量的值修改为您的云开发环境 ID（当前项目使用的环境ID为：`cloud1-8g1pwz868e1c211b`）
-
 ### 本地开发
 
 ```bash
 npm run dev
 ```
+
+访问 `http://localhost:5173` 即可查看应用
 
 ### 构建生产版本
 
@@ -63,76 +134,135 @@ npm run dev
 npm run build
 ```
 
-## 部署指南
+构建产物将输出到 `dist` 目录
 
-### 部署到云开发静态网站托管
+---
 
-#### 方法一：使用CloudBase MCP工具（推荐）
+## 📦 部署
+
+### 部署到腾讯云开发静态托管
+
+#### 方法一：使用 CloudBase CLI（推荐）
+
+```bash
+# 1. 构建项目
+npm run build
+
+# 2. 登录云开发
+npx @cloudbase/cli login
+
+# 3. 部署到静态托管
+npx @cloudbase/cli hosting:deploy ./dist -e cloud1-8g1pwz868e1c211b
+```
+
+#### 方法二：控制台手动上传
 
 1. 构建项目：`npm run build`
-2. 使用CloudBase MCP工具登录：
-   ```bash
-   npx @cloudbase/cli login
-   ```
-3. 上传文件到静态托管：
-   ```bash
-   npx @cloudbase/cli hosting:deploy ./dist -e cloud1-8g1pwz868e1c211b
-   ```
+2. 登录 [腾讯云开发控制台](https://console.cloud.tencent.com/tcb)
+3. 进入环境 → 静态网站托管
+4. 上传 `dist` 目录中的所有文件
 
-#### 方法二：通过控制台手动上传
+### 当前部署信息
 
-1. 构建项目：`npm run build`
-2. 登录腾讯云开发控制台
-3. 进入您的环境 -> 静态网站托管
-4. 上传 `dist` 目录中的文件
+- **线上地址**: https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app
+- **环境ID**: `cloud1-8g1pwz868e1c211b`
 
-### 已部署版本
-
-当前应用已部署在以下地址：
-- **访问地址**: [https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app](https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app)
-- **环境ID**: cloud1-8g1pwz868e1c211b
-
-## 目录结构
+## 📁 项目结构
 
 ```
-├── public/               # 静态资源
+little-guitar/
+├── public/                      # 静态资源
 ├── src/
-│   ├── components/       # 可复用组件
-│   ├── pages/            # 页面组件
-│   │   ├── TunerPage.jsx # 调音器页面
-│   │   └── ChordFinderPage.jsx # 和弦查找器页面
-│   ├── utils/            # 工具函数和云开发初始化
-│   ├── App.jsx           # 应用入口
-│   ├── main.jsx          # 渲染入口
-│   └── index.css         # 全局样式
-├── index.html            # HTML 模板
-├── tailwind.config.js    # Tailwind 配置
-├── postcss.config.js     # PostCSS 配置
-├── vite.config.js        # Vite 配置
-└── package.json          # 项目依赖
+│   ├── components/              # 可复用组件
+│   │   ├── ChordPractice/       # 和弦进行练习组件
+│   │   ├── ScalePractice/       # 音阶练习组件
+│   │   ├── RhythmPractice/      # 节奏训练组件
+│   │   ├── Improvisation/       # 即兴创作组件
+│   │   ├── Navbar.jsx           # 导航栏
+│   │   └── Footer.jsx           # 页脚
+│   ├── pages/                   # 页面组件
+│   │   ├── HomePage.jsx         # 首页
+│   │   ├── TunerPage.jsx        # 调音器页面
+│   │   ├── BluesPage.jsx        # Blues练习页面
+│   │   └── ChordFinderPage.jsx  # 和弦查找器页面
+│   ├── utils/                   # 工具类
+│   │   ├── drumKit.js           # 鼓组音频合成
+│   │   └── accompaniment.js     # 伴奏音频合成（口琴/吉他）
+│   ├── App.jsx                  # 应用入口
+│   ├── main.jsx                 # 渲染入口
+│   └── index.css                # 全局样式
+├── index.html                   # HTML 模板
+├── tailwind.config.js           # Tailwind 配置
+├── vite.config.js               # Vite 配置
+└── package.json                 # 项目依赖
 ```
 
-## 使用说明
+---
 
-### 调音器
+## 📖 使用指南
 
-1. 访问调音器页面
-2. 允许浏览器访问麦克风
-3. 弹奏吉他弦，应用将自动检测音高
-4. 根据视觉指示调整弦的松紧度，直到指示器显示正确的音高
+### 🎵 调音器使用
 
-### 和弦查找器
+1. 点击导航栏进入"调音器"页面
+2. 点击"开始调音"按钮（浏览器会请求麦克风权限）
+3. 选择要调的弦（1-6弦）
+4. 弹奏对应的弦，观察：
+   - **频率显示**：当前检测到的频率
+   - **音符显示**：最接近的音符
+   - **指针位置**：偏左=音低，偏右=音高，居中=准确
+   - **颜色提示**：绿色=完美，黄色=接近，红色=需调整
+5. 根据指示调整琴弦松紧，直到指针居中且显示绿色
 
-1. 访问和弦查找器页面
-2. 从根音选择器中选择所需的根音（如C、G、D等）
-3. 从和弦类型选择器中选择所需的和弦类型（如大三和弦、小三和弦等）
-4. 查看和弦指法图和组成音信息
-5. 如果有替代指法，可以查看不同的指法选项
+### 🎹 Blues 练习使用
 
-## 贡献指南
+1. 进入"Blues 即兴"页面
+2. 选择练习模式：
+   - **和弦进行**：练习Blues和弦变化
+   - **音阶练习**：学习Blues音阶位置
+   - **节奏训练**：培养节奏感
+   - **即兴创作**：综合实战
 
-欢迎贡献代码、报告问题或提出改进建议！
+#### 和弦进行练习步骤：
+1. 选择调式（A、C、E、G等）
+2. 选择进行类型（12小节/6小节）
+3. 调整BPM速度（建议初学者从60-80开始）
+4. 配置伴奏：
+   - 开启鼓声，选择节奏型
+   - 可选：开启口琴伴奏
+   - 可选：开启吉他伴奏
+5. 点击"播放"开始练习
+6. 跟随高亮的和弦提示演奏
 
-## 许可证
+### 🎼 和弦查找器使用
 
-MIT
+1. 进入"和弦查找"页面
+2. 选择根音（C、D、E等）
+3. 选择和弦类型（大三、小三、七和弦等）
+4. 查看指法图：
+   - 黑点表示按弦位置
+   - 数字表示使用的手指
+   - X表示不弹该弦
+   - O表示空弦
+5. 查看和弦组成音信息
+
+---
+
+## 🎯 技术亮点
+
+### 音频处理
+- **零延迟音频分析**：使用`requestAnimationFrame`实现实时处理
+- **高精度频率检测**：32768点FFT + HPS算法
+- **纯前端音频合成**：无需音频文件，使用Web Audio API动态生成
+
+### 性能优化
+- **React Hooks优化**：使用`useCallback`、`useRef`避免不必要渲染
+- **音频节点复用**：减少内存占用
+- **异步处理**：音频处理不阻塞UI
+
+### 用户体验
+- **响应式设计**：完美适配桌面和移动设备
+- **流畅动画**：Framer Motion提供丝滑的交互体验
+- **即时反馈**：所有操作都有清晰的视觉和听觉反馈
+
+---
+

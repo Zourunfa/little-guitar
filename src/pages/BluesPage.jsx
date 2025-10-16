@@ -68,21 +68,120 @@ const BluesPage = () => {
     });
   }, [selectedKey, bluesType]);
 
-  // 吉他指板音符位置 (简化版,只显示前12品)
+  // 吉他指板音符位置 - 基于A小调精确位置，通过移调计算所有调
   const getFretboardPositions = useCallback(() => {
     const scaleNotes = getScaleNotes();
-    const strings = ['E', 'A', 'D', 'G', 'B', 'E']; // 标准调弦
-    const positions = [];
+    
+    // A小调Blues的精确指板位置模板（基于图片，扩展到20品）
+    // 这里只存储相对于根音A的品位偏移
+    // ScalePractice组件的弦顺序: ['E', 'B', 'G', 'D', 'A', 'E']
+    // stringIndex: 0=高E, 1=B, 2=G, 3=D, 4=A, 5=低E
+    const aMinorBluesTemplate = [
+      // 第1弦 - 高E弦 (stringIndex = 0, 空弦音=E)
+      { string: 0, fretOffset: 0 },  // E
+      { string: 0, fretOffset: 3 },  // G
+      { string: 0, fretOffset: 5 },  // A (根音)
+      { string: 0, fretOffset: 8 },  // C
+      { string: 0, fretOffset: 10 }, // D
+      { string: 0, fretOffset: 11 }, // D# (Eb)
+      { string: 0, fretOffset: 12 }, // E
+      { string: 0, fretOffset: 15 }, // G
+      { string: 0, fretOffset: 17 }, // A (根音)
+      { string: 0, fretOffset: 20 }, // C
+      
+      // 第2弦 - B弦 (stringIndex = 1, 空弦音=B)
+      { string: 1, fretOffset: 1 },  // C
+      { string: 1, fretOffset: 3 },  // D
+      { string: 1, fretOffset: 4 },  // D# (Eb)
+      { string: 1, fretOffset: 5 },  // E
+      { string: 1, fretOffset: 8 },  // G
+      { string: 1, fretOffset: 10 }, // A (根音)
+      { string: 1, fretOffset: 13 }, // C
+      { string: 1, fretOffset: 15 }, // D
+      { string: 1, fretOffset: 16 }, // D# (Eb)
+      { string: 1, fretOffset: 17 }, // E
+      { string: 1, fretOffset: 20 }, // G
+      
+      // 第3弦 - G弦 (stringIndex = 2, 空弦音=G)
+      { string: 2, fretOffset: 0 },  // G
+      { string: 2, fretOffset: 2 },  // A (根音)
+      { string: 2, fretOffset: 5 },  // C
+      { string: 2, fretOffset: 7 },  // D
+      { string: 2, fretOffset: 8 },  // D# (Eb)
+      { string: 2, fretOffset: 9 },  // E
+      { string: 2, fretOffset: 12 }, // G
+      { string: 2, fretOffset: 14 }, // A (根音)
+      { string: 2, fretOffset: 17 }, // C
+      { string: 2, fretOffset: 19 }, // D
+      { string: 2, fretOffset: 20 }, // D# (Eb)
+      
+      // 第4弦 - D弦 (stringIndex = 3, 空弦音=D)
+      { string: 3, fretOffset: 0 },  // D
+      { string: 3, fretOffset: 1 },  // D# (Eb)
+      { string: 3, fretOffset: 2 },  // E
+      { string: 3, fretOffset: 5 },  // G
+      { string: 3, fretOffset: 7 },  // A (根音)
+      { string: 3, fretOffset: 10 }, // C
+      { string: 3, fretOffset: 12 }, // D
+      { string: 3, fretOffset: 13 }, // D# (Eb)
+      { string: 3, fretOffset: 14 }, // E
+      { string: 3, fretOffset: 17 }, // G
+      { string: 3, fretOffset: 19 }, // A (根音)
+      
+      // 第5弦 - A弦 (stringIndex = 4, 空弦音=A)
+      { string: 4, fretOffset: 0 },  // A (根音)
+      { string: 4, fretOffset: 3 },  // C
+      { string: 4, fretOffset: 5 },  // D
+      { string: 4, fretOffset: 6 },  // D# (Eb)
+      { string: 4, fretOffset: 7 },  // E
+      { string: 4, fretOffset: 10 }, // G
+      { string: 4, fretOffset: 12 }, // A (根音)
+      { string: 4, fretOffset: 15 }, // C
+      { string: 4, fretOffset: 17 }, // D
+      { string: 4, fretOffset: 18 }, // D# (Eb)
+      { string: 4, fretOffset: 19 }, // E
+      
+      // 第6弦 - 低E弦 (stringIndex = 5, 空弦音=E)
+      { string: 5, fretOffset: 0 },  // E
+      { string: 5, fretOffset: 3 },  // G
+      { string: 5, fretOffset: 5 },  // A (根音)
+      { string: 5, fretOffset: 8 },  // C
+      { string: 5, fretOffset: 10 }, // D
+      { string: 5, fretOffset: 11 }, // D# (Eb)
+      { string: 5, fretOffset: 12 }, // E
+      { string: 5, fretOffset: 15 }, // G
+      { string: 5, fretOffset: 17 }, // A (根音)
+      { string: 5, fretOffset: 20 }  // C
+    ];
 
-    strings.forEach((stringNote, stringIndex) => {
-      const stringRoot = notes.indexOf(stringNote);
-      for (let fret = 0; fret <= 12; fret++) {
-        const noteIndex = (stringRoot + fret) % 12;
+    // 计算从A到目标调的半音偏移
+    const rootIndexA = notes.indexOf('A');
+    const targetRootIndex = notes.indexOf(selectedKey);
+    const transposeOffset = (targetRootIndex - rootIndexA + 12) % 12;
+
+    // 标准调弦的每根弦的空弦音
+    const openStrings = ['E', 'B', 'G', 'D', 'A', 'E']; // 对应stringIndex 0-5
+
+    // 基于模板和移调偏移计算实际位置
+    const positions = [];
+    
+    aMinorBluesTemplate.forEach(template => {
+      const stringOpenNote = openStrings[template.string];
+      const stringOpenIndex = notes.indexOf(stringOpenNote);
+      
+      // 计算移调后的品位
+      const newFret = template.fretOffset + transposeOffset;
+      
+      // 只保留0-20品的位置
+      if (newFret >= 0 && newFret <= 20) {
+        const noteIndex = (stringOpenIndex + newFret) % 12;
         const note = notes[noteIndex];
+        
+        // 只添加在当前音阶内的音符
         if (scaleNotes.includes(note)) {
           positions.push({
-            string: stringIndex,
-            fret,
+            string: template.string,
+            fret: newFret,
             note,
             isRoot: note === selectedKey
           });
@@ -91,7 +190,7 @@ const BluesPage = () => {
     });
 
     return positions;
-  }, [selectedKey, getScaleNotes]);
+  }, [selectedKey, bluesType, getScaleNotes]);
 
   // 练习提示
   const getPracticeTips = () => {
