@@ -47,10 +47,10 @@ function App() {
         <Navbar />
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<Navigate to="/tuner" replace />} />
+            <Route path="/" element={<Navigate to="/blues" replace />} />
             <Route path="/tuner" element={<TunerPage />} />
             <Route path="/blues" element={<BluesPage />} />
-            <Route path="*" element={<Navigate to="/tuner" replace />} />
+            <Route path="*" element={<Navigate to="/blues" replace />} />
           </Routes>
         </main>
         <Footer />

@@ -43,6 +43,9 @@ const Navbar = () => {
           <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>🎸 调音器</Link></li>
         </ul>
       </div>
+      <div className="navbar-end">
+        {/* 占位元素,保持导航栏平衡 */}
+      </div>
     </div>
   );
 };
