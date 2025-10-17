@@ -344,6 +344,7 @@ const BluesPage = () => {
               {practiceMode === 'chord' && (
                 <ChordPractice
                   selectedKey={selectedKey}
+                  bluesType={bluesType}
                   progression={progression}
                   setProgression={setProgression}
                   chordProgressions={chordProgressions}
