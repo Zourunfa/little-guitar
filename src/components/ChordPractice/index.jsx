@@ -270,13 +270,13 @@ const ChordPractice = ({
       </div>
 
       {/* BPM速度控制 */}
-      <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl p-4 mb-6 border border-purple-500/30">
-        <h3 className="text-lg font-semibold mb-4">⏱️ 节拍速度 (BPM)</h3>
-        
-        <div className="flex items-center gap-4 mb-4">
-          <div className="flex items-center gap-2 min-w-[100px]">
-            <span className="text-sm font-medium">当前:</span>
-            <span className="text-3xl font-bold text-yellow-400">{bpm}</span>
+      <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl p-3 md:p-4 mb-6 border border-purple-500/30">
+        <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">⏱️ 节拍速度 (BPM)</h3>
+
+        <div className="flex items-center gap-3 md:gap-4 mb-4">
+          <div className="flex items-center gap-2 min-w-[80px] md:min-w-[100px]">
+            <span className="text-xs md:text-sm font-medium">当前:</span>
+            <span className="text-2xl md:text-3xl font-bold text-yellow-400">{bpm}</span>
           </div>
           
           <div className="flex-1">
@@ -301,23 +301,25 @@ const ChordPractice = ({
         </div>
 
         {/* 快捷BPM按钮 */}
-        <div className="flex gap-2 flex-wrap mb-3">
-          <span className="text-sm text-gray-400 self-center">快速设置:</span>
-          {[60, 80, 100, 120, 140, 160].map(speed => (
-            <motion.button
-              key={speed}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                bpm === speed 
-                  ? 'bg-yellow-500 text-black shadow-lg' 
-                  : 'bg-white/10 hover:bg-white/20'
-              }`}
-              onClick={() => setBpm(speed)}
-            >
-              {speed}
-            </motion.button>
-          ))}
+        <div className="mb-3">
+          <div className="text-xs md:text-sm text-gray-400 mb-2">快速设置:</div>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {[60, 80, 100, 120, 140, 160].map(speed => (
+              <motion.button
+                key={speed}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  bpm === speed
+                    ? 'bg-yellow-500 text-black shadow-lg'
+                    : 'bg-white/10 hover:bg-white/20'
+                }`}
+                onClick={() => setBpm(speed)}
+              >
+                {speed}
+              </motion.button>
+            ))}
+          </div>
         </div>
 
         {/* 节拍指示器 */}
@@ -350,22 +352,22 @@ const ChordPractice = ({
       </div>
 
       {/* 鼓声节奏设置 */}
-      <div className="bg-black/50 rounded-xl p-4 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">🥁 鼓声节奏</h3>
+      <div className="bg-black/50 rounded-xl p-3 md:p-4 mb-6">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h3 className="text-base md:text-lg font-semibold">🥁 鼓声节奏</h3>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={isDrumEnabled}
               onChange={(e) => setIsDrumEnabled(e.target.checked)}
-              className="w-5 h-5 rounded"
+              className="w-4 h-4 md:w-5 md:h-5 rounded"
             />
-            <span className="text-sm">启用鼓声</span>
+            <span className="text-xs md:text-sm">启用</span>
           </label>
         </div>
 
         {/* 节奏型选择 */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className="grid grid-cols-3 gap-2 mb-3 md:mb-4">
           {[
             { id: 'shuffle', name: 'Shuffle', desc: 'Blues 摇摆' },
             { id: 'standard', name: 'Standard', desc: '标准四四拍' },
@@ -429,30 +431,30 @@ const ChordPractice = ({
 
 
       {/* 和弦进行展示 */}
-      <div className="bg-black/50 rounded-xl p-4 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">和弦序列</h3>
-          <div className="text-sm text-gray-400">共 {expandedChords.length} 小节 · 每小节 4 拍</div>
+      <div className="bg-black/50 rounded-xl p-3 md:p-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
+          <h3 className="text-base md:text-lg font-semibold">和弦序列</h3>
+          <div className="text-xs md:text-sm text-gray-400">共 {expandedChords.length} 小节 · 每小节 4 拍</div>
         </div>
-        <div className="grid grid-cols-4 md:grid-cols-6 gap-2 md:gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 md:gap-3">
           {expandedChords.map((item, index) => (
             <motion.div
               key={index}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: index * 0.05 }}
-              className={`relative p-3 md:p-4 rounded-lg text-center transition-all ${
+              className={`relative p-2 md:p-4 rounded-lg text-center transition-all ${
                 isPlaying && index === currentChordIndex
                   ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black shadow-lg transform scale-110'
                   : 'bg-white/10'
               }`}
             >
-              <div className="text-xs text-gray-400 mb-1">#{index + 1}</div>
-              <div className="text-lg md:text-xl font-bold">{item.chord}</div>
-              <div className="text-xs text-gray-400 mt-1">{item.degree}</div>
+              <div className="text-[10px] md:text-xs text-gray-400 mb-1">#{index + 1}</div>
+              <div className="text-base md:text-xl font-bold">{item.chord}</div>
+              <div className="text-[10px] md:text-xs text-gray-400 mt-1">{item.degree}</div>
               {isPlaying && index === currentChordIndex && (
                 <motion.div
-                  className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full"
+                  className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full"
                   animate={{ scale: [1, 1.2, 1] }}
                   transition={{ duration: 0.5, repeat: Infinity }}
                 />
@@ -461,15 +463,20 @@ const ChordPractice = ({
           ))}
         </div>
       </div>
-
+      <ScalePractice
+          selectedKey={getCurrentChordRoot}
+          bluesType="minor"
+          scaleNotes={getCurrentScaleNotes}
+          fretboardPositions={getCurrentFretboardPositions}
+        />
       {/* 播放控制 */}
-      <div className="bg-black/50 rounded-xl p-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4 w-full md:w-auto">
+      <div className="bg-black/50 rounded-xl p-3 md:p-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 justify-center">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`px-6 py-3 rounded-xl font-bold text-lg transition-all ${
+              className={`flex-1 max-w-[160px] px-5 py-3 rounded-xl font-bold text-base md:text-lg transition-all ${
                 isPlaying
                   ? 'bg-red-500 hover:bg-red-600'
                   : 'bg-green-500 hover:bg-green-600'
@@ -487,7 +494,7 @@ const ChordPractice = ({
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 rounded-xl font-bold bg-gray-600 hover:bg-gray-700"
+              className="flex-1 max-w-[160px] px-5 py-3 rounded-xl font-bold text-base md:text-lg bg-gray-600 hover:bg-gray-700"
               onClick={() => {
                 setIsPlaying(false);
                 setCurrentChordIndex(0);
@@ -497,10 +504,10 @@ const ChordPractice = ({
               ⏹ 停止
             </motion.button>
           </div>
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <span className="text-sm text-gray-400 whitespace-nowrap">速度:</span>
-            <div className="px-4 py-2 bg-white/10 rounded-lg">
-              <span className="text-sm font-bold">{bpm} BPM</span>
+          <div className="flex items-center justify-center gap-2 text-sm md:text-base">
+            <span className="text-gray-400">当前速度:</span>
+            <div className="px-3 py-1.5 bg-white/10 rounded-lg">
+              <span className="font-bold">{bpm} BPM</span>
             </div>
           </div>
         </div>
@@ -518,26 +525,19 @@ const ChordPractice = ({
       </div>
 
       {/* 当前和弦对应的Blues纸板 */}
-      <div className="mt-6">
-        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-4 mb-4 border border-yellow-500/30">
-          <h3 className="text-lg md:text-xl font-bold mb-2">
+      <div className="mt-4 md:mt-6">
+        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-3 md:p-4 mb-4 border border-yellow-500/30">
+          <h3 className="text-base md:text-xl font-bold mb-2">
             🎯 当前和弦即兴指南
           </h3>
-          <p className="text-sm md:text-base text-gray-300">
-            当前播放: <span className="text-yellow-400 font-bold text-xl">{getCurrentChordRoot}7</span> 和弦
+          <p className="text-xs md:text-base text-gray-300">
+            当前播放: <span className="text-yellow-400 font-bold text-lg md:text-xl">{getCurrentChordRoot}7</span> 和弦
             → 可使用 <span className="text-blue-400 font-bold">{getCurrentChordRoot} 小调 Blues</span> 音阶即兴
           </p>
-          <p className="text-xs md:text-sm text-gray-400 mt-2">
+          <p className="text-[10px] md:text-sm text-gray-400 mt-2">
             💡 提示: 纸板上的黄色圆点是根音位置,蓝色圆点是其他音阶音符。跟随和弦变化,在对应的音阶上即兴演奏!
           </p>
         </div>
-
-        <ScalePractice
-          selectedKey={getCurrentChordRoot}
-          bluesType="minor"
-          scaleNotes={getCurrentScaleNotes}
-          fretboardPositions={getCurrentFretboardPositions}
-        />
       </div>
     </div>
   );
