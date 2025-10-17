@@ -37,9 +37,12 @@ const ScalePractice = ({ selectedKey, bluesType, scaleNotes, fretboardPositions 
       </div>
 
       {/* 吉他指板图 */}
-      <div className="bg-black/50 rounded-xl p-12 overflow-x-auto">
-        <h3 className="text-lg font-semibold mb-3">吉他指板 (前20品)</h3>
-        <div className="relative min-w-[1400px]">
+      <div className="bg-black/50 rounded-xl p-4 md:p-8 lg:p-12 overflow-x-auto">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base md:text-lg font-semibold">吉他指板 (前20品)</h3>
+          <div className="text-xs text-gray-400 md:hidden">👉 左右滑动</div>
+        </div>
+        <div className="relative min-w-[1000px] md:min-w-[1400px]">
           {/* 琴弦 */}
           <div className="space-y-10">
             {['E', 'B', 'G', 'D', 'A', 'E'].map((stringName, stringIndex) => (
