@@ -1,7 +1,14 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import DrumKit from '../../utils/drumKit';
 import Accompaniment from '../../utils/accompaniment';
+import ScalePractice from '../ScalePractice';
+
+// 音符定义 (组件外部常量)
+const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+// 小调Blues音阶定义 (半音间隔)
+const MINOR_BLUES_INTERVALS = [0, 3, 5, 6, 7, 10, 12]; // 1, b3, 4, b5, 5, b7, 8
 
 /**
  * 和弦进行练习组件
@@ -90,6 +97,54 @@ const ChordPractice = ({
   };
 
   const expandedChords = expandProgression();
+
+  // 获取当前和弦的根音 (从和弦名中提取,如 "A7" -> "A")
+  const getCurrentChordRoot = useMemo(() => {
+    if (expandedChords.length === 0) return selectedKey;
+    const currentChord = expandedChords[currentChordIndex]?.chord || selectedKey;
+    return currentChord.replace(/7$/, ''); // 去掉"7"
+  }, [currentChordIndex, expandedChords, selectedKey]);
+
+  // 根据当前和弦根音生成对应的小调Blues音阶
+  const getCurrentScaleNotes = useMemo(() => {
+    const rootIndex = NOTES.indexOf(getCurrentChordRoot);
+    return MINOR_BLUES_INTERVALS.map(interval => {
+      const noteIndex = (rootIndex + interval) % 12;
+      return NOTES[noteIndex];
+    });
+  }, [getCurrentChordRoot]);
+
+  // 计算当前和弦对应的指板位置
+  const getCurrentFretboardPositions = useMemo(() => {
+    const scaleNotes = getCurrentScaleNotes;
+    const positions = [];
+
+    // 标准调弦的每根弦的空弦音
+    const openStrings = ['E', 'B', 'G', 'D', 'A', 'E'];
+
+    // 直接计算每根弦上0-20品的所有音阶位置
+    openStrings.forEach((openString, stringIndex) => {
+      const openNoteIndex = NOTES.indexOf(openString);
+
+      // 遍历0-20品
+      for (let fret = 0; fret <= 20; fret++) {
+        const noteIndex = (openNoteIndex + fret) % 12;
+        const note = NOTES[noteIndex];
+
+        // 如果该音符在当前音阶内,则添加位置
+        if (scaleNotes.includes(note)) {
+          positions.push({
+            string: stringIndex,
+            fret: fret,
+            note,
+            isRoot: note === getCurrentChordRoot
+          });
+        }
+      }
+    });
+
+    return positions;
+  }, [getCurrentChordRoot, getCurrentScaleNotes]);
 
   // 播放鼓声
   const playDrum = (beatNumber) => {
@@ -371,101 +426,7 @@ const ChordPractice = ({
         )}
       </div>
 
-      {/* 伴奏设置 */}
-      <div className="bg-gradient-to-r from-orange-500/20 to-yellow-500/20 rounded-xl p-4 mb-6 border border-orange-500/30">
-        <h3 className="text-lg font-semibold mb-4">🎺 Blues 伴奏</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* 口琴伴奏 */}
-          <div className="bg-black/30 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🎵</span>
-                <span className="font-semibold">口琴</span>
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isHarmonicaEnabled}
-                  onChange={(e) => setIsHarmonicaEnabled(e.target.checked)}
-                  className="w-5 h-5 rounded"
-                />
-                <span className="text-sm">启用</span>
-              </label>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400 whitespace-nowrap">音量:</span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={harmonicaVolume}
-                onChange={(e) => setHarmonicaVolume(Number(e.target.value))}
-                className="flex-1"
-                disabled={!isHarmonicaEnabled}
-              />
-              <span className="text-xs font-bold w-12">{Math.round(harmonicaVolume * 100)}%</span>
-            </div>
-            <div className="text-xs text-gray-500 mt-2">
-              在第1拍和第3拍演奏 Blues Riff
-            </div>
-          </div>
 
-          {/* 吉他伴奏 */}
-          <div className="bg-black/30 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🎸</span>
-                <span className="font-semibold">吉他</span>
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isGuitarEnabled}
-                  onChange={(e) => setIsGuitarEnabled(e.target.checked)}
-                  className="w-5 h-5 rounded"
-                />
-                <span className="text-sm">启用</span>
-              </label>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400 whitespace-nowrap">音量:</span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={guitarVolume}
-                onChange={(e) => setGuitarVolume(Number(e.target.value))}
-                className="flex-1"
-                disabled={!isGuitarEnabled}
-              />
-              <span className="text-xs font-bold w-12">{Math.round(guitarVolume * 100)}%</span>
-            </div>
-            <div className="text-xs text-gray-500 mt-2">
-              演奏 Blues 节奏和弦伴奏
-            </div>
-          </div>
-        </div>
-
-        {/* 伴奏提示 */}
-        {(isHarmonicaEnabled || isGuitarEnabled) && (
-          <div className="mt-4 p-3 bg-blue-500/20 rounded-lg border border-blue-500/30">
-            <div className="flex items-start gap-2">
-              <span className="text-lg">💡</span>
-              <div className="text-xs text-gray-300">
-                <div className="font-semibold mb-1">伴奏提示:</div>
-                <ul className="space-y-1 list-disc list-inside">
-                  {isHarmonicaEnabled && <li>口琴会在强拍(1、3拍)演奏旋律</li>}
-                  {isGuitarEnabled && <li>吉他会跟随和弦进行演奏节奏伴奏</li>}
-                  <li>建议先熟悉和弦进行，再开启伴奏</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* 和弦进行展示 */}
       <div className="bg-black/50 rounded-xl p-4 mb-6">
@@ -554,6 +515,29 @@ const ChordPractice = ({
           <li>▸ 尝试在和弦之间加入装饰音</li>
           <li>▸ 可以加入九音、十三音等延伸音增加色彩</li>
         </ul>
+      </div>
+
+      {/* 当前和弦对应的Blues纸板 */}
+      <div className="mt-6">
+        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-4 mb-4 border border-yellow-500/30">
+          <h3 className="text-lg md:text-xl font-bold mb-2">
+            🎯 当前和弦即兴指南
+          </h3>
+          <p className="text-sm md:text-base text-gray-300">
+            当前播放: <span className="text-yellow-400 font-bold text-xl">{getCurrentChordRoot}7</span> 和弦
+            → 可使用 <span className="text-blue-400 font-bold">{getCurrentChordRoot} 小调 Blues</span> 音阶即兴
+          </p>
+          <p className="text-xs md:text-sm text-gray-400 mt-2">
+            💡 提示: 纸板上的黄色圆点是根音位置,蓝色圆点是其他音阶音符。跟随和弦变化,在对应的音阶上即兴演奏!
+          </p>
+        </div>
+
+        <ScalePractice
+          selectedKey={getCurrentChordRoot}
+          bluesType="minor"
+          scaleNotes={getCurrentScaleNotes}
+          fretboardPositions={getCurrentFretboardPositions}
+        />
       </div>
     </div>
   );
