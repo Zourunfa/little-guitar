@@ -1,26 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
-  const [theme, setTheme] = useState('cyberpunk');
   const location = useLocation();
   
   // 检测是否是活跃路由
   const isActive = (path) => location.pathname === path;
 
-  // 切换主题
-  const toggleTheme = () => {
-    const themes = ['light', 'dark', 'cupcake', 'synthwave', 'retro', 'cyberpunk'];
-    const currentIndex = themes.indexOf(theme);
-    const nextIndex = (currentIndex + 1) % themes.length;
-    const newTheme = themes[nextIndex];
-    setTheme(newTheme);
-  };
-
-  // 应用主题
+  // 应用黑色主题
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }, []);
 
   return (
     <div className="navbar bg-base-100 shadow-lg">
@@ -32,8 +22,8 @@ const Navbar = () => {
             </svg>
           </div>
           <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-            <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>🎸 调音器</Link></li>
             <li><Link to="/blues" className={isActive('/blues') ? 'active' : ''}>🎵 Blues 即兴</Link></li>
+            <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>🎸 调音器</Link></li>
           </ul>
         </div>
         <Link to="/tuner" className="btn btn-ghost text-xl normal-case">
@@ -49,19 +39,12 @@ const Navbar = () => {
       </div>
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1">
-          <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>🎸 调音器</Link></li>
           <li><Link to="/blues" className={isActive('/blues') ? 'active' : ''}>🎵 Blues 即兴</Link></li>
+          <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>🎸 调音器</Link></li>
         </ul>
       </div>
-      <div className="navbar-end">
-        <button onClick={toggleTheme} className="btn btn-ghost btn-circle">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
-        </button>
-              </div>
-            </div>
-          );
-        };
+    </div>
+  );
+};
 
 export default Navbar;

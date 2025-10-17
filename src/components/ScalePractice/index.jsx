@@ -14,8 +14,8 @@ const ScalePractice = ({ selectedKey, bluesType, scaleNotes, fretboardPositions 
         🎵 {selectedKey} {bluesType.charAt(0).toUpperCase() + bluesType.slice(1)} Blues 音阶
       </h2>
 
-      {/* 音阶音符展示 */}
-      <div className="bg-black/50 rounded-xl p-4 mb-6">
+      {/* 音阶音符展示 - 移动端隐藏 */}
+      <div className="hidden md:block bg-black/50 rounded-xl p-4 mb-6">
         <h3 className="text-lg font-semibold mb-3">音阶音符</h3>
         <div className="flex flex-wrap gap-3 justify-center">
           {scaleNotes.map((note, index) => (
@@ -24,7 +24,7 @@ const ScalePractice = ({ selectedKey, bluesType, scaleNotes, fretboardPositions 
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: index * 0.1 }}
-              className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-lg md:text-xl font-bold ${
+              className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold ${
                 note === selectedKey
                   ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black'
                   : 'bg-blue-500 text-white'
@@ -37,59 +37,71 @@ const ScalePractice = ({ selectedKey, bluesType, scaleNotes, fretboardPositions 
       </div>
 
       {/* 吉他指板图 */}
-      <div className="bg-black/50 rounded-xl p-4 md:p-8 lg:p-12 overflow-x-auto">
+      <div className="bg-black/50 rounded-xl p-3 md:p-8 lg:p-12 overflow-x-auto">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base md:text-lg font-semibold">吉他指板 (前20品)</h3>
-          <div className="text-xs text-gray-400 md:hidden">👉 左右滑动</div>
+          <h3 className="text-sm md:text-lg font-semibold">吉他指板</h3>
+          <div className="text-[10px] md:text-xs text-gray-400">
+            <span className="md:hidden">前15品可见 · 👉滑动查看更多</span>
+            <span className="hidden md:inline">前20品</span>
+          </div>
         </div>
-        <div className="relative min-w-[1000px] md:min-w-[1400px]">
-          {/* 琴弦 */}
-          <div className="space-y-10">
-            {['E', 'B', 'G', 'D', 'A', 'E'].map((stringName, stringIndex) => (
-              <div key={stringIndex} className="relative h-[2px]">
-                {/* 弦名 */}
-                <div className="absolute -left-8 top-0 transform -translate-y-1/2 text-sm font-bold text-gray-400">
-                  {stringName}
-                </div>
-                {/* 弦线 */}
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gray-600">
-                  {/* 品丝 */}
-                  {Array.from({ length: 21 }).map((_, fret) => (
-                    <div
-                      key={fret}
-                      className="absolute top-0 transform -translate-y-1/2 h-10 border-l border-gray-500"
-                      style={{ left: `${(fret / 20) * 100}%` }}
-                    >
-                      {/* 品位标记 */}
-                      {stringIndex === 5 && fret > 0 && (
-                        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-500">
-                          {fret}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {/* 音阶位置 */}
-                  {fretboardPositions
-                    .filter(pos => pos.string === stringIndex)
-                    .map((pos, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: idx * 0.02 }}
-                        className={`absolute -top-3 transform -translate-y-1/2 -translate-x-1/2 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                          pos.isRoot
-                            ? 'bg-yellow-500 text-black border-2 border-yellow-300'
-                            : 'bg-blue-500 text-white'
-                        }`}
-                        style={{ left: `${((pos.fret + 0.5) / 20) * 100}%` }}
+        {/* 移动端优化: 使用CSS缩放,确保前15品在屏幕内可见 */}
+        <div className="w-full">
+          <div
+            className="relative origin-left scale-[0.3] md:scale-100"
+            style={{
+              width: '333.33%', // 补偿scale(0.3)后的宽度: 1/0.3 = 3.3333
+              minWidth: '1000px'
+            }}
+          >
+            {/* 琴弦 */}
+            <div className="space-y-8 md:space-y-10">
+              {['E', 'B', 'G', 'D', 'A', 'E'].map((stringName, stringIndex) => (
+                <div key={stringIndex} className="relative h-[2px]">
+                  {/* 弦名 */}
+                  <div className="absolute -left-6 md:-left-8 top-0 transform -translate-y-1/2 text-xs md:text-sm font-bold text-gray-400">
+                    {stringName}
+                  </div>
+                  {/* 弦线 */}
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gray-600">
+                    {/* 品丝 */}
+                    {Array.from({ length: 21 }).map((_, fret) => (
+                      <div
+                        key={fret}
+                        className="absolute top-0 transform -translate-y-1/2 h-8 md:h-10 border-l border-gray-500"
+                        style={{ left: `${(fret / 20) * 100}%` }}
                       >
-                        {pos.note}
-                      </motion.div>
+                        {/* 品位标记 */}
+                        {stringIndex === 5 && fret > 0 && (
+                          <div className="absolute -bottom-5 md:-bottom-6 left-1/2 transform -translate-x-1/2 text-[10px] md:text-xs text-gray-500">
+                            {fret}
+                          </div>
+                        )}
+                      </div>
                     ))}
+                    {/* 音阶位置 */}
+                    {fretboardPositions
+                      .filter(pos => pos.string === stringIndex)
+                      .map((pos, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: idx * 0.02 }}
+                          className={`absolute -top-3 transform -translate-y-1/2 -translate-x-1/2 w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold ${
+                            pos.isRoot
+                              ? 'bg-yellow-500 text-black border-2 border-yellow-300'
+                              : 'bg-blue-500 text-white'
+                          }`}
+                          style={{ left: `${((pos.fret + 0.5) / 20) * 100}%` }}
+                        >
+                          {pos.note}
+                        </motion.div>
+                      ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
