@@ -41,6 +41,7 @@ const ChordPractice = ({
   const [drumPattern, setDrumPattern] = useState('shuffle'); // 鼓声节奏型
   const [drumVolume, setDrumVolume] = useState(0.7); // 鼓声音量
   const [isDrumEnabled, setIsDrumEnabled] = useState(true); // 是否启用鼓声
+  const [countdown, setCountdown] = useState(0); // 倒计时状态 (0表示不倒计时, 3/2/1表示倒计时中)
   
   // 伴奏相关状态
   const [isHarmonicaEnabled, setIsHarmonicaEnabled] = useState(false); // 是否启用口琴
@@ -190,9 +191,25 @@ const ChordPractice = ({
     }
   };
 
+  // 倒计时逻辑
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        if (countdown === 1) {
+          // 倒计时结束,开始播放
+          setCountdown(0);
+          setIsPlaying(true);
+        } else {
+          setCountdown(countdown - 1);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown, setIsPlaying]);
+
   // 节拍控制 - 每拍触发一次鼓声和伴奏
   useEffect(() => {
-    if (!isPlaying) {
+    if (!isPlaying || countdown > 0) {
       setCurrentBeat(1);
       return;
     }
@@ -436,25 +453,25 @@ const ChordPractice = ({
           <h3 className="text-base md:text-lg font-semibold">和弦序列</h3>
           <div className="text-xs md:text-sm text-gray-400">共 {expandedChords.length} 小节 · 每小节 4 拍</div>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 md:gap-3">
+        <div className="grid grid-cols-4 gap-1.5 md:gap-2">
           {expandedChords.map((item, index) => (
             <motion.div
               key={index}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: index * 0.05 }}
-              className={`relative p-2 md:p-4 rounded-lg text-center transition-all ${
+              className={`relative p-1 md:p-3 rounded-md text-center transition-all ${
                 isPlaying && index === currentChordIndex
                   ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black shadow-lg transform scale-110'
                   : 'bg-white/10'
               }`}
             >
-              <div className="text-[10px] md:text-xs text-gray-400 mb-1">#{index + 1}</div>
-              <div className="text-base md:text-xl font-bold">{item.chord}</div>
-              <div className="text-[10px] md:text-xs text-gray-400 mt-1">{item.degree}</div>
+              <div className="text-[7px] md:text-xs text-gray-400 mb-0.5">#{index + 1}</div>
+              <div className="text-[10px] md:text-lg font-bold">{item.chord}</div>
+              <div className="text-[7px] md:text-xs text-gray-400 mt-0.5">{item.degree}</div>
               {isPlaying && index === currentChordIndex && (
                 <motion.div
-                  className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full"
+                  className="absolute -top-0.5 -right-0.5 md:-top-1 md:-right-1 w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full"
                   animate={{ scale: [1, 1.2, 1] }}
                   transition={{ duration: 0.5, repeat: Infinity }}
                 />
@@ -469,6 +486,27 @@ const ChordPractice = ({
           scaleNotes={getCurrentScaleNotes}
           fretboardPositions={getCurrentFretboardPositions}
         />
+      {/* 倒计时动画 */}
+      {countdown > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.5 }}
+          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+        >
+          <motion.div
+            key={countdown}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 2, opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-[120px] md:text-[200px] font-bold bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(251,191,36,0.5)]"
+          >
+            {countdown}
+          </motion.div>
+        </motion.div>
+      )}
+
       {/* 播放控制 */}
       <div className="bg-black/50 rounded-xl p-3 md:p-4">
         <div className="flex flex-col gap-3">
@@ -477,25 +515,35 @@ const ChordPractice = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className={`flex-1 max-w-[160px] px-5 py-3 rounded-xl font-bold text-base md:text-lg transition-all ${
-                isPlaying
+                isPlaying || countdown > 0
                   ? 'bg-red-500 hover:bg-red-600'
                   : 'bg-green-500 hover:bg-green-600'
               }`}
               onClick={() => {
-                setIsPlaying(!isPlaying);
-                if (!isPlaying) {
+                if (countdown > 0) {
+                  // 倒计时中,点击取消
+                  setCountdown(0);
+                  setIsPlaying(false);
+                } else if (isPlaying) {
+                  // 正在播放,点击暂停
+                  setIsPlaying(false);
+                } else {
+                  // 未播放,开始倒计时
                   setCurrentChordIndex(0);
                   setCurrentBeat(1);
+                  setCountdown(3);
                 }
               }}
+              disabled={countdown > 0}
             >
-              {isPlaying ? '⏸ 暂停' : '▶️ 播放'}
+              {countdown > 0 ? '准备中...' : isPlaying ? '⏸ 暂停' : '▶️ 播放'}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="flex-1 max-w-[160px] px-5 py-3 rounded-xl font-bold text-base md:text-lg bg-gray-600 hover:bg-gray-700"
               onClick={() => {
+                setCountdown(0);
                 setIsPlaying(false);
                 setCurrentChordIndex(0);
                 setCurrentBeat(1);
