@@ -48,9 +48,9 @@ const ScalePractice = ({ selectedKey, bluesType, scaleNotes, fretboardPositions 
         {/* 移动端优化: 使用CSS缩放,确保前15品在屏幕内可见 */}
         <div className="w-full">
           <div
-            className="relative origin-left scale-[0.3] md:scale-100"
+            className="relative origin-left scale-[0.3] md:scale-50"
             style={{
-              width: '333.33%', // 补偿scale(0.3)后的宽度: 1/0.3 = 3.3333
+              width: '200%', // 补偿scale(0.3)后的宽度: 1/0.3 = 3.3333
               minWidth: '1000px'
             }}
           >
