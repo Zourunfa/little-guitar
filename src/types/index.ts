@@ -89,3 +89,39 @@ export interface AudioConfig {
   volume: number;
   enabled: boolean;
 }
+
+/**
+ * Blues 乐句难度
+ */
+export type LickDifficulty = 'beginner' | 'intermediate' | 'advanced';
+
+/**
+ * Blues 乐句风格
+ */
+export type LickStyle = 'chicago' | 'texas' | 'delta' | 'modern' | 'classic';
+
+/**
+ * 吉他 TAB 音符
+ */
+export interface TabNote {
+  string: number;      // 弦号 (0-5, 0是高E弦)
+  fret: number;        // 品位
+  duration: number;    // 时值 (秒)
+  technique?: 'bend' | 'slide' | 'hammer' | 'pull' | 'vibrato'; // 技巧
+  bendAmount?: number; // 推弦量 (半音数)
+}
+
+/**
+ * Blues 乐句数据
+ */
+export interface BluesLick {
+  id: string;
+  name: string;
+  style: LickStyle;
+  difficulty: LickDifficulty;
+  key: Note;
+  bpm: number;
+  description: string;
+  tabs: TabNote[];      // TAB 谱数据
+  audioTips?: string;   // 演奏提示
+}
