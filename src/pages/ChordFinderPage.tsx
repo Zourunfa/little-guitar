@@ -1,16 +1,40 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
-const ChordFinderPage = () => {
-  const [selectedRoot, setSelectedRoot] = useState('C');
-  const [selectedType, setSelectedType] = useState('major');
-  const [currentChord, setCurrentChord] = useState(null);
+// 类型定义
+type Note = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
+
+type ChordTypeId = 'major' | 'minor' | '7' | 'maj7' | 'm7' | 'dim' | 'aug' | 'sus2' | 'sus4' | 'add9';
+
+interface ChordType {
+  id: ChordTypeId;
+  name: string;
+  suffix: string;
+}
+
+interface ChordData {
+  positions: string[];
+  fingering: string[];
+  name: string;
+  notFound?: boolean;
+}
+
+type ChordDatabase = {
+  [key in Note]?: {
+    [key in ChordTypeId]?: ChordData;
+  };
+};
+
+const ChordFinderPage: React.FC = () => {
+  const [selectedRoot, setSelectedRoot] = useState<Note>('C');
+  const [selectedType, setSelectedType] = useState<ChordTypeId>('major');
+  const [currentChord, setCurrentChord] = useState<ChordData | null>(null);
 
   // 音符列表
-  const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const notes: Note[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   
   // 和弦类型
-  const chordTypes = [
+  const chordTypes: ChordType[] = [
     { id: 'major', name: '大三和弦', suffix: '' },
     { id: 'minor', name: '小三和弦', suffix: 'm' },
     { id: '7', name: '属七和弦', suffix: '7' },
@@ -24,7 +48,7 @@ const ChordFinderPage = () => {
   ];
 
   // 和弦指法数据库
-  const chordDatabase = {
+  const chordDatabase: ChordDatabase = {
     // C和弦
     'C': {
       'major': { positions: ['x32010', 'x32013', '8x1098'], fingering: ['x32010'], name: 'C' },
@@ -93,24 +117,24 @@ const ChordFinderPage = () => {
   };
 
   // 查找和弦
-  const findChord = () => {
+  const findChord = (): void => {
     // 如果数据库中有这个和弦
-    if (chordDatabase[selectedRoot] && chordDatabase[selectedRoot][selectedType]) {
-      setCurrentChord(chordDatabase[selectedRoot][selectedType]);
+    if (chordDatabase[selectedRoot]?.[selectedType]) {
+      setCurrentChord(chordDatabase[selectedRoot][selectedType]!);
     } else {
       // 如果没有这个和弦，返回一个通用的和弦结构
       const chordType = chordTypes.find(type => type.id === selectedType);
       setCurrentChord({
         positions: ['xxxxxx'],
         fingering: ['xxxxxx'],
-        name: `${selectedRoot}${chordType.suffix}`,
+        name: `${selectedRoot}${chordType?.suffix || ''}`,
         notFound: true
       });
     }
   };
 
   // 渲染吉他指板
-  const renderFretboard = (position) => {
+  const renderFretboard = (position: string): JSX.Element => {
     // 将和弦位置字符串转换为数组
     const frets = position.split('').map(fret => fret === 'x' ? 'x' : parseInt(fret));
     
@@ -250,7 +274,7 @@ const ChordFinderPage = () => {
               <select 
                 className="select select-bordered w-full"
                 value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
+                onChange={(e) => setSelectedType(e.target.value as ChordTypeId)}
               >
                 {chordTypes.map(type => (
                   <option key={type.id} value={type.id}>
@@ -335,11 +359,12 @@ const ChordFinderPage = () => {
 };
 
 // 根据根音和和弦类型获取和弦组成音
-const getChordNotes = (root, type) => {
-  const noteIndex = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(root);
+const getChordNotes = (root: Note, type: ChordTypeId): Note[] => {
+  const allNotes: Note[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const noteIndex = allNotes.indexOf(root);
   
   // 各和弦类型的音程结构（半音数）
-  const intervals = {
+  const intervals: Record<ChordTypeId, number[]> = {
     'major': [0, 4, 7],           // 大三和弦: 1-3-5
     'minor': [0, 3, 7],           // 小三和弦: 1-b3-5
     '7': [0, 4, 7, 10],           // 属七和弦: 1-3-5-b7
@@ -351,8 +376,6 @@ const getChordNotes = (root, type) => {
     'sus4': [0, 5, 7],            // 挂四和弦: 1-4-5
     'add9': [0, 4, 7, 14],        // 加九和弦: 1-3-5-9
   };
-  
-  const allNotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   
   // 根据音程计算和弦音符
   return intervals[type].map(interval => {
