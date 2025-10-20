@@ -25,9 +25,10 @@ export interface IAccompaniment {
   init(): void;
   getNoteFrequency(note: string, octave?: number): number;
   playHarmonica(note: string, octave?: number, duration?: number, volume?: number): void;
-  playGuitar(note: string, octave?: number, duration?: number, volume?: number): void;
+  playGuitar(note: string, octave?: number, duration?: number, volume?: number, isMuted?: boolean): void;
   playHarmonicaBluesRiff(rootNote: string, volume?: number): void;
-  playGuitarBluesRhythm(rootNote: string, beatNumber: number, volume?: number): void;
+  playGuitarBluesRhythm(rootNote: string, beatNumber: number, volume?: number, customPattern?: string): void;
+  playBassWalkingPattern(chord: string, beatNumber: number, volume?: number, pattern?: string): void;
   dispose(): void;
 }
 

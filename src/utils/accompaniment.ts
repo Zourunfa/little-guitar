@@ -227,9 +227,16 @@ class Accompaniment implements IAccompaniment {
    * @param chord - 和弦根音
    * @param beatNumber - 当前拍号 (1-4)
    * @param volume - 音量
+   * @param customPattern - 自定义节奏型 (例如 '1111 4411 5415' 表示低音行进)
    */
-  playGuitarBluesRhythm(chord: string, beatNumber: number, volume: number = 0.4): void {
+  playGuitarBluesRhythm(chord: string, beatNumber: number, volume: number = 0.4, customPattern?: string): void {
     if (!this.isInitialized) return;
+
+    // 如果有自定义节奏型，使用低音行进模式
+    if (customPattern) {
+      this.playBassWalkingPattern(chord, beatNumber, volume, customPattern);
+      return;
+    }
 
     // 根据和弦生成三和弦音符
     const chordNotes = this.getChordNotes(chord);
@@ -247,6 +254,67 @@ class Accompaniment implements IAccompaniment {
       case 4: // 第四拍: 闷音
         this.playGuitarChord(chordNotes, 0.3, volume * 0.6, 'muted');
         break;
+    }
+  }
+
+  /**
+   * 播放低音行进模式 (Bass Walking Pattern)
+   * @param chord - 和弦根音
+   * @param beatNumber - 当前拍号 (1-4)
+   * @param volume - 音量
+   * @param pattern - 节奏型字符串 (例如 '1111 4411 5415')
+   */
+  playBassWalkingPattern(chord: string, beatNumber: number, volume: number = 0.4, pattern: string = '1111 4411 5415'): void {
+    if (!this.isInitialized) return;
+
+    // 解析节奏型: 移除空格，得到数字数组
+    const notes = pattern.replace(/\s/g, '').split('').map(n => parseInt(n));
+    
+    // 每拍2个八分音符，根据当前拍号计算索引
+    const baseIndex = (beatNumber - 1) * 2;
+    
+    // 获取当前拍的两个音符
+    const note1 = notes[baseIndex];
+    const note2 = notes[baseIndex + 1];
+
+    // 根据音级获取音符
+    const getScaleNote = (degree: number): { note: string; octave: number } => {
+      const noteMap = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+      const rootIndex = noteMap.indexOf(chord);
+      
+      // 音级到半音的映射 (大调音阶)
+      const intervals: Record<number, number> = {
+        1: 0,  // 根音
+        2: 2,  // 大二度
+        3: 4,  // 大三度
+        4: 5,  // 纯四度
+        5: 7,  // 纯五度
+        6: 9,  // 大六度
+        7: 11  // 大七度
+      };
+
+      const interval = intervals[degree] || 0;
+      const noteIndex = (rootIndex + interval) % 12;
+      const octave = 2 + Math.floor((rootIndex + interval) / 12); // 低音区
+
+      return {
+        note: noteMap[noteIndex],
+        octave: octave
+      };
+    };
+
+    // 播放第一个八分音符
+    if (note1) {
+      const noteInfo1 = getScaleNote(note1);
+      this.playGuitar(noteInfo1.note, noteInfo1.octave, 0.4, volume, false);
+    }
+
+    // 延迟播放第二个八分音符 (半拍后)
+    if (note2) {
+      setTimeout(() => {
+        const noteInfo2 = getScaleNote(note2);
+        this.playGuitar(noteInfo2.note, noteInfo2.octave, 0.4, volume, false);
+      }, 250); // 假设120 BPM，半拍 = 250ms
     }
   }
 

@@ -167,10 +167,14 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
     // 播放吉他伴奏
     if (isGuitarEnabled) {
+      // 第12小节使用特殊的低音行进节奏型
+      const customPattern = currentChordIndex === 11 ? '1111 4411 5415' : undefined;
+      
       accompanimentRef.current.playGuitarBluesRhythm(
         rootNote,
         beatNumber,
-        guitarVolume
+        guitarVolume,
+        customPattern
       );
     }
 

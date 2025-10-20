@@ -11,6 +11,36 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
   scaleNotes, 
   fretboardPositions 
 }) => {
+  // 动态计算指板显示范围
+  const getDisplayRange = () => {
+    if (!fretboardPositions || fretboardPositions.length === 0) {
+      return { startFret: 0, endFret: 15, displayFrets: 15 };
+    }
+
+    // 找到最小品位
+    const frets = fretboardPositions.map(pos => pos.fret);
+    const minFret = Math.min(...frets);
+
+    // 如果最小品位小于等于3，从0品开始显示
+    if (minFret <= 3) {
+      return { startFret: 0, endFret: 15, displayFrets: 15 };
+    }
+
+    // 否则，从最小品位-2开始，确保有一些空间
+    const startFret = Math.max(0, minFret - 2);
+    const endFret = Math.min(20, startFret + 15);
+    
+    return { startFret, endFret, displayFrets: endFret - startFret };
+  };
+
+  const { startFret, endFret, displayFrets } = getDisplayRange();
+
+  // 调整指板位置，使其相对于起始品位
+  const adjustedPositions = fretboardPositions.map(pos => ({
+    ...pos,
+    displayFret: pos.fret - startFret
+  }));
+
   return (
     <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 border border-white/10">
       <h2 className="text-xl md:text-2xl font-bold mb-4">
@@ -68,23 +98,26 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
                   {/* 弦线 */}
                   <div className="absolute top-0 left-0 right-0 h-[2px] bg-gray-600">
                     {/* 品丝 */}
-                    {Array.from({ length: 21 }).map((_, fret) => (
-                      <div
-                        key={fret}
-                        className="absolute top-0 transform -translate-y-1/2 h-8 md:h-10 border-l border-gray-500"
-                        style={{ left: `${(fret / 20) * 100}%` }}
-                      >
-                        {/* 品位标记 */}
-                        {stringIndex === 5 && fret > 0 && (
-                          <div className="absolute -bottom-5 md:-bottom-6 left-1/2 transform -translate-x-1/2 text-[10px] md:text-xs text-gray-500">
-                            {fret}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    {Array.from({ length: displayFrets + 1 }).map((_, index) => {
+                      const fret = startFret + index;
+                      return (
+                        <div
+                          key={fret}
+                          className="absolute top-0 transform -translate-y-1/2 h-8 md:h-10 border-l border-gray-500"
+                          style={{ left: `${(index / displayFrets) * 100}%` }}
+                        >
+                          {/* 品位标记 */}
+                          {stringIndex === 5 && (
+                            <div className="absolute -bottom-5 md:-bottom-6 left-1/2 transform -translate-x-1/2 text-[10px] md:text-xs text-gray-500">
+                              {fret}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                     {/* 音阶位置 */}
-                    {fretboardPositions
-                      .filter(pos => pos.string === stringIndex)
+                    {adjustedPositions
+                      .filter(pos => pos.string === stringIndex && pos.fret >= startFret && pos.fret <= endFret)
                       .map((pos, idx) => (
                         <motion.div
                           key={idx}
@@ -96,7 +129,7 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
                               ? 'bg-yellow-500 text-black border-2 border-yellow-300'
                               : 'bg-blue-500 text-white'
                           }`}
-                          style={{ left: `${((pos.fret + 0.5) / 20) * 100}%` }}
+                          style={{ left: `${((pos.displayFret + 0.5) / displayFrets) * 100}%` }}
                         >
                           {pos.note}
                         </motion.div>

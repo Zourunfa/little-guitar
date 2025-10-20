@@ -40,7 +40,8 @@ const BluesPage: React.FC = () => {
       { bars: 2, chord: 'I7', name: '主和弦' },
       { bars: 1, chord: 'V7', name: '属和弦' },
       { bars: 1, chord: 'IV7', name: '下属和弦' },
-      { bars: 2, chord: 'I7', name: '主和弦回到终止' }
+      { bars: 1, chord: 'I7', name: '主和弦' },
+      { bars: 1, chord: 'V7', name: '属和弦终止' }
     ],
     'quick': [
       { bars: 2, chord: 'I7', name: '主和弦' },
