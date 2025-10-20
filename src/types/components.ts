@@ -6,6 +6,7 @@ import type {
   FretboardPosition,
   RhythmPattern
 } from './index';
+import type { Dispatch, SetStateAction } from 'react';
 
 /**
  * ScalePractice 组件 Props
@@ -29,7 +30,7 @@ export interface ChordPracticeProps {
   isPlaying: boolean;
   setIsPlaying: (isPlaying: boolean) => void;
   currentChordIndex: number;
-  setCurrentChordIndex: (index: number) => void;
+  setCurrentChordIndex: Dispatch<SetStateAction<number>>;
   bpm: number;
   setBpm: (bpm: number) => void;
 }

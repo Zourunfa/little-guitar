@@ -73,73 +73,30 @@ const BluesPage: React.FC = () => {
   // 吉他指板音符位置
   const getFretboardPositions = useCallback((): FretboardPosition[] => {
     const scaleNotes = getScaleNotes();
-    
-    const aMinorBluesTemplate = [
-      // 第1弦 - 高E弦
-      { string: 0, fretOffset: 0 }, { string: 0, fretOffset: 3 }, { string: 0, fretOffset: 5 },
-      { string: 0, fretOffset: 8 }, { string: 0, fretOffset: 10 }, { string: 0, fretOffset: 11 },
-      { string: 0, fretOffset: 12 }, { string: 0, fretOffset: 15 }, { string: 0, fretOffset: 17 },
-      { string: 0, fretOffset: 20 },
-      
-      // 第2弦 - B弦
-      { string: 1, fretOffset: 1 }, { string: 1, fretOffset: 3 }, { string: 1, fretOffset: 4 },
-      { string: 1, fretOffset: 5 }, { string: 1, fretOffset: 8 }, { string: 1, fretOffset: 10 },
-      { string: 1, fretOffset: 13 }, { string: 1, fretOffset: 15 }, { string: 1, fretOffset: 16 },
-      { string: 1, fretOffset: 17 }, { string: 1, fretOffset: 20 },
-      
-      // 第3弦 - G弦
-      { string: 2, fretOffset: 0 }, { string: 2, fretOffset: 2 }, { string: 2, fretOffset: 5 },
-      { string: 2, fretOffset: 7 }, { string: 2, fretOffset: 8 }, { string: 2, fretOffset: 9 },
-      { string: 2, fretOffset: 12 }, { string: 2, fretOffset: 14 }, { string: 2, fretOffset: 17 },
-      { string: 2, fretOffset: 19 }, { string: 2, fretOffset: 20 },
-      
-      // 第4弦 - D弦
-      { string: 3, fretOffset: 0 }, { string: 3, fretOffset: 1 }, { string: 3, fretOffset: 2 },
-      { string: 3, fretOffset: 5 }, { string: 3, fretOffset: 7 }, { string: 3, fretOffset: 10 },
-      { string: 3, fretOffset: 12 }, { string: 3, fretOffset: 13 }, { string: 3, fretOffset: 14 },
-      { string: 3, fretOffset: 17 }, { string: 3, fretOffset: 19 },
-      
-      // 第5弦 - A弦
-      { string: 4, fretOffset: 0 }, { string: 4, fretOffset: 3 }, { string: 4, fretOffset: 5 },
-      { string: 4, fretOffset: 6 }, { string: 4, fretOffset: 7 }, { string: 4, fretOffset: 10 },
-      { string: 4, fretOffset: 12 }, { string: 4, fretOffset: 15 }, { string: 4, fretOffset: 17 },
-      { string: 4, fretOffset: 18 }, { string: 4, fretOffset: 19 },
-      
-      // 第6弦 - 低E弦
-      { string: 5, fretOffset: 0 }, { string: 5, fretOffset: 3 }, { string: 5, fretOffset: 5 },
-      { string: 5, fretOffset: 8 }, { string: 5, fretOffset: 10 }, { string: 5, fretOffset: 11 },
-      { string: 5, fretOffset: 12 }, { string: 5, fretOffset: 15 }, { string: 5, fretOffset: 17 },
-      { string: 5, fretOffset: 20 }
-    ];
-
-    const rootIndexA = notes.indexOf('A');
-    const targetRootIndex = notes.indexOf(selectedKey);
-    const transposeOffset = (targetRootIndex - rootIndexA + 12) % 12;
-
     const openStrings: Note[] = ['E', 'B', 'G', 'D', 'A', 'E'];
-
     const positions: FretboardPosition[] = [];
     
-    aMinorBluesTemplate.forEach(template => {
-      const stringOpenNote = openStrings[template.string];
+    // 遍历每根弦
+    for (let stringIndex = 0; stringIndex < 6; stringIndex++) {
+      const stringOpenNote = openStrings[stringIndex];
       const stringOpenIndex = notes.indexOf(stringOpenNote);
       
-      const newFret = template.fretOffset + transposeOffset;
-      
-      if (newFret >= 0 && newFret <= 20) {
-        const noteIndex = (stringOpenIndex + newFret) % 12;
+      // 遍历每个品位（0-20品）
+      for (let fret = 0; fret <= 20; fret++) {
+        const noteIndex = (stringOpenIndex + fret) % 12;
         const note = notes[noteIndex];
         
+        // 如果这个音符在音阶中，就添加到位置列表
         if (scaleNotes.includes(note)) {
           positions.push({
-            string: template.string,
-            fret: newFret,
+            string: stringIndex,
+            fret: fret,
             note,
             isRoot: note === selectedKey
           });
         }
       }
-    });
+    }
 
     return positions;
   }, [selectedKey, bluesType, getScaleNotes]);
