@@ -1,8 +1,15 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
-const HomePage = () => {
-  const features = [
+interface Feature {
+  title: string;
+  description: string;
+  icon: JSX.Element;
+}
+
+const HomePage: React.FC = () => {
+  const features: Feature[] = [
     {
       title: '精准调音',
       description: '实时音频分析，支持标准调音和多种调音模式',
@@ -212,4 +219,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage; 
+export default HomePage;
