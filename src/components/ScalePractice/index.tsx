@@ -48,16 +48,16 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
       </h2>
 
       {/* 音阶音符展示 - 移动端隐藏 */}
-      <div className="hidden md:block bg-black/50 rounded-xl p-4 mb-6">
-        <h3 className="text-lg font-semibold mb-3">音阶音符</h3>
-        <div className="flex flex-wrap gap-3 justify-center">
+      <div className="hidden md:block bg-black/50 rounded-xl p-2 mb-3">
+        <h3 className="text-sm font-semibold mb-2">音阶音符</h3>
+        <div className="flex flex-wrap gap-2 justify-center">
           {scaleNotes.map((note, index) => (
             <motion.div
               key={index}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-              className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold ${
+              transition={{ delay: index * 0.05 }}
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold ${
                 note === selectedKey
                   ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black'
                   : 'bg-blue-500 text-white'
