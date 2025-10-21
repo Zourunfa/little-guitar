@@ -445,31 +445,30 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
 
       {/* 和弦进行展示 */}
-      <div className="bg-black/50 rounded-xl p-3 md:p-4 mb-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
-          <h3 className="text-base md:text-lg font-semibold">和弦序列</h3>
-          <div className="text-xs md:text-sm text-gray-400">共 {expandedChords.length} 小节 · 每小节 4 拍</div>
+      <div className="bg-black/50 rounded-xl p-2 md:p-3 mb-4">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-sm md:text-base font-semibold">和弦序列</h3>
+          <div className="text-[10px] md:text-xs text-gray-400">{expandedChords.length}小节</div>
         </div>
-        <div className="grid grid-cols-4 gap-1.5 md:gap-2">
+        <div className="grid grid-cols-4 gap-1.5">
           {expandedChords.map((item, index) => (
             <motion.div
               key={index}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: index * 0.05 }}
-              className={`relative p-1 md:p-3 rounded-md text-center transition-all ${
+              transition={{ delay: index * 0.03 }}
+              className={`relative p-2 rounded text-center transition-all ${
                 isPlaying && index === currentChordIndex
-                  ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black shadow-lg transform scale-110'
+                  ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black shadow-md scale-105'
                   : 'bg-white/10'
               }`}
             >
-              <div className="text-[7px] md:text-xs text-gray-400 mb-0.5">#{index + 1}</div>
-              <div className="text-[10px] md:text-lg font-bold">{item.chord}</div>
-              <div className="text-[7px] md:text-xs text-gray-400 mt-0.5">{item.degree}</div>
+              <div className="text-[8px] text-gray-400">#{index + 1}</div>
+              <div className="text-xs md:text-sm font-bold">{item.chord}</div>
               {isPlaying && index === currentChordIndex && (
                 <motion.div
-                  className="absolute -top-0.5 -right-0.5 md:-top-1 md:-right-1 w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full"
-                  animate={{ scale: [1, 1.2, 1] }}
+                  className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-green-500 rounded-full"
+                  animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 0.5, repeat: Infinity }}
                 />
               )}
