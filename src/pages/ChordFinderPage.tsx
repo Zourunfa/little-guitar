@@ -134,7 +134,7 @@ const ChordFinderPage: React.FC = () => {
   };
 
   // 渲染吉他指板
-  const renderFretboard = (position: string): JSX.Element => {
+  const renderFretboard = (position: string): React.ReactElement => {
     // 将和弦位置字符串转换为数组
     const frets = position.split('').map(fret => fret === 'x' ? 'x' : parseInt(fret));
     

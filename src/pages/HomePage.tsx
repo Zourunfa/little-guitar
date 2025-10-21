@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 interface Feature {
   title: string;
   description: string;
-  icon: JSX.Element;
+  icon: React.ReactElement;
 }
 
 const HomePage: React.FC = () => {

@@ -4,7 +4,7 @@ import cloudbase from '@cloudbase/js-sdk';
 const ENV_ID = 'cloud1-8g1pwz868e1c211b';
 
 // 检查环境ID是否已配置
-const isValidEnvId = ENV_ID && ENV_ID !== 'your-env-id';
+const isValidEnvId = Boolean(ENV_ID);
 
 /**
  * 初始化配置接口
@@ -12,18 +12,6 @@ const isValidEnvId = ENV_ID && ENV_ID !== 'your-env-id';
 interface InitConfig {
   env?: string;
   timeout?: number;
-}
-
-/**
- * 登录状态接口
- */
-interface LoginState {
-  isLoggedIn: boolean;
-  user: {
-    uid: string;
-    isAnonymous: boolean;
-    isOffline?: boolean;
-  };
 }
 
 /**
@@ -69,7 +57,7 @@ export const checkEnvironment = (): boolean => {
  * 确保用户已登录（如未登录会执行匿名登录）
  * @returns 登录状态
  */
-export const ensureLogin = async (): Promise<LoginState> => {
+export const ensureLogin = async (): Promise<any> => {
   // 检查环境配置
   if (!checkEnvironment()) {
     throw new Error('环境ID未配置');
@@ -95,6 +83,9 @@ export const ensureLogin = async (): Promise<LoginState> => {
       // await auth.toDefaultLoginPage()
 
       loginState = await auth.getLoginState();
+      if (!loginState) {
+        throw new Error('登录失败');
+      }
       return loginState;
     }
   } catch (error) {
