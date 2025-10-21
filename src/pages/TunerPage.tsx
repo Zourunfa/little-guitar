@@ -24,7 +24,7 @@ const TunerPage: React.FC = () => {
   const [isTuning, setIsTuning] = useState<boolean>(false);
   const [currentNote, setCurrentNote] = useState<string>('--');
   const [frequency, setFrequency] = useState<number>(0);
-  const [cents, setCents] = useState<number>(0);
+  const [_cents, setCents] = useState<number>(0);
   const [selectedString, setSelectedString] = useState<StringNumber>('6');
   const [error, setError] = useState<string | null>(null);
 
@@ -36,8 +36,8 @@ const TunerPage: React.FC = () => {
   // 调音精度状态
   const [accuracyText, setAccuracyText] = useState<string>('');
   const [accuracyColor, setAccuracyColor] = useState<string>('#4CAF50');
-  const [needlePosition, setNeedlePosition] = useState<number>(50);
-  const [needleColor, setNeedleColor] = useState<string>('#ffffff');
+  const [_needlePosition, setNeedlePosition] = useState<number>(50);
+  const [_needleColor, setNeedleColor] = useState<string>('#ffffff');
 
   // 音频历史数据
   const [pitchHistory, setPitchHistory] = useState<PitchHistoryPoint[]>([]);
