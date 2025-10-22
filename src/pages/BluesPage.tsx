@@ -133,7 +133,7 @@ const BluesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white pb-32">
       <div className="container mx-auto px-4 py-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -302,6 +302,126 @@ const BluesPage: React.FC = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* 固定在页面底部的播放控制栏 - 仅在和弦进行模式下显示 */}
+      {practiceMode === 'chord' && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="fixed bottom-0 left-0 right-0 z-50"
+        >
+          <div className="bg-gradient-to-t from-black/98 via-black/95 to-transparent backdrop-blur-xl border-t border-purple-500/30 shadow-2xl">
+            <div className="container mx-auto px-4 py-4 md:py-5">
+              <div className="max-w-6xl mx-auto">
+                <div className="flex items-center justify-between gap-3 md:gap-6">
+                  
+                  {/* 左侧：状态指示器 */}
+                  <div className="flex items-center gap-3 min-w-[120px] md:min-w-[180px]">
+                    <div className="relative">
+                      <div className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                        isPlaying 
+                          ? 'bg-green-500 shadow-lg shadow-green-500/50 animate-pulse' 
+                          : 'bg-gray-500'
+                      }`}></div>
+                      {isPlaying && (
+                        <div className="absolute inset-0 w-4 h-4 rounded-full bg-green-500 animate-ping"></div>
+                      )}
+                    </div>
+                    <div className="hidden md:block">
+                      <div className="text-sm font-bold text-white">
+                        {isPlaying ? '播放中' : '已暂停'}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {isPlaying ? `小节 ${currentChordIndex + 1}` : `${bpm} BPM`}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 中间：播放控制按钮 */}
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`
+                        relative overflow-hidden px-6 md:px-10 py-3 md:py-4 rounded-2xl font-bold text-base md:text-lg
+                        transition-all duration-300 shadow-2xl
+                        ${isPlaying
+                          ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-red-500/50' 
+                          : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-green-500/50'
+                        }
+                      `}
+                      onClick={() => {
+                        if (isPlaying) {
+                          setIsPlaying(false);
+                        } else {
+                          setCurrentChordIndex(0);
+                          setIsPlaying(true);
+                        }
+                      }}
+                    >
+                      <div className="relative z-10 flex items-center gap-2 md:gap-3">
+                        {isPlaying ? (
+                          <>
+                            <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 20 20">
+                              <rect x="5" y="3" width="3" height="14" rx="1" />
+                              <rect x="12" y="3" width="3" height="14" rx="1" />
+                            </svg>
+                            <span>暂停</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                            </svg>
+                            <span>播放</span>
+                          </>
+                        )}
+                      </div>
+                    </motion.button>
+
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-6 md:px-8 py-3 md:py-4 rounded-2xl font-bold text-base md:text-lg bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white shadow-xl transition-all duration-300"
+                      onClick={() => {
+                        setIsPlaying(false);
+                        setCurrentChordIndex(0);
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 20 20">
+                          <rect x="5" y="5" width="10" height="10" rx="1" />
+                        </svg>
+                        <span className="hidden md:inline">停止</span>
+                      </div>
+                    </motion.button>
+                  </div>
+
+                  {/* 右侧：当前信息 */}
+                  <div className="hidden lg:flex items-center gap-4 min-w-[180px]">
+                    <div className="flex items-center gap-3 bg-gradient-to-r from-purple-500/20 to-blue-500/20 px-4 py-3 rounded-xl border border-purple-500/30">
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400">速度</div>
+                        <div className="text-xl font-bold text-yellow-400">
+                          {bpm}
+                        </div>
+                      </div>
+                      <div className="w-px h-10 bg-white/20"></div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400">小节</div>
+                        <div className="text-xl font-bold text-blue-400">
+                          {currentChordIndex + 1}/{chordProgressions[progression].reduce((sum, section) => sum + section.bars, 0)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };

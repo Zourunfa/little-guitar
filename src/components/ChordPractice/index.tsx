@@ -503,59 +503,6 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         </motion.div>
       )}
 
-      {/* 播放控制 */}
-      <div className="bg-black/50 rounded-xl p-3 md:p-4">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2 justify-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`flex-1 max-w-[160px] px-5 py-3 rounded-xl font-bold text-base md:text-lg transition-all ${
-                isPlaying || countdown > 0
-                  ? 'bg-red-500 hover:bg-red-600'
-                  : 'bg-green-500 hover:bg-green-600'
-              }`}
-              onClick={() => {
-                if (countdown > 0) {
-                  // 倒计时中,点击取消
-                  setCountdown(0);
-                  setIsPlaying(false);
-                } else if (isPlaying) {
-                  // 正在播放,点击暂停
-                  setIsPlaying(false);
-                } else {
-                  // 未播放,开始倒计时
-                  setCurrentChordIndex(0);
-                  setCurrentBeat(1);
-                  setCountdown(3);
-                }
-              }}
-              disabled={countdown > 0}
-            >
-              {countdown > 0 ? '准备中...' : isPlaying ? '⏸ 暂停' : '▶️ 播放'}
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex-1 max-w-[160px] px-5 py-3 rounded-xl font-bold text-base md:text-lg bg-gray-600 hover:bg-gray-700"
-              onClick={() => {
-                setCountdown(0);
-                setIsPlaying(false);
-                setCurrentChordIndex(0);
-                setCurrentBeat(1);
-              }}
-            >
-              ⏹ 停止
-            </motion.button>
-          </div>
-          <div className="flex items-center justify-center gap-2 text-sm md:text-base">
-            <span className="text-gray-400">当前速度:</span>
-            <div className="px-3 py-1.5 bg-white/10 rounded-lg">
-              <span className="font-bold">{bpm} BPM</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* 和弦指法提示 */}
       <div className="bg-purple-500/20 rounded-xl p-4 mt-4 border border-purple-500/30">
