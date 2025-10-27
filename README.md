@@ -1,29 +1,14 @@
 # 🎸 Little Guitar
 
-**一款功能全面的吉他学习与练习Web应用**
+**一款功能全面的blue即兴吉他学习与练习Web应用**
 
-[![Powered by CloudBase](https://7463-tcb-advanced-a656fc-1257967285.tcb.qcloud.la/mcp/powered-by-cloudbase-badge.svg)](https://github.com/TencentCloudBase/CloudBase-AI-ToolKit)
 
-**访问地址**: [https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app](https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app)
+**访问地址**: [https://littleguitar.pages.dev/#/blues](https://littleguitar.pages.dev/#/blues)
 
-> 本项目基于 [**CloudBase AI ToolKit**](https://github.com/TencentCloudBase/CloudBase-AI-ToolKit) 开发，通过AI提示词和 MCP 协议+云开发，让开发更智能、更高效。
 
 ---
 
 ## ✨ 功能特点
-
-### 🎵 吉他调音器
-
-精准的实时调音工具，帮助你快速调好吉他：
-
-- **实时音频分析**：使用Web Audio API + FFT算法精确检测音高
-- **标准调音支持**：支持6根弦标准调音 (E2, A2, D3, G3, B3, E4)
-- **可视化反馈**：
-  - 实时频率显示
-  - 音分偏差指示器（±50音分范围）
-  - 颜色编码精度提示（绿色=完美，黄色=接近，红色=偏离）
-- **智能识别**：自动识别最接近的音符并显示调整方向
-- **历史数据追踪**：记录调音过程，便于分析
 
 ### 🎹 Blues 即兴练习
 
@@ -83,6 +68,20 @@
 - **多维度筛选**：按和弦类型和根音快速查找
 - **替代指法支持**：提供多种演奏选择
 
+### 🎵 吉他调音器
+
+精准的实时调音工具，帮助你快速调好吉他：
+
+- **实时音频分析**：使用Web Audio API + FFT算法精确检测音高
+- **标准调音支持**：支持6根弦标准调音 (E2, A2, D3, G3, B3, E4)
+- **可视化反馈**：
+  - 实时频率显示
+  - 音分偏差指示器（±50音分范围）
+  - 颜色编码精度提示（绿色=完美，黄色=接近，红色=偏离）
+- **智能识别**：自动识别最接近的音符并显示调整方向
+- **历史数据追踪**：记录调音过程，便于分析
+
+
 ## 🛠️ 技术栈
 
 ### 核心技术
@@ -102,8 +101,6 @@
   - 滤波器（BiquadFilter）
   - LFO（低频振荡器）
 
-### 云服务
-- **腾讯云开发（CloudBase）**：静态网站托管
 
 ---
 
