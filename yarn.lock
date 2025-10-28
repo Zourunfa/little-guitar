@@ -319,6 +319,11 @@
   "resolved" "https://registry.npmmirror.com/@cloudbase/wx-cloud-client-sdk/-/wx-cloud-client-sdk-1.6.1.tgz"
   "version" "1.6.1"
 
+"@esbuild/darwin-x64@0.25.10":
+  "integrity" "sha512-tguWg1olF6DGqzws97pKZ8G2L7Ig1vjDmGTwcTuYHbuU6TTjJe5FXbgs5C1BBzHbJ2bo1m3WkQDbWO2PvamRcg=="
+  "resolved" "https://registry.npmmirror.com/@esbuild/darwin-x64/-/darwin-x64-0.25.10.tgz"
+  "version" "0.25.10"
+
 "@eslint-community/eslint-utils@^4.8.0":
   "integrity" "sha512-ayVFHdtZ+hsq1t2Dy24wCmGXGe4q9Gu3smhLYALJrr473ZH27MsnSL+LKUlimp4BWJqMDMLmPpx/Q9R3OAlL4g=="
   "resolved" "https://registry.npmmirror.com/@eslint-community/eslint-utils/-/eslint-utils-4.9.0.tgz"
@@ -553,6 +558,11 @@
   "resolved" "https://registry.npmmirror.com/@types/estree/-/estree-1.0.8.tgz"
   "version" "1.0.8"
 
+"@types/howler@^2.2.12":
+  "integrity" "sha512-hy769UICzOSdK0Kn1FBk4gN+lswcj1EKRkmiDtMkUGvFfYJzgaDXmVXkSShS2m89ERAatGIPnTUlp2HhfkVo5g=="
+  "resolved" "https://registry.npmmirror.com/@types/howler/-/howler-2.2.12.tgz"
+  "version" "2.2.12"
+
 "@types/json-schema@^7.0.15":
   "integrity" "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="
   "resolved" "https://registry.npmmirror.com/@types/json-schema/-/json-schema-7.0.15.tgz"
@@ -603,6 +613,11 @@
   "integrity" "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="
   "resolved" "https://registry.npmmirror.com/acorn/-/acorn-8.15.0.tgz"
   "version" "8.15.0"
+
+"adsr@^1.0.0":
+  "integrity" "sha512-thr9LK4jxApOzBA33IWOA83bXJFbyfbeozpHXyrMQOIhUni198uRxXqDhobW0S/51iokqty2Yz2WbLZbE6tntQ=="
+  "resolved" "https://registry.npmmirror.com/adsr/-/adsr-1.0.1.tgz"
+  "version" "1.0.1"
 
 "ajv@^6.12.4":
   "integrity" "sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g=="
@@ -663,6 +678,11 @@
   "integrity" "sha512-zPMVc3ZYlGLNk4mpK1NzP2wg0ml9t7fUgDsayR5Y5rSzxQilzR9FGu/EH2jQOcKSAeAfWeylyW8juy3OkWRvNA=="
   "resolved" "https://registry.npmmirror.com/array-flatten/-/array-flatten-3.0.0.tgz"
   "version" "3.0.0"
+
+"audio-loader@^0.5.0":
+  "integrity" "sha512-mEoYRjZhqkBSen/X9i2PNosqvafEsur8bI5MNoPr0wsJu9Nzlul3Yv1elYeMPsXxTxYhXLY8AZlScBvaK4mydg=="
+  "resolved" "https://registry.npmmirror.com/audio-loader/-/audio-loader-0.5.0.tgz"
+  "version" "0.5.0"
 
 "automation-events@^7.0.9":
   "integrity" "sha512-1Hay5TQPzxsskSqPTH3YXyzE9Iirz82zZDse2vr3+kOR7Sc7om17qIEPsESchlNX0EgKxANwR40i2g/O3GM1Tw=="
@@ -1204,6 +1224,11 @@
     "accidental-value" "^1.0.0"
     "notecoord" "^1.0.1"
 
+"howler@^2.2.4":
+  "integrity" "sha512-iARIBPgcQrwtEr+tALF+rapJ8qSc+Set2GJQl7xT1MQzWaVkFebdJhR3alVlSiUf5U7nAANKuj3aWpwerocD5w=="
+  "resolved" "https://registry.npmmirror.com/howler/-/howler-2.2.4.tgz"
+  "version" "2.2.4"
+
 "ieee754@^1.1.13":
   "integrity" "sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA=="
   "resolved" "https://registry.npmmirror.com/ieee754/-/ieee754-1.2.1.tgz"
@@ -1401,6 +1426,11 @@
   "resolved" "https://registry.npmmirror.com/midi-file/-/midi-file-1.2.4.tgz"
   "version" "1.2.4"
 
+"midimessage@^1.0.5":
+  "integrity" "sha512-MPJ2tDupFOfZB5/PLp8fri1IS4fd9hPj0Bio//FBhWRQ+TsJA7/49CF1aJyraDxa0Jq8zMHAwrwXl2GINvLvgw=="
+  "resolved" "https://registry.npmmirror.com/midimessage/-/midimessage-1.0.5.tgz"
+  "version" "1.0.5"
+
 "minimatch@^3.1.2":
   "integrity" "sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw=="
   "resolved" "https://registry.npmmirror.com/minimatch/-/minimatch-3.1.2.tgz"
@@ -1470,6 +1500,16 @@
   "integrity" "sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA=="
   "resolved" "https://registry.npmmirror.com/normalize-range/-/normalize-range-0.1.2.tgz"
   "version" "0.1.2"
+
+"note-parser@^1.1.0":
+  "integrity" "sha512-YTqWQBsRp40EFrEznnkGtmx68gcgOQ8CdoBspqGBA3G1/4mJwIYbDe/vuNpX3oGX2DhP7b1dBgTmj7p3Zr0P1Q=="
+  "resolved" "https://registry.npmmirror.com/note-parser/-/note-parser-1.1.0.tgz"
+  "version" "1.1.0"
+
+"note-parser@^2.0.0":
+  "integrity" "sha512-w9o6Fv46y3NsFxeezTZSmftBtUM/ypme6iZWVrTJvvsD5RN+w0XNDePWtfreNrZFL3jSjBFhadPoXb+pJO4UdA=="
+  "resolved" "https://registry.npmmirror.com/note-parser/-/note-parser-2.0.1.tgz"
+  "version" "2.0.1"
 
 "notecoord@^1.0.1":
   "integrity" "sha512-nMJ/uHG9AxMO5lZ0JBb17+T2eU5CbqChAfTJpC0SdvMzguvy4b2iIO7jhdoRdv+k19Nko7XGcmRCSeqd/aGVXA=="
@@ -1754,6 +1794,15 @@
   dependencies:
     "queue-microtask" "^1.2.2"
 
+"sample-player@^0.5.5":
+  "integrity" "sha512-VQ9pXPJ1m/eTH8QK6OQ8Dn/HSVToNyY9w9vnv+y/yjkJeRm87tJ/gBEm66jItfSLhKe6VG1DfX8+oT+Mg7QUpg=="
+  "resolved" "https://registry.npmmirror.com/sample-player/-/sample-player-0.5.5.tgz"
+  "version" "0.5.5"
+  dependencies:
+    "adsr" "^1.0.0"
+    "midimessage" "^1.0.5"
+    "note-parser" "^1.1.0"
+
 "scheduler@^0.27.0":
   "integrity" "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q=="
   "resolved" "https://registry.npmmirror.com/scheduler/-/scheduler-0.27.0.tgz"
@@ -1788,6 +1837,15 @@
   "integrity" "sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw=="
   "resolved" "https://registry.npmmirror.com/signal-exit/-/signal-exit-4.1.0.tgz"
   "version" "4.1.0"
+
+"soundfont-player@^0.12.0":
+  "integrity" "sha512-8BJIsAt7h1PK3thSZDgF6zecgGhYkK74JnZO8WRZi3h34qG6H/DYlnv7cpRvL7Q9C8N6qld4Qwj7nJsX1gYjEA=="
+  "resolved" "https://registry.npmmirror.com/soundfont-player/-/soundfont-player-0.12.0.tgz"
+  "version" "0.12.0"
+  dependencies:
+    "audio-loader" "^0.5.0"
+    "note-parser" "^2.0.0"
+    "sample-player" "^0.5.5"
 
 "source-map-js@^1.2.1":
   "integrity" "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="

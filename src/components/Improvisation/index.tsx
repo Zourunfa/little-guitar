@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { ImprovisationProps } from '../../types/components';
 import BluesLicksPlayer from '../BluesLicksPlayer';
+import HarmonicaAccompaniment from '../HarmonicaAccompaniment';
 
 interface ImprovTechnique {
   name: string;
@@ -19,7 +20,8 @@ const Improvisation: React.FC<ImprovisationProps> = ({
   progression,
   bpm
 }) => {
-  const [activeTab, setActiveTab] = useState<'techniques' | 'licks'>('techniques');
+  const [activeTab, setActiveTab] = useState<'techniques' | 'licks' | 'harmonica'>('techniques');
+  const [isHarmonicaPlaying, setIsHarmonicaPlaying] = useState(false);
 
   const improvTechniques: ImprovTechnique[] = [
     { name: '音阶爬行', desc: '从低到高演奏音阶', icon: '↗️' },
@@ -55,6 +57,16 @@ const Improvisation: React.FC<ImprovisationProps> = ({
           }`}
         >
           🎸 经典乐句库
+        </button>
+        <button
+          onClick={() => setActiveTab('harmonica')}
+          className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+            activeTab === 'harmonica'
+              ? 'bg-gradient-to-r from-orange-500 to-yellow-500 text-white'
+              : 'bg-white/10 text-gray-400 hover:bg-white/20'
+          }`}
+        >
+          🎺 口琴伴奏
         </button>
       </div>
 
@@ -137,9 +149,17 @@ const Improvisation: React.FC<ImprovisationProps> = ({
             </ol>
           </div>
         </>
-      ) : (
+      ) : activeTab === 'licks' ? (
         /* 经典乐句库 */
         <BluesLicksPlayer selectedKey={selectedKey} bpm={bpm} />
+      ) : (
+        /* 口琴伴奏 */
+        <HarmonicaAccompaniment
+          selectedKey={selectedKey}
+          bpm={bpm}
+          isPlaying={isHarmonicaPlaying}
+          onPlayingChange={setIsHarmonicaPlaying}
+        />
       )}
     </div>
   );
