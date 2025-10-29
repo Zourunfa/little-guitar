@@ -70,6 +70,25 @@ const BluesPage: React.FC = () => {
     });
   }, [selectedKey, bluesType]);
 
+  // 获取音阶的音程标记（度数）
+  const getScaleDegrees = useCallback((): string[] => {
+    console.log('getScaleDegrees called, bluesType:', bluesType);
+    let degrees: string[];
+    if (bluesType === 'minor') {
+      degrees = ['1', 'b3', '4', 'b5', '5', 'b7', '1'];
+    } else if (bluesType === 'major') {
+      degrees = ['1', '2', 'b3', '3', '5', '6', '1'];
+    } else if (bluesType === 'mixolydian') {
+      degrees = ['1', '2', '3', '4', '5', '6', 'b7', '1'];
+    } else {
+      // 默认使用 minor
+      console.warn('Unknown bluesType:', bluesType, 'using minor as default');
+      degrees = ['1', 'b3', '4', 'b5', '5', 'b7', '1'];
+    }
+    console.log('BluesPage - getScaleDegrees result:', degrees);
+    return degrees;
+  }, [bluesType]);
+
   // 吉他指板音符位置
   const getFretboardPositions = useCallback((): FretboardPosition[] => {
     const scaleNotes = getScaleNotes();
@@ -241,14 +260,19 @@ const BluesPage: React.FC = () => {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              {practiceMode === 'scale' && (
-                <ScalePractice
-                  selectedKey={selectedKey}
-                  bluesType={bluesType}
-                  scaleNotes={getScaleNotes()}
-                  fretboardPositions={getFretboardPositions()}
-                />
-              )}
+              {practiceMode === 'scale' && (() => {
+                const degrees = getScaleDegrees();
+                console.log('BluesPage render - passing scaleDegrees:', degrees);
+                return (
+                  <ScalePractice
+                    selectedKey={selectedKey}
+                    bluesType={bluesType}
+                    scaleNotes={getScaleNotes()}
+                    scaleDegrees={degrees}
+                    fretboardPositions={getFretboardPositions()}
+                  />
+                );
+              })()}
 
               {practiceMode === 'chord' && (
                 <ChordPractice
@@ -281,6 +305,7 @@ const BluesPage: React.FC = () => {
                   selectedKey={selectedKey}
                   bluesType={bluesType}
                   scaleNotes={getScaleNotes()}
+                  scaleDegrees={getScaleDegrees()}
                   progression={progression}
                   bpm={bpm}
                 />

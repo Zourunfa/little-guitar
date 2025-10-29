@@ -15,6 +15,7 @@ export interface ScalePracticeProps {
   selectedKey: Note;
   bluesType: BluesType;
   scaleNotes: string[];
+  scaleDegrees: string[];
   fretboardPositions: FretboardPosition[];
 }
 
@@ -53,6 +54,7 @@ export interface ImprovisationProps {
   selectedKey: Note;
   bluesType: BluesType;
   scaleNotes: string[];
+  scaleDegrees: string[];
   progression: ProgressionType;
   bpm: number;
 }
