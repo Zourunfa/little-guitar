@@ -5,7 +5,7 @@
 
 @media (min-width: 768px) {
   #root {
-    padding: 2rem; /* 桌面端保留padding */
+    /* padding: 2rem;  */
   }
 }
 
