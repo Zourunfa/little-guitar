@@ -54,10 +54,10 @@ const BluesPage: React.FC = () => {
 
   // 节奏型定义
   const rhythmPatterns: RhythmPattern[] = [
-    { id: 'shuffle', name: 'Shuffle', pattern: [1, 2, 3], description: '三连音摇摆节奏' },
-    { id: 'straight', name: 'Straight', pattern: [1, 1, 1, 1], description: '直四分音符' },
-    { id: 'syncopated', name: 'Syncopated', pattern: [1, 2, 1, 2], description: '切分音节奏' },
-    { id: 'slow', name: 'Slow Blues', pattern: [3, 1, 3, 1], description: '慢板 Blues' }
+    { id: 'shuffle', name: 'Shuffle', pattern: [2, 1, 2, 1], description: '三连音摇摆节奏 - 长短长短' },
+    { id: 'straight', name: 'Straight', pattern: [1, 1, 1, 1], description: '直四分音符 - 均匀节奏' },
+    { id: 'swing', name: 'Swing', pattern: [2, 1, 2, 1], description: '摇摆节奏 - 轻松律动' },
+    { id: 'syncopated', name: 'Syncopated', pattern: [1, 2, 1, 2], description: '切分音节奏 - 强调弱拍' }
   ];
 
   // 根据调式和音阶类型生成音阶音符
