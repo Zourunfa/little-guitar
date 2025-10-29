@@ -1,6 +1,6 @@
 #root {
   margin: 0 auto;
-  padding: 2rem 0; /* 移动端去掉左右padding */
+  /* padding: 2rem 0; */
 }
 
 @media (min-width: 768px) {
