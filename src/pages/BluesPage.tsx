@@ -55,7 +55,7 @@ const BluesPage: React.FC = () => {
   // 节奏型定义
   const rhythmPatterns: RhythmPattern[] = [
     { id: 'shuffle', name: 'Shuffle', pattern: [2, 1, 2, 1], description: '三连音摇摆节奏 - 长短长短' },
-    { id: 'straight', name: 'Straight', pattern: [1, 1, 1, 1], description: '直四分音符 - 均匀节奏' },
+    { id: 'straight', name: 'Straight', pattern: [1, 1, 1], description: '均匀三连音 - 每拍三个音' },
     { id: 'swing', name: 'Swing', pattern: [2, 1, 2, 1], description: '摇摆节奏 - 轻松律动' },
     { id: 'syncopated', name: 'Syncopated', pattern: [1, 2, 1, 2], description: '切分音节奏 - 强调弱拍' }
   ];
