@@ -8,7 +8,8 @@ import type { ScalePracticeProps } from '../../types/components';
 const ScalePractice: React.FC<ScalePracticeProps> = ({ 
   selectedKey, 
   bluesType, 
-  scaleNotes, 
+  scaleNotes,
+  scaleDegrees,
   fretboardPositions 
 }) => {
   // 动态计算指板显示范围
@@ -46,6 +47,13 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
       <h2 className="text-xl md:text-2xl font-bold mb-4">
         🎵 {selectedKey} {bluesType.charAt(0).toUpperCase() + bluesType.slice(1)} Blues 音阶
       </h2>
+      
+      {/* 临时调试信息 */}
+      {!scaleDegrees && (
+        <div className="bg-red-500/20 border border-red-500 rounded p-2 mb-4 text-sm">
+          ⚠️ scaleDegrees 未传递！
+        </div>
+      )}
 
       {/* 音阶音符展示 - 移动端隐藏 */}
       <div className="hidden md:block bg-black/50 rounded-xl p-2 mb-3">
@@ -57,13 +65,22 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: index * 0.05 }}
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold ${
-                note === selectedKey
-                  ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black'
-                  : 'bg-blue-500 text-white'
-              }`}
+              className="flex flex-col items-center gap-1"
             >
-              {note}
+              {/* 音符圆圈 */}
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold ${
+                  note === selectedKey
+                    ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black'
+                    : 'bg-blue-500 text-white'
+                }`}
+              >
+                {note}
+              </div>
+              {/* 音程标记 */}
+              <div className="text-xs font-bold text-gray-400">
+                {scaleDegrees && scaleDegrees[index] ? scaleDegrees[index] : (index + 1)}
+              </div>
             </motion.div>
           ))}
         </div>

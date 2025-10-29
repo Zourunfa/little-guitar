@@ -107,6 +107,12 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     });
   }, [getCurrentChordRoot]);
 
+  // 获取当前音阶的音程标记（度数）
+  const getCurrentScaleDegrees = useMemo(() => {
+    // 小调Blues音阶的音程标记
+    return ['1', 'b3', '4', 'b5', '5', 'b7', '1'];
+  }, []);
+
   // 计算当前和弦对应的指板位置
   const getCurrentFretboardPositions = useMemo(() => {
     const scaleNotes = getCurrentScaleNotes;
@@ -480,6 +486,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
           selectedKey={getCurrentChordRoot}
           bluesType="minor"
           scaleNotes={getCurrentScaleNotes}
+          scaleDegrees={getCurrentScaleDegrees}
           fretboardPositions={getCurrentFretboardPositions}
         />
       {/* 倒计时动画 */}

@@ -17,6 +17,7 @@ const Improvisation: React.FC<ImprovisationProps> = ({
   selectedKey,
   bluesType,
   scaleNotes,
+  scaleDegrees,
   progression,
   bpm
 }) => {
@@ -104,13 +105,22 @@ const Improvisation: React.FC<ImprovisationProps> = ({
                 <motion.div
                   key={index}
                   whileHover={{ scale: 1.1 }}
-                  className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-base md:text-lg font-bold cursor-pointer ${
-                    note === selectedKey
-                      ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black'
-                      : 'bg-blue-500 text-white hover:bg-blue-400'
-                  }`}
+                  className="flex flex-col items-center gap-1 cursor-pointer"
                 >
-                  {note}
+                  {/* 音符圆圈 */}
+                  <div
+                    className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-base md:text-lg font-bold ${
+                      note === selectedKey
+                        ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black'
+                        : 'bg-blue-500 text-white hover:bg-blue-400'
+                    }`}
+                  >
+                    {note}
+                  </div>
+                  {/* 音程标记 */}
+                  <div className="text-xs font-bold text-gray-400">
+                    {scaleDegrees?.[index] || (index + 1)}
+                  </div>
                 </motion.div>
               ))}
             </div>
