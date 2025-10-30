@@ -9,14 +9,19 @@ import type { Note, DrumPattern as DrumPatternType } from '../../types';
 // 音符定义 (组件外部常量)
 const NOTES: Note[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-// 小调Blues音阶定义 (半音间隔)
-const MINOR_BLUES_INTERVALS = [0, 3, 5, 6, 7, 10, 12]; // 1, b3, 4, b5, 5, b7, 8
+// Blues音阶定义 (半音间隔)
+const BLUES_INTERVALS = {
+  minor: [0, 3, 5, 6, 7, 10, 12],      // 1, b3, 4, b5, 5, b7, 8
+  major: [0, 2, 3, 4, 7, 9, 12],       // 1, 2, b3, 3, 5, 6, 8
+  mixolydian: [0, 2, 4, 5, 7, 9, 10, 12] // 1, 2, 3, 4, 5, 6, b7, 8
+};
 
 /**
  * 和弦进行练习组件
  */
 const ChordPractice: React.FC<ChordPracticeProps> = ({
   selectedKey,
+  bluesType,
   progression,
   setProgression,
   chordProgressions,
@@ -98,20 +103,28 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     return currentChord.replace(/7$/, '') as Note; // 去掉"7"
   }, [currentChordIndex, expandedChords, selectedKey]);
 
-  // 根据当前和弦根音生成对应的小调Blues音阶
+  // 根据当前和弦根音和Blues类型生成对应的Blues音阶
   const getCurrentScaleNotes = useMemo(() => {
     const rootIndex = NOTES.indexOf(getCurrentChordRoot);
-    return MINOR_BLUES_INTERVALS.map(interval => {
+    const intervals = BLUES_INTERVALS[bluesType];
+    return intervals.map(interval => {
       const noteIndex = (rootIndex + interval) % 12;
       return NOTES[noteIndex];
     });
-  }, [getCurrentChordRoot]);
+  }, [getCurrentChordRoot, bluesType]);
 
   // 获取当前音阶的音程标记（度数）
   const getCurrentScaleDegrees = useMemo(() => {
-    // 小调Blues音阶的音程标记
+    if (bluesType === 'minor') {
+      return ['1', 'b3', '4', 'b5', '5', 'b7', '1'];
+    } else if (bluesType === 'major') {
+      return ['1', '2', 'b3', '3', '5', '6', '1'];
+    } else if (bluesType === 'mixolydian') {
+      return ['1', '2', '3', '4', '5', '6', 'b7', '1'];
+    }
+    // 默认返回小调
     return ['1', 'b3', '4', 'b5', '5', 'b7', '1'];
-  }, []);
+  }, [bluesType]);
 
   // 计算当前和弦对应的指板位置
   const getCurrentFretboardPositions = useMemo(() => {
@@ -484,7 +497,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       </div>
       <ScalePractice
           selectedKey={getCurrentChordRoot}
-          bluesType="minor"
+          bluesType={bluesType}
           scaleNotes={getCurrentScaleNotes}
           scaleDegrees={getCurrentScaleDegrees}
           fretboardPositions={getCurrentFretboardPositions}
