@@ -1,0 +1,21 @@
+{
+  "name": "@little-guitar/cloudbase",
+  "version": "1.0.0",
+  "description": "云开发 SDK 封装",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cloudbase/js-sdk": "^2.16.0",
+    "@little-guitar/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "eslint": "^9.25.0",
+    "typescript": "^5.3.3"
+  }
+}

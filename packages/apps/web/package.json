@@ -1,0 +1,48 @@
+{
+  "name": "@little-guitar/web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "deploy": "pnpm build && node ../../tools/deploy-scripts/deploy-web.js"
+  },
+  "dependencies": {
+    "@cloudbase/js-sdk": "^2.16.0",
+    "@heroicons/react": "^2.2.0",
+    "@little-guitar/cloudbase": "workspace:*",
+    "@tonejs/midi": "^2.0.28",
+    "daisyui": "^5.0.35",
+    "framer-motion": "^12.23.3",
+    "howler": "^2.2.4",
+    "pitchy": "^4.1.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^6.30.1",
+    "soundfont-player": "^0.12.0",
+    "teoria": "^2.5.0",
+    "tone": "^15.1.22",
+    "yallist": "^5.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/howler": "^2.2.12",
+    "@types/node": "^20.11.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.3.3",
+    "vite": "^6.3.5"
+  }
+}

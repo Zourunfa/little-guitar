@@ -1,0 +1,16 @@
+{
+  "name": "@little-guitar/cloudfunctions",
+  "version": "1.0.0",
+  "description": "云函数集合",
+  "scripts": {
+    "build": "pnpm -r build",
+    "deploy": "node ../../tools/deploy-scripts/deploy-functions.js",
+    "lint": "pnpm -r lint"
+  },
+  "devDependencies": {
+    "@cloudbase/node-sdk": "^3.10.0",
+    "@types/node": "^20.11.0",
+    "eslint": "^9.25.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@little-guitar/music-theory",
+  "version": "1.0.0",
+  "description": "音乐理论工具库",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@little-guitar/types": "workspace:*",
+    "teoria": "^2.5.0",
+    "@tonejs/midi": "^2.0.28"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "eslint": "^9.25.0",
+    "typescript": "^5.3.3"
+  }
+}
