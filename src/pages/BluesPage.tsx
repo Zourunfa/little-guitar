@@ -381,6 +381,9 @@ const BluesPage: React.FC = () => {
                           setIsPlaying(false);
                         } else {
                           setCurrentChordIndex(0);
+                          // 不直接播放，而是触发倒计时
+                          // setIsPlaying(true);
+                          // 通过设置一个标志来触发倒计时，实际的播放由ChordPractice组件控制
                           setIsPlaying(true);
                         }
                       }}

@@ -39,6 +39,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   const [drumVolume, setDrumVolume] = useState<number>(0.7); // 鼓声音量
   const [isDrumEnabled, setIsDrumEnabled] = useState<boolean>(true); // 是否启用鼓声
   const [countdown, setCountdown] = useState<number>(0); // 倒计时状态 (0表示不倒计时, 3/2/1表示倒计时中)
+  const [isActuallyPlaying, setIsActuallyPlaying] = useState<boolean>(false); // 真正的播放状态
   
   // 伴奏相关状态
   const [isHarmonicaEnabled] = useState<boolean>(false); // 是否启用口琴
@@ -206,6 +207,19 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     }
   };
 
+  // 监听isPlaying变化，启动倒计时或停止播放
+  useEffect(() => {
+    if (isPlaying && !isActuallyPlaying && countdown === 0) {
+      // 用户点击了播放，启动倒计时
+      setCountdown(3);
+      setIsPlaying(false); // 先暂停，等倒计时结束再播放
+    } else if (!isPlaying && isActuallyPlaying) {
+      // 用户点击了暂停或停止，重置实际播放状态
+      setIsActuallyPlaying(false);
+      setCountdown(0); // 清除可能正在进行的倒计时
+    }
+  }, [isPlaying, isActuallyPlaying, countdown, setIsPlaying]);
+
   // 倒计时逻辑
   useEffect(() => {
     if (countdown > 0) {
@@ -213,6 +227,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         if (countdown === 1) {
           // 倒计时结束,开始播放
           setCountdown(0);
+          setIsActuallyPlaying(true);
           setIsPlaying(true);
         } else {
           setCountdown(countdown - 1);
@@ -224,7 +239,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
   // 节拍控制 - 每拍触发一次鼓声和伴奏
   useEffect(() => {
-    if (!isPlaying || countdown > 0) {
+    if (!isActuallyPlaying || countdown > 0) {
       setCurrentBeat(1);
       return;
     }
@@ -248,11 +263,11 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
     return () => clearInterval(beatInterval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, bpm, drumPattern, drumVolume, isDrumEnabled, isGuitarEnabled, isHarmonicaEnabled, guitarVolume, harmonicaVolume, currentChordIndex]);
+  }, [isActuallyPlaying, bpm, drumPattern, drumVolume, isDrumEnabled, isGuitarEnabled, isHarmonicaEnabled, guitarVolume, harmonicaVolume, currentChordIndex]);
 
   // 小节控制 - 每4拍切换一次和弦
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isActuallyPlaying) return;
 
     const beatsPerBar = 4;
     const msPerBeat = (60 / bpm) * 1000;
@@ -263,7 +278,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     }, msPerBar);
 
     return () => clearInterval(barInterval);
-  }, [isPlaying, bpm, expandedChords.length, setCurrentChordIndex]);
+  }, [isActuallyPlaying, bpm, expandedChords.length, setCurrentChordIndex]);
 
   return (
     <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 border border-white/10">
@@ -356,7 +371,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         </div>
 
         {/* 节拍指示器 */}
-        {isPlaying && (
+        {isActuallyPlaying && (
           <div className="flex items-center gap-3 p-2 bg-black/30 rounded-lg">
             <span className="text-sm font-medium">当前节拍:</span>
             <div className="flex gap-1.5">
@@ -441,7 +456,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         </div>
 
         {/* 当前拍号显示 */}
-        {isPlaying && isDrumEnabled && (
+        {isActuallyPlaying && isDrumEnabled && (
           <div className="mt-4 flex justify-center gap-2">
             {[1, 2, 3, 4].map(beat => (
               <motion.div
@@ -477,14 +492,14 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
               animate={{ scale: 1 }}
               transition={{ delay: index * 0.03 }}
               className={`relative p-2 rounded text-center transition-all ${
-                isPlaying && index === currentChordIndex
+                isActuallyPlaying && index === currentChordIndex
                   ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black shadow-md scale-105'
                   : 'bg-white/10'
               }`}
             >
               <div className="text-[8px] text-gray-400">#{index + 1}</div>
               <div className="text-xs md:text-sm font-bold">{item.chord}</div>
-              {isPlaying && index === currentChordIndex && (
+              {isActuallyPlaying && index === currentChordIndex && (
                 <motion.div
                   className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-green-500 rounded-full"
                   animate={{ scale: [1, 1.3, 1] }}
