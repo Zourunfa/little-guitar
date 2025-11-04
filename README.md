@@ -1,12 +1,41 @@
-# 🎸 Little Guitar
+# 🎸 Little Guitar Monorepo
 
-**一款功能全面的blue即兴吉他学习与练习Web应用**
+吉他学习应用 Monorepo 项目，基于 React + Vite + TypeScript 构建，采用 pnpm workspace 管理。
 
+## 访问地址
 
-**访问地址**: [https://littleguitar.pages.dev/#/blues](https://littleguitar.pages.dev/#/blues)
+**线上地址**: [https://littleguitar.pages.dev/#/blues](https://littleguitar.pages.dev/#/blues)
 
 
 ---
+
+## 🏗️ 项目架构
+
+这是一个 monorepo 项目，包含以下子包：
+
+```
+little-guitar-monorepo/
+├── packages/
+│   ├── apps/
+│   │   └── web/                    # 主 Web 应用 (React + Vite)
+│   └── packages/
+│       ├── ui/                     # 共享 UI 组件库
+│       ├── audio/                  # 音频处理工具库 (调音器��鼓机)
+│       ├── music-theory/           # 音乐理论工具库 (音阶、和弦、指板)
+│       ├── cloudbase/              # 云开发 SDK 封装
+│       └── types/                  # 共享 TypeScript 类型定义
+└── packages/cloudfunctions/        # 云函数集合
+```
+
+### 子包说明
+
+- **@little-guitar/web** - 主 Web 应用，包含完整的吉他学习功能
+- **@little-guitar/ui** - 可复用的 React 组件库
+- **@little-guitar/audio** - 音频处理工具，包含调音器和鼓音生成器
+- **@little-guitar/music-theory** - 音乐理论工具，包含音阶、和弦计算等
+- **@little-guitar/cloudbase** - 腾讯云开发 SDK 封装
+- **@little-guitar/types** - 项目共享的 TypeScript 类型定义
+- **云函数** - 后端云函数集合
 
 ## ✨ 功能特点
 
@@ -84,12 +113,17 @@
 
 ## 🛠️ 技术栈
 
-### 核心技术
-- **前端框架**：React 18
-- **构建工具**：Vite
-- **路由**：React Router 6（HashRouter）
-- **样式**：Tailwind CSS
-- **动画**：Framer Motion
+### Monorepo 管理
+- **包管理器**: pnpm workspace
+- **构建工具**: Turbo
+- **版本管理**: Changesets
+
+### 前端技术
+- **前端框架**: React 19 + TypeScript
+- **构建工具**: Vite
+- **路由**: React Router 6（HashRouter）
+- **样式**: Tailwind CSS + DaisyUI
+- **动画**: Framer Motion
 
 ### 音频技术
 - **Web Audio API**：实时音频处理和分析
@@ -102,67 +136,113 @@
   - LFO（低频振荡器）
 
 
+### 云开发技术
+- **云开发**: 腾讯云开发 CloudBase
+- **SDK**: @cloudbase/js-sdk
+- **部署**: 静态托管 + 云函数
+
 ---
 
 ## 🚀 快速开始
 
-### 前提条件
-
-- Node.js 14+ 
-- npm 或 yarn
+### 环境要求
+- Node.js >= 18
+- pnpm >= 8
 
 ### 安装依赖
-
 ```bash
-npm install
+pnpm install
 ```
 
-### 本地开发
-
+### 开发模式
 ```bash
-npm run dev
+# 启动主 Web 应用
+pnpm dev
+
+# 或者使用 workspace
+pnpm -C packages/apps/web dev
 ```
 
-访问 `http://localhost:5173` 即可查看应用
-
-### 构建生产版本
-
+### 构建
 ```bash
-npm run build
+# 构建所有包
+pnpm build:all
+
+# 构建主应用
+pnpm build
 ```
 
-构建产物将输出到 `dist` 目录
+### 代码检查
+```bash
+# 所有包的代码检查
+pnpm lint
 
----
+# 类型检查
+pnpm type-check
+```
 
 ## 📦 部署
 
-### 部署到腾讯云开发静态托管
-
-#### 方法一：使用 CloudBase CLI（推荐）
-
+### Web 应用部署
 ```bash
-# 1. 构建项目
-npm run build
-
-# 2. 登录云开发
-npx @cloudbase/cli login
-
-# 3. 部署到静态托管
-npx @cloudbase/cli hosting:deploy ./dist -e cloud1-8g1pwz868e1c211b
+# 构建并部署 Web 应用
+pnpm deploy:web
 ```
 
-#### 方法二：控制台手动上传
+### 云函数部署
+```bash
+# 部署所有云函数
+pnpm deploy:functions
 
-1. 构建项目：`npm run build`
-2. 登录 [腾讯云开发控制台](https://console.cloud.tencent.com/tcb)
-3. 进入环境 → 静态网站托管
-4. 上传 `dist` 目录中的所有文件
+# 部署全部资源
+pnpm deploy:all
+```
 
-### 当前部署信息
+### 传统部署方式
+```bash
+# 1. 构建项目
+pnpm build
+
+# 2. 部署到云开发静态托管
+npx @cloudbase/cli hosting:deploy ./packages/apps/web/dist -e cloud1-8g1pwz868e1c211b
+```
+
+### 云开发资源信息
 
 - **线上地址**: https://cloud1-8g1pwz868e1c211b-1302374225.tcloudbaseapp.com/guitar-app
 - **环境ID**: `cloud1-8g1pwz868e1c211b`
+- **静态托管**: packages/apps/web/dist
+- **云函数目录**: packages/cloudfunctions
+
+## 🛠️ 开发指南
+
+### 添加新的共享组件
+1. 在 `packages/packages/ui/src` 中创建组件
+2. 在 `packages/packages/ui/src/index.ts` 中导出
+3. 在需要的应用中导入使用
+
+### 添加新的工具函数
+- 音频相关：添加到 `packages/packages/audio/src`
+- 音乐理论相关：添加到 `packages/packages/music-theory/src`
+- 云开发相关：添加到 `packages/packages/cloudbase/src`
+
+### 类型定义
+所有共享的类型定义都应放在 `packages/packages/types/src` 中。
+
+## 📊 包���赖关系
+
+```mermaid
+graph TD
+    A[web] --> B[ui]
+    A --> C[audio]
+    A --> D[music-theory]
+    A --> E[cloudbase]
+    A --> F[types]
+    B --> F
+    C --> F
+    D --> F
+    E --> F
+```
 
 ## 📁 项目结构
 

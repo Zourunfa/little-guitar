@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { cloudbase } from '@little-guitar/cloudbase'
+import cloudbase from './utils/cloudbase'
 import TunerPage from './pages/TunerPage'
 import BluesPage from './pages/BluesPage'
 import Navbar from './components/Navbar'

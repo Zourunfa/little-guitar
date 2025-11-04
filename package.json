@@ -1,46 +1,40 @@
 {
-  "name": "cloudbase-react-template",
+  "name": "little-guitar-monorepo",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "吉他学习应用 monorepo 项目",
+  "workspaces": [
+    "packages/*",
+    "packages/apps/*",
+    "packages/cloudfunctions/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "type-check": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@cloudbase/js-sdk": "^2.16.0",
-    "@heroicons/react": "^2.2.0",
-    "@tonejs/midi": "^2.0.28",
-    "daisyui": "^5.0.35",
-    "framer-motion": "^12.23.3",
-    "howler": "^2.2.4",
-    "pitchy": "^4.1.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-router-dom": "^6.30.1",
-    "soundfont-player": "^0.12.0",
-    "teoria": "^2.5.0",
-    "tone": "^15.1.22",
-    "yallist": "^5.0.0"
+    "dev": "pnpm -C packages/apps/web dev",
+    "build": "pnpm -C packages/apps/web build",
+    "build:all": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "type-check": "pnpm -r type-check",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "deploy:web": "pnpm -C packages/apps/web deploy",
+    "deploy:functions": "pnpm -C packages/cloudfunctions deploy",
+    "deploy:all": "pnpm deploy:functions && pnpm deploy:web",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build:all && changeset publish"
   },
   "devDependencies": {
-    "@eslint/js": "^9.25.0",
-    "@types/howler": "^2.2.12",
-    "@types/node": "^20.11.0",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
-    "@vitejs/plugin-react": "^4.4.1",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^9.25.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.19",
-    "globals": "^16.0.0",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17",
+    "@changesets/cli": "^2.27.1",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
     "typescript": "^5.3.3",
-    "vite": "^6.3.5"
-  }
+    "turbo": "^1.12.4"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.4"
 }
