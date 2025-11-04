@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import DrumKit from '../../utils/drumKit';
 import Accompaniment from '../../utils/accompaniment';
+import AudioBackingTrack, { type BackingTrackKey } from '../../utils/audioBackingTrack';
 import ScalePractice from '../ScalePractice';
 import type { ChordPracticeProps } from '../../types/components';
 import type { Note, DrumPattern as DrumPatternType } from '../../types';
@@ -34,6 +35,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 }) => {
   const drumKitRef = useRef<DrumKit | null>(null);
   const accompanimentRef = useRef<Accompaniment | null>(null);
+  const audioBackingTrackRef = useRef<AudioBackingTrack | null>(null);
   const [currentBeat, setCurrentBeat] = useState<number>(1); // 当前拍号 (1-4)
   const [drumPattern, setDrumPattern] = useState<DrumPatternType>('shuffle'); // 鼓声节奏型
   const [drumVolume, setDrumVolume] = useState<number>(0.7); // 鼓声音量
@@ -46,6 +48,14 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   const [isGuitarEnabled] = useState<boolean>(false); // 是否启用吉他
   const [harmonicaVolume] = useState<number>(0.4); // 口琴音量
   const [guitarVolume] = useState<number>(0.4); // 吉他音量
+  
+  // 音频伴奏相关状态
+  const [accompanimentMode, setAccompanimentMode] = useState<'synthesized' | 'audio'>('synthesized'); // 伴奏模式
+  const [audioBackingKey, setAudioBackingKey] = useState<BackingTrackKey>('A'); // 音频伴奏调性
+  const [audioBackingVolume, setAudioBackingVolume] = useState<number>(0.7); // 音频伴奏音量
+  const [isAudioBackingLoading, setIsAudioBackingLoading] = useState<boolean>(false); // 音频加载状态
+  const [audioBackingError, setAudioBackingError] = useState<string>(''); // 音频加载错误
+  const [isAudioBackingPlaying, setIsAudioBackingPlaying] = useState<boolean>(false); // 音频播放状态
 
   // 初始化鼓组和伴奏
   useEffect(() => {
@@ -54,6 +64,12 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     
     accompanimentRef.current = new Accompaniment();
     accompanimentRef.current.init();
+    
+    // 初始化音频伴奏
+    audioBackingTrackRef.current = new AudioBackingTrack();
+    audioBackingTrackRef.current.init().catch(err => {
+      console.error('音频伴奏初始化失败:', err);
+    });
 
     return () => {
       if (drumKitRef.current) {
@@ -61,6 +77,9 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       }
       if (accompanimentRef.current) {
         accompanimentRef.current.dispose();
+      }
+      if (audioBackingTrackRef.current) {
+        audioBackingTrackRef.current.dispose();
       }
     };
   }, []);
@@ -207,6 +226,27 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     }
   };
 
+  // 加载音频伴奏
+  const loadAudioBacking = async (key: BackingTrackKey) => {
+    if (!audioBackingTrackRef.current) return;
+
+    setIsAudioBackingLoading(true);
+    setAudioBackingError('');
+    setIsAudioBackingPlaying(false);
+
+    try {
+      await audioBackingTrackRef.current.loadTrack(key);
+      setAudioBackingKey(key);
+      console.log(`✅ 成功加载 ${key} 调音频伴奏`);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : '加载失败';
+      setAudioBackingError(errorMsg);
+      console.error('❌ 加载音频伴奏失败:', err);
+    } finally {
+      setIsAudioBackingLoading(false);
+    }
+  };
+  
   // 监听isPlaying变化，启动倒计时或停止播放
   useEffect(() => {
     if (isPlaying && !isActuallyPlaying && countdown === 0) {
@@ -217,25 +257,53 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       // 用户点击了暂停或停止，重置实际播放状态
       setIsActuallyPlaying(false);
       setCountdown(0); // 清除可能正在进行的倒计时
+
+      // 停止音频伴奏
+      if (audioBackingTrackRef.current) {
+        audioBackingTrackRef.current.stop();
+        setIsAudioBackingPlaying(false);
+        console.log('🛑 停止音频伴奏播放');
+      }
     }
   }, [isPlaying, isActuallyPlaying, countdown, setIsPlaying]);
 
   // 倒计时逻辑
   useEffect(() => {
     if (countdown > 0) {
-      const timer = setTimeout(() => {
+      const timer = setTimeout(async () => {
         if (countdown === 1) {
           // 倒计时结束,开始播放
           setCountdown(0);
           setIsActuallyPlaying(true);
           setIsPlaying(true);
+          
+          // 如果是音频伴奏模式，启动音频播放
+          if (accompanimentMode === 'audio' && audioBackingTrackRef.current) {
+            try {
+              // 检查音频是否已加载
+              if (!audioBackingTrackRef.current.isAudioLoaded()) {
+                console.log(`⏳ 音频未加载，正在加载 ${audioBackingKey} 调伴奏...`);
+                await loadAudioBacking(audioBackingKey);
+              }
+              
+              // 播放音频
+              audioBackingTrackRef.current.play(bpm);
+              setIsAudioBackingPlaying(true);
+              console.log(`🎵 开始播放 ${audioBackingKey} 调音频伴奏，速度: ${bpm} BPM`);
+            } catch (err) {
+              console.error('❌ 音频伴奏播放失败:', err);
+              const errorMsg = err instanceof Error ? err.message : '播放失败';
+              setAudioBackingError(errorMsg);
+              setIsAudioBackingPlaying(false);
+            }
+          }
         } else {
           setCountdown(countdown - 1);
         }
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [countdown, setIsPlaying]);
+  }, [countdown, setIsPlaying, accompanimentMode, bpm, audioBackingKey]);
 
   // 节拍控制 - 每拍触发一次鼓声和伴奏
   useEffect(() => {
@@ -247,23 +315,28 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     const msPerBeat = (60 / bpm) * 1000;
     let beatCounter = 1;
 
-    // 立即播放第一拍
-    playDrum(beatCounter);
-    const currentChord = expandedChords[currentChordIndex]?.chord || selectedKey;
-    playAccompaniment(beatCounter, currentChord);
+    // 只在合成伴奏模式下播放鼓声和伴奏
+    if (accompanimentMode === 'synthesized') {
+      playDrum(beatCounter);
+      const currentChord = expandedChords[currentChordIndex]?.chord || selectedKey;
+      playAccompaniment(beatCounter, currentChord);
+    }
     setCurrentBeat(beatCounter);
 
     const beatInterval = setInterval(() => {
-      beatCounter = (beatCounter % 4) + 1; // 循环 1-4 拍
-      playDrum(beatCounter);
-      const chord = expandedChords[currentChordIndex]?.chord || selectedKey;
-      playAccompaniment(beatCounter, chord);
+      beatCounter = (beatCounter % 4) + 1; // 循环 1-4 拑
+      // 只在合成伴奏模式下播放鼓声和伴奏
+      if (accompanimentMode === 'synthesized') {
+        playDrum(beatCounter);
+        const chord = expandedChords[currentChordIndex]?.chord || selectedKey;
+        playAccompaniment(beatCounter, chord);
+      }
       setCurrentBeat(beatCounter);
     }, msPerBeat);
 
     return () => clearInterval(beatInterval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isActuallyPlaying, bpm, drumPattern, drumVolume, isDrumEnabled, isGuitarEnabled, isHarmonicaEnabled, guitarVolume, harmonicaVolume, currentChordIndex]);
+  }, [isActuallyPlaying, bpm, drumPattern, drumVolume, isDrumEnabled, isGuitarEnabled, isHarmonicaEnabled, guitarVolume, harmonicaVolume, currentChordIndex, accompanimentMode]);
 
   // 小节控制 - 每4拍切换一次和弦
   useEffect(() => {
@@ -279,6 +352,35 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
     return () => clearInterval(barInterval);
   }, [isActuallyPlaying, bpm, expandedChords.length, setCurrentChordIndex]);
+  
+  // 监听BPM变化，实时调整音频伴奏速度
+  useEffect(() => {
+    if (accompanimentMode === 'audio' && isActuallyPlaying && audioBackingTrackRef.current) {
+      audioBackingTrackRef.current.adjustSpeed(bpm);
+    }
+  }, [bpm, accompanimentMode, isActuallyPlaying]);
+  
+  // 监听音频伴奏音量变化
+  useEffect(() => {
+    if (audioBackingTrackRef.current) {
+      audioBackingTrackRef.current.setVolume(audioBackingVolume);
+    }
+  }, [audioBackingVolume]);
+  
+  // 监听伴奏模式切换，自动预加载音频
+  useEffect(() => {
+    if (accompanimentMode === 'audio' && audioBackingTrackRef.current) {
+      const isAvailable = audioBackingTrackRef.current.isTrackAvailable(audioBackingKey);
+      const isLoaded = audioBackingTrackRef.current.isAudioLoaded();
+      
+      // 如果调性可用但音频未加载，自动加载
+      if (isAvailable && !isLoaded) {
+        console.log(`🔄 切换到音频模式，预加载 ${audioBackingKey} 调伴奏...`);
+        loadAudioBacking(audioBackingKey);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accompanimentMode, audioBackingKey]);
 
   return (
     <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 border border-white/10">
@@ -397,6 +499,146 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
           {bpm >= 120 && bpm < 150 && "🏃 快速 - 进阶练习"}
           {bpm >= 150 && "🚀 极速 - 专业水平挑战"}
         </div>
+      </div>
+
+      {/* 伴奏模式选择 */}
+      <div className="bg-gradient-to-r from-orange-500/20 to-pink-500/20 rounded-xl p-3 md:p-4 mb-6 border border-orange-500/30">
+        <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">🎵 伴奏模式</h3>
+        
+        {/* 模式切换 */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`p-3 rounded-xl text-center transition-all ${
+              accompanimentMode === 'synthesized'
+                ? 'bg-gradient-to-r from-orange-500 to-pink-500 shadow-lg'
+                : 'bg-white/10 hover:bg-white/20'
+            }`}
+            onClick={() => setAccompanimentMode('synthesized')}
+          >
+            <div className="font-bold text-sm md:text-base">🎹 原生合成</div>
+            <div className="text-xs text-gray-300">实时合成伴奏</div>
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`p-3 rounded-xl text-center transition-all ${
+              accompanimentMode === 'audio'
+                ? 'bg-gradient-to-r from-orange-500 to-pink-500 shadow-lg'
+                : 'bg-white/10 hover:bg-white/20'
+            }`}
+            onClick={() => setAccompanimentMode('audio')}
+          >
+            <div className="font-bold text-sm md:text-base">🎸 经典音频</div>
+            <div className="text-xs text-gray-300">真实录音伴奏</div>
+          </motion.button>
+        </div>
+
+        {/* 音频伴奏设置 */}
+        {accompanimentMode === 'audio' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-4"
+          >
+            {/* 调性选择 */}
+            <div>
+              <div className="text-xs md:text-sm text-gray-400 mb-2">选择调性:</div>
+              <div className="grid grid-cols-6 gap-2">
+                {(['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as BackingTrackKey[]).map(key => {
+                  const isAvailable = audioBackingTrackRef.current?.isTrackAvailable(key);
+                  const isCurrent = audioBackingKey === key;
+                  
+                  return (
+                    <motion.button
+                      key={key}
+                      whileHover={isAvailable ? { scale: 1.05 } : {}}
+                      whileTap={isAvailable ? { scale: 0.95 } : {}}
+                      className={`px-2 py-2 rounded-lg text-sm font-medium transition-all ${
+                        isCurrent && isAvailable
+                          ? 'bg-pink-500 text-white shadow-lg'
+                          : isAvailable
+                          ? 'bg-white/10 hover:bg-white/20'
+                          : 'bg-white/5 text-gray-600 cursor-not-allowed'
+                      }`}
+                      onClick={() => isAvailable && loadAudioBacking(key)}
+                      disabled={!isAvailable || isAudioBackingLoading}
+                    >
+                      {key}
+                    </motion.button>
+                  );
+                })}
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                💡 提示: 灰色按钮表示该调暂未配置音频文件
+              </div>
+            </div>
+
+            {/* 播放状态显示 */}
+            {accompanimentMode === 'audio' && (
+              <div className="bg-black/30 p-3 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">音频状态:</span>
+                  <div className="flex items-center gap-2">
+                    {isAudioBackingLoading && (
+                      <div className="flex items-center gap-2 text-yellow-400">
+                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-yellow-400 border-t-transparent"></div>
+                        <span className="text-xs">加载中...</span>
+                      </div>
+                    )}
+                    {!isAudioBackingLoading && isAudioBackingPlaying && (
+                      <div className="flex items-center gap-2 text-green-400">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-xs">正在播放</span>
+                      </div>
+                    )}
+                    {!isAudioBackingLoading && !isAudioBackingPlaying && isActuallyPlaying && (
+                      <div className="flex items-center gap-2 text-gray-400">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                        <span className="text-xs">已停止</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 错误提示 */}
+                {audioBackingError && (
+                  <div className="text-sm text-red-400 bg-red-500/10 p-2 rounded-lg mt-2">
+                    ⚠️ {audioBackingError}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 音量控制 */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-400 whitespace-nowrap">音量:</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={audioBackingVolume}
+                onChange={(e) => setAudioBackingVolume(Number(e.target.value))}
+                className="flex-1"
+              />
+              <span className="text-sm font-bold w-12">{Math.round(audioBackingVolume * 100)}%</span>
+            </div>
+
+            {/* 说明 */}
+            <div className="text-xs text-gray-400 bg-black/30 p-3 rounded-lg">
+              <div className="font-semibold mb-1">🎼 音频伴奏说明:</div>
+              <ul className="space-y-1 ml-4">
+                <li>• 使用真实录音的Blues伴奏</li>
+                <li>• 自动根据BPM调整播放速度</li>
+                <li>• 循环播放，无缝衔接</li>
+              </ul>
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* 鼓声节奏设置 */}
