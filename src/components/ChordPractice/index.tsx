@@ -267,9 +267,12 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     }
   }, [isPlaying, isActuallyPlaying, countdown, setIsPlaying]);
 
-  // 倒计时逻辑
+  // 倒计时逻辑 - 倒计时速度跟随节拍速度
   useEffect(() => {
     if (countdown > 0) {
+      // 计算每拍的时长（毫秒）
+      const msPerBeat = (60 / bpm) * 1000;
+      
       const timer = setTimeout(async () => {
         if (countdown === 1) {
           // 倒计时结束,开始播放
@@ -300,7 +303,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         } else {
           setCountdown(countdown - 1);
         }
-      }, 1000);
+      }, msPerBeat); // 使用节拍时长而不是固定的1000ms
       return () => clearTimeout(timer);
     }
   }, [countdown, setIsPlaying, accompanimentMode, bpm, audioBackingKey]);
@@ -772,7 +775,9 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 2, opacity: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ 
+              duration: Math.min((60 / bpm) * 0.8, 0.8) // 动画时长为一拍的80%，最长0.8秒
+            }}
             className="text-[120px] md:text-[200px] font-bold bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(251,191,36,0.5)]"
           >
             {countdown}
