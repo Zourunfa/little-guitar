@@ -5,6 +5,9 @@
 
 **访问地址**: [https://littleguitar.pages.dev/#/blues](https://littleguitar.pages.dev/#/blues)
 
+todo:
+- [ ] 吉他纸板的缩放功能
+- [x] 倒计时更具节拍速度大小同步速度
 
 ---
 
