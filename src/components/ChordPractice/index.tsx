@@ -56,6 +56,8 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   const [isAudioBackingLoading, setIsAudioBackingLoading] = useState<boolean>(false); // 音频加载状态
   const [audioBackingError, setAudioBackingError] = useState<string>(''); // 音频加载错误
   const [isAudioBackingPlaying, setIsAudioBackingPlaying] = useState<boolean>(false); // 音频播放状态
+  const [isPreloading, setIsPreloading] = useState<boolean>(false); // 预加载状态
+  const [preloadedKeys, setPreloadedKeys] = useState<BackingTrackKey[]>([]); // 已预加载的调性
 
   // 初始化鼓组和伴奏
   useEffect(() => {
@@ -65,11 +67,27 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     accompanimentRef.current = new Accompaniment();
     accompanimentRef.current.init();
     
-    // 初始化音频伴奏
-    audioBackingTrackRef.current = new AudioBackingTrack();
-    audioBackingTrackRef.current.init().catch(err => {
-      console.error('音频伴奏初始化失败:', err);
-    });
+    // 初始化音频伴奏并预加载
+    const initAudioBacking = async () => {
+      audioBackingTrackRef.current = new AudioBackingTrack();
+      try {
+        await audioBackingTrackRef.current.init();
+        console.log('✅ 音频伴奏初始化成功');
+        
+        // 自动预加载所有可用音频
+        setIsPreloading(true);
+        await audioBackingTrackRef.current.preloadAllTracks();
+        const loaded = audioBackingTrackRef.current.getPreloadedKeys();
+        setPreloadedKeys(loaded);
+        console.log(`✅ 预加载完成: ${loaded.join(', ')}`);
+      } catch (err) {
+        console.error('❌ 音频伴奏初始化或预加载失败:', err);
+      } finally {
+        setIsPreloading(false);
+      }
+    };
+    
+    initAudioBacking();
 
     return () => {
       if (drumKitRef.current) {
@@ -226,7 +244,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     }
   };
 
-  // 加载音频伴奏
+  // 加载音频伴奏（使用预加载缓存）
   const loadAudioBacking = async (key: BackingTrackKey) => {
     if (!audioBackingTrackRef.current) return;
 
@@ -235,8 +253,20 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     setIsAudioBackingPlaying(false);
 
     try {
-      await audioBackingTrackRef.current.loadTrack(key);
-      setAudioBackingKey(key);
+      // 检查是否已预加载
+      if (audioBackingTrackRef.current.isTrackPreloaded(key)) {
+        console.log(`⚡ 使用预加载的 ${key} 调音频`);
+        await audioBackingTrackRef.current.loadTrack(key);
+        setAudioBackingKey(key);
+      } else {
+        // 如果未预加载，立即加载
+        console.log(`⏳ ${key} 调音频未预加载，正在加载...`);
+        await audioBackingTrackRef.current.loadTrack(key);
+        setAudioBackingKey(key);
+        // 更新预加载列表
+        const loaded = audioBackingTrackRef.current.getPreloadedKeys();
+        setPreloadedKeys(loaded);
+      }
       console.log(`✅ 成功加载 ${key} 调音频伴奏`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : '加载失败';
@@ -370,15 +400,19 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     }
   }, [audioBackingVolume]);
   
-  // 监听伴奏模式切换，自动预加载音频
+  // 监听伴奏模式切换，确保当前调性已加载
   useEffect(() => {
     if (accompanimentMode === 'audio' && audioBackingTrackRef.current) {
       const isAvailable = audioBackingTrackRef.current.isTrackAvailable(audioBackingKey);
-      const isLoaded = audioBackingTrackRef.current.isAudioLoaded();
+      const isPreloaded = audioBackingTrackRef.current.isTrackPreloaded(audioBackingKey);
       
-      // 如果调性可用但音频未加载，自动加载
-      if (isAvailable && !isLoaded) {
-        console.log(`🔄 切换到音频模式，预加载 ${audioBackingKey} 调伴奏...`);
+      // 如果调性可用但未预加载，立即加载
+      if (isAvailable && !isPreloaded) {
+        console.log(`🔄 切换到音频模式，${audioBackingKey} 调未预加载，正在加载...`);
+        loadAudioBacking(audioBackingKey);
+      } else if (isPreloaded) {
+        // 如果已预加载，直接设置为当前调性
+        console.log(`✅ ${audioBackingKey} 调已预加载，可直接使用`);
         loadAudioBacking(audioBackingKey);
       }
     }
@@ -549,18 +583,26 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
           >
             {/* 调性选择 */}
             <div>
-              <div className="text-xs md:text-sm text-gray-400 mb-2">选择调性:</div>
+              <div className="text-xs md:text-sm text-gray-400 mb-2">
+                选择调性:
+                {isPreloading && (
+                  <span className="ml-2 text-yellow-400 text-xs">
+                    ⏳ 正在预加载音频...
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-6 gap-2">
                 {(['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as BackingTrackKey[]).map(key => {
                   const isAvailable = audioBackingTrackRef.current?.isTrackAvailable(key);
                   const isCurrent = audioBackingKey === key;
+                  const isPreloadedKey = preloadedKeys.includes(key);
                   
                   return (
                     <motion.button
                       key={key}
                       whileHover={isAvailable ? { scale: 1.05 } : {}}
                       whileTap={isAvailable ? { scale: 0.95 } : {}}
-                      className={`px-2 py-2 rounded-lg text-sm font-medium transition-all ${
+                      className={`px-2 py-2 rounded-lg text-sm font-medium transition-all relative ${
                         isCurrent && isAvailable
                           ? 'bg-pink-500 text-white shadow-lg'
                           : isAvailable
@@ -571,12 +613,15 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                       disabled={!isAvailable || isAudioBackingLoading}
                     >
                       {key}
+                      {isPreloadedKey && isAvailable && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full" title="已预加载"></span>
+                      )}
                     </motion.button>
                   );
                 })}
               </div>
               <div className="text-xs text-gray-500 mt-2">
-                💡 提示: 灰色按钮表示该调暂未配置音频文件
+                💡 提示: 灰色按钮表示该调暂未配置音频文件，绿点表示已预加载
               </div>
             </div>
 

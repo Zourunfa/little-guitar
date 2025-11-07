@@ -24,6 +24,8 @@ class AudioBackingTrack {
   private currentBPM: number = 105;
   private volume: number = 0.7;
   private gainNode: GainNode | null = null;
+  private preloadedBuffers: Map<BackingTrackKey, AudioBuffer> = new Map(); // 预加载的音频缓存
+  private loadingKeys: Set<BackingTrackKey> = new Set(); // 正在加载的调性
 
   // 12个调的音频配置（目前只有A调，其他调可以后续添加）
   private backingTracks: Record<BackingTrackKey, BackingTrackConfig> = {
@@ -68,11 +70,23 @@ class AudioBackingTrack {
   }
 
   /**
-   * 加载指定调的音频文件
+   * 预加载指定调的音频文件（不会停止当前播放）
    */
-  async loadTrack(key: BackingTrackKey): Promise<void> {
+  async preloadTrack(key: BackingTrackKey): Promise<void> {
     if (!this.isInitialized || !this.audioContext) {
       throw new Error('AudioContext 未初始化');
+    }
+
+    // 如果已经预加载过，直接返回
+    if (this.preloadedBuffers.has(key)) {
+      console.log(`✅ ${key} 调音频已在缓存中`);
+      return;
+    }
+
+    // 如果正在加载，避免重复加载
+    if (this.loadingKeys.has(key)) {
+      console.log(`⏳ ${key} 调音频正在加载中...`);
+      return;
     }
 
     const trackConfig = this.backingTracks[key];
@@ -80,11 +94,10 @@ class AudioBackingTrack {
       throw new Error(`调 ${key} 的音频文件暂未配置`);
     }
 
-    try {
-      // 停止当前播放
-      this.stop();
+    this.loadingKeys.add(key);
 
-      console.log(`🎵 开始加载 ${key} 调伴奏: ${trackConfig.url}`);
+    try {
+      console.log(`🔄 开始预加载 ${key} 调伴奏: ${trackConfig.url}`);
 
       // 加载音频文件
       const response = await fetch(trackConfig.url);
@@ -99,13 +112,15 @@ class AudioBackingTrack {
 
       console.log(`📊 音频文件大小: ${(arrayBuffer.byteLength / 1024).toFixed(1)}KB`);
 
-      this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-      this.currentKey = key;
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      
+      // 存入缓存
+      this.preloadedBuffers.set(key, audioBuffer);
 
-      console.log(`✅ 成功加载 ${key} 调伴奏，时长: ${this.audioBuffer.duration.toFixed(2)}秒，采样率: ${this.audioBuffer.sampleRate}Hz`);
+      console.log(`✅ 成功预加载 ${key} 调伴奏，时长: ${audioBuffer.duration.toFixed(2)}秒，采样率: ${audioBuffer.sampleRate}Hz`);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : '未知错误';
-      console.error(`❌ 加载 ${key} 调伴奏失败:`, errorMessage);
+      console.error(`❌ 预加载 ${key} 调伴奏失败:`, errorMessage);
 
       // 提供更具体的错误信息
       if (errorMessage.includes('decodeAudioData')) {
@@ -115,7 +130,56 @@ class AudioBackingTrack {
       } else {
         throw new Error(`加载失败: ${errorMessage}`);
       }
+    } finally {
+      this.loadingKeys.delete(key);
     }
+  }
+
+  /**
+   * 加载指定调的音频文件（兼容旧接口，会使用预加载的缓存）
+   */
+  async loadTrack(key: BackingTrackKey): Promise<void> {
+    if (!this.isInitialized || !this.audioContext) {
+      throw new Error('AudioContext 未初始化');
+    }
+
+    const trackConfig = this.backingTracks[key];
+    if (!trackConfig.url) {
+      throw new Error(`调 ${key} 的音频文件暂未配置`);
+    }
+
+    // 停止当前播放
+    this.stop();
+
+    // 如果已经预加载，直接使用缓存
+    if (this.preloadedBuffers.has(key)) {
+      console.log(`⚡ 使用预加载的 ${key} 调音频缓存`);
+      this.audioBuffer = this.preloadedBuffers.get(key)!;
+      this.currentKey = key;
+      return;
+    }
+
+    // 否则立即加载
+    await this.preloadTrack(key);
+    this.audioBuffer = this.preloadedBuffers.get(key)!;
+    this.currentKey = key;
+  }
+
+  /**
+   * 预加载所有可用的音频文件
+   */
+  async preloadAllTracks(): Promise<void> {
+    const availableKeys = this.getAvailableKeys();
+    console.log(`🔄 开始预加载所有可用音频: ${availableKeys.join(', ')}`);
+    
+    const promises = availableKeys.map(key => 
+      this.preloadTrack(key).catch(err => {
+        console.warn(`⚠️ 预加载 ${key} 调失败:`, err);
+      })
+    );
+    
+    await Promise.all(promises);
+    console.log(`✅ 所有可用音频预加载完成`);
   }
 
   /**
@@ -272,10 +336,43 @@ class AudioBackingTrack {
   }
 
   /**
-   * 检查音频是否已加载
+   * 检查音频是否已加载（包括预加载缓存）
    */
   isAudioLoaded(): boolean {
-    return !!this.audioBuffer;
+    return !!this.audioBuffer || this.preloadedBuffers.has(this.currentKey);
+  }
+
+  /**
+   * 检查指定调的音频是否已预加载
+   */
+  isTrackPreloaded(key: BackingTrackKey): boolean {
+    return this.preloadedBuffers.has(key);
+  }
+
+  /**
+   * 检查指定调的音频是否正在加载
+   */
+  isTrackLoading(key: BackingTrackKey): boolean {
+    return this.loadingKeys.has(key);
+  }
+
+  /**
+   * 获取已预加载的调性列表
+   */
+  getPreloadedKeys(): BackingTrackKey[] {
+    return Array.from(this.preloadedBuffers.keys());
+  }
+
+  /**
+   * 获取预加载缓存大小（字节）
+   */
+  getPreloadedCacheSize(): number {
+    let totalSize = 0;
+    this.preloadedBuffers.forEach(buffer => {
+      // AudioBuffer 大小 = 采样数 * 声道数 * 每样本字节数(4字节float32)
+      totalSize += buffer.length * buffer.numberOfChannels * 4;
+    });
+    return totalSize;
   }
 
   /**
@@ -359,10 +456,20 @@ class AudioBackingTrack {
   }
 
   /**
+   * 清除预加载缓存
+   */
+  clearPreloadCache(): void {
+    this.preloadedBuffers.clear();
+    this.loadingKeys.clear();
+    console.log('🗑️ 已清除所有预加载缓存');
+  }
+
+  /**
    * 释放资源
    */
   dispose(): void {
     this.stop();
+    this.clearPreloadCache();
     if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close();
     }
