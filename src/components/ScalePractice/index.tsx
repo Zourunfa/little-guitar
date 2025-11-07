@@ -92,7 +92,7 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
           <h3 className="text-sm md:text-lg font-semibold">吉他指板</h3>
           <div className="text-[10px] md:text-xs text-gray-400">
             <span className="md:hidden">前15品可见 · 👉滑动查看更多</span>
-            <span className="hidden md:inline">前20品</span>
+            <span className="hidden md:inline">品位范围: {startFret}-{endFret} 品</span>
           </div>
         </div>
         {/* 移动端优化: 使用CSS缩放,确保前15品在屏幕内可见 */}
@@ -104,6 +104,28 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
               minWidth: '1000px'
             }}
           >
+            {/* 品位标记 - 顶部 */}
+            <div className="flex justify-between mb-4 px-2">
+              {Array.from({ length: displayFrets + 1 }).map((_, index) => {
+                const fret = startFret + index;
+                const isSpecialFret = [3, 5, 7, 9, 12, 15, 17, 19].includes(fret);
+                return (
+                  <div
+                    key={fret}
+                    className="flex-1 text-center"
+                    style={{ maxWidth: `${100 / (displayFrets + 1)}%` }}
+                  >
+                    <div className={`inline-block px-2 py-1 rounded text-sm font-bold ${
+                      isSpecialFret 
+                        ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/50' 
+                        : 'bg-gray-700/50 text-gray-300'
+                    }`}>
+                      {fret}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
             {/* 琴弦 */}
             <div className="space-y-8 md:space-y-10">
               {['E', 'B', 'G', 'D', 'A', 'E'].map((stringName, stringIndex) => (
@@ -117,15 +139,22 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
                     {/* 品丝 */}
                     {Array.from({ length: displayFrets + 1 }).map((_, index) => {
                       const fret = startFret + index;
+                      const isSpecialFret = [3, 5, 7, 9, 12, 15, 17, 19].includes(fret);
                       return (
                         <div
                           key={fret}
-                          className="absolute top-0 transform -translate-y-1/2 h-8 md:h-10 border-l border-gray-500"
+                          className={`absolute top-0 transform -translate-y-1/2 h-8 md:h-10 border-l ${
+                            isSpecialFret ? 'border-yellow-500/50 border-l-2' : 'border-gray-500'
+                          }`}
                           style={{ left: `${(index / displayFrets) * 100}%` }}
                         >
-                          {/* 品位标记 */}
+                          {/* 品位标记 - 底部 */}
                           {stringIndex === 5 && (
-                            <div className="absolute -bottom-5 md:-bottom-6 left-1/2 transform -translate-x-1/2 text-[10px] md:text-xs text-gray-500">
+                            <div className={`absolute -bottom-6 md:-bottom-8 left-1/2 transform -translate-x-1/2 ${
+                              isSpecialFret 
+                                ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/50 px-2 py-0.5 rounded text-xs md:text-sm font-bold' 
+                                : 'text-xs md:text-sm text-gray-400 font-medium'
+                            }`}>
                               {fret}
                             </div>
                           )}
