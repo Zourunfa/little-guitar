@@ -1,7 +1,7 @@
 # 🎸 Little Guitar
 
 **一款功能全面的blue即兴吉他学习与练习Web应用**
-
+视频地址：https://www.bilibili.com/video/BV1RC1GB6EUi/?spm_id_from=333.1387.homepage.video_card.click
 
 **访问地址**: [https://littleguitar.pages.dev/#/blues](https://littleguitar.pages.dev/#/blues)
 
