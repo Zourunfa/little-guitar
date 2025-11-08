@@ -456,6 +456,55 @@ class AudioBackingTrack {
   }
 
   /**
+   * 从本地文件加载音频
+   */
+  async loadFromFile(key: BackingTrackKey, file: File): Promise<void> {
+    if (!this.isInitialized || !this.audioContext) {
+      throw new Error('AudioContext 未初始化');
+    }
+
+    this.loadingKeys.add(key);
+
+    try {
+      console.log(`📁 开始从本地文件加载 ${key} 调: ${file.name}`);
+
+      // 读取文件为 ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
+      if (arrayBuffer.byteLength === 0) {
+        throw new Error('文件为空');
+      }
+
+      console.log(`📊 文件大小: ${(arrayBuffer.byteLength / 1024 / 1024).toFixed(2)}MB`);
+
+      // 解码音频数据
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      
+      // 存入缓存
+      this.preloadedBuffers.set(key, audioBuffer);
+      
+      // 更新配置（使用本地文件URL）
+      this.backingTracks[key] = {
+        ...this.backingTracks[key],
+        url: URL.createObjectURL(file),
+        originalBPM: 120, // 默认BPM，可以后续调整
+      };
+
+      console.log(`✅ 成功从本地文件加载 ${key} 调，时长: ${audioBuffer.duration.toFixed(2)}秒`);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : '未知错误';
+      console.error(`❌ 从本地文件加载 ${key} 调失败:`, errorMessage);
+
+      if (errorMessage.includes('decodeAudioData')) {
+        throw new Error(`音频文件格式不支持或文件损坏`);
+      } else {
+        throw new Error(`加载失败: ${errorMessage}`);
+      }
+    } finally {
+      this.loadingKeys.delete(key);
+    }
+  }
+
+  /**
    * 清除预加载缓存
    */
   clearPreloadCache(): void {
