@@ -24,6 +24,7 @@ export interface ScalePracticeProps {
  */
 export interface ChordPracticeProps {
   selectedKey: Note;
+  setSelectedKey: (key: Note) => void;
   bluesType: BluesType;
   progression: ProgressionType;
   setProgression: (progression: ProgressionType) => void;

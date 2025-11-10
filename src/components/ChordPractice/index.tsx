@@ -23,6 +23,7 @@ const BLUES_INTERVALS = {
  */
 const ChordPractice: React.FC<ChordPracticeProps> = ({
   selectedKey,
+  setSelectedKey,
   bluesType,
   progression,
   setProgression,
@@ -296,76 +297,101 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   
   // 获取项目中可用的音频文件列表 - 按调性分类
   const getAvailableAudioFiles = (key: BackingTrackKey) => {
-    // 定义所有调的音频文件配置
-    const audioFilesByKey: Record<BackingTrackKey, Array<{ name: string; url: string; bpm: number; description?: string }>> = {
+    // 定义所有调的音频文件配置（从对应文件夹中读取）
+    const audioFilesByKey: Record<BackingTrackKey, Array<{ 
+      name: string; 
+      url: string; 
+      bpm: number; 
+      description?: string;
+      startOffset?: number; // 音频起始偏移时间（秒）
+      loopStart?: number; // 循环起始点（秒）
+      loopEnd?: number; // 循环结束点（秒）
+    }>> = {
       'A': [
-        { name: 'A 调 Blues 伴奏', url: '/blues-mp3/A.mp3', bpm: 125, description: '经典 12 小节 Blues' },
-        // 可以添加更多 A 调的音频
-        // { name: 'A 调 Rock 伴奏', url: '/blues-mp3/A-rock.mp3', bpm: 140, description: '摇滚风格' },
+        { name: 'A 调 Blues 伴奏 2', url: `/blues-mp3/A/A2.mp4`, bpm: 105, description: 'Blues 风格变奏', startOffset: 6.5 },
+        { name: 'A 调 Blues 伴奏', url: `/blues-mp3/A/A.mp3`, bpm: 125, description: '经典 12 小节 Blues',startOffset: 5 },
+        // 可以添加更多 A 调的音频,只需放到 public/blues-mp3/A/ 文件夹下
       ],
       'A#': [
-        // { name: 'A# 调 Blues 伴奏', url: '/blues-mp3/A#.mp3', bpm: 120 },
+        // { name: 'A# 调 Blues 伴奏', url: '/blues-mp3/A#/A#.mp3', bpm: 120 },
       ],
       'B': [
-        // { name: 'B 调 Blues 伴奏', url: '/blues-mp3/B.mp3', bpm: 120 },
+        // 可以添加更多 B 调的音频
       ],
       'C': [
-        // { name: 'C 调 Blues 伴奏', url: '/blues-mp3/C.mp3', bpm: 120 },
-        // { name: 'C 调 Funk 伴奏', url: '/blues-mp3/C-funk.mp3', bpm: 110 },
+        // { name: 'C 调 Blues 伴奏', url: '/blues-mp3/C/C.mp3', bpm: 120 },
+        // { name: 'C 调 Funk 伴奏', url: '/blues-mp3/C/C-funk.mp3', bpm: 110 },
       ],
       'C#': [
-        // { name: 'C# 调 Blues 伴奏', url: '/blues-mp3/C#.mp3', bpm: 120 },
+        // { name: 'C# 调 Blues 伴奏', url: '/blues-mp3/C#/C#.mp3', bpm: 120 },
       ],
       'D': [
-        // { name: 'D 调 Blues 伴奏', url: '/blues-mp3/D.mp3', bpm: 120 },
+        // { name: 'D 调 Blues 伴奏', url: '/blues-mp3/D/D.mp3', bpm: 120 },
       ],
       'D#': [
-        // { name: 'D# 调 Blues 伴奏', url: '/blues-mp3/D#.mp3', bpm: 120 },
+        // { name: 'D# 调 Blues 伴奏', url: '/blues-mp3/D#/D#.mp3', bpm: 120 },
       ],
       'E': [
-        // { name: 'E 调 Blues 伴奏', url: '/blues-mp3/E.mp3', bpm: 120 },
+        { name: 'E 调 Blues 伴奏', url: `/blues-mp3/E/E1.mp4`, bpm: 90, description: '经典 12 小节 Blues', startOffset: 7.5 },
       ],
       'F': [
-        // { name: 'F 调 Blues 伴奏', url: '/blues-mp3/F.mp3', bpm: 120 },
+        // { name: 'F 调 Blues 伴奏', url: '/blues-mp3/F/F.mp3', bpm: 120 },
       ],
       'F#': [
-        // { name: 'F# 调 Blues 伴奏', url: '/blues-mp3/F#.mp3', bpm: 120 },
+        // { name: 'F# 调 Blues 伴奏', url: '/blues-mp3/F#/F#.mp3', bpm: 120 },
       ],
       'G': [
-        // { name: 'G 调 Blues 伴奏', url: '/blues-mp3/G.mp3', bpm: 120 },
+        // { name: 'G 调 Blues 伴奏', url: '/blues-mp3/G/G.mp3', bpm: 120 },
       ],
       'G#': [
-        // { name: 'G# 调 Blues 伴奏', url: '/blues-mp3/G#.mp3', bpm: 120 },
+        // { name: 'G# 调 Blues 伴奏', url: '/blues-mp3/G#/G#.mp3', bpm: 120 },
       ],
     };
-    
+
     // 返回指定调的音频文件列表
     return audioFilesByKey[key] || [];
   };
   
   // 从URL加载音频
-  const handleSelectAudioFromUrl = async (key: BackingTrackKey, url: string) => {
+  const handleSelectAudioFromUrl = async (
+    key: BackingTrackKey, 
+    url: string, 
+    bpm?: number,
+    startOffset?: number,
+    loopStart?: number,
+    loopEnd?: number
+  ) => {
     if (!audioBackingTrackRef.current) return;
-    
+
     setIsDrawerOpen(false);
     setIsAudioBackingLoading(true);
     setAudioBackingError('');
     setLoadingKeyName(`${key} 调`);
     setLoadingProgress(0);
-    
+
     try {
       console.log(`🔄 开始加载音频: ${url}`);
+      setLoadingProgress(10);
+
+      // 先更新该调的配置（URL、BPM 和其他参数）
+      audioBackingTrackRef.current.updateTrackConfig(key, {
+        url: url,
+        originalBPM: bpm || 120,
+        startOffset: startOffset,
+        loopStart: loopStart,
+        loopEnd: loopEnd,
+      });
       setLoadingProgress(30);
-      
-      // 使用 preloadTrack 方法加载
-      await audioBackingTrackRef.current.preloadTrack(key);
+
+      // 使用 loadTrack 方法加载（会设置 audioBuffer 和 currentKey）
+      await audioBackingTrackRef.current.loadTrack(key);
       setLoadingProgress(100);
-      
+
       // 更新预加载列表
       const loaded = audioBackingTrackRef.current.getPreloadedKeys();
       setPreloadedKeys(loaded);
       setAudioBackingKey(key);
-      
+
       console.log(`✅ 成功加载音频: ${url}`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : '加载失败';
@@ -376,6 +402,31 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       setLoadingKeyName('');
     }
   };
+
+  // 监听抽屉打开，如果有音频文件且未加载，自动选择第一个
+  useEffect(() => {
+    if (isDrawerOpen) {
+      const availableFiles = getAvailableAudioFiles(selectedKeyForDrawer);
+
+      // 如果有可用音频文件，且该调未预加载，自动加载第一个音频
+      if (availableFiles.length > 0 && !preloadedKeys.includes(selectedKeyForDrawer)) {
+        const firstAudio = availableFiles[0];
+        console.log(`💡 ${selectedKeyForDrawer} 调有可用音频，自动加载第一个: ${firstAudio.name}`);
+        // 延迟100ms自动加载，让用户看到抽屉内容
+        setTimeout(() => {
+          handleSelectAudioFromUrl(
+            selectedKeyForDrawer, 
+            firstAudio.url, 
+            firstAudio.bpm,
+            firstAudio.startOffset,
+            firstAudio.loopStart,
+            firstAudio.loopEnd
+          );
+        }, 100);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDrawerOpen, selectedKeyForDrawer]);
   
   // 监听isPlaying变化，启动倒计时或停止播放
   useEffect(() => {
@@ -526,24 +577,37 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     }
   }, [audioBackingVolume]);
   
-  // 监听伴奏模式切换，确保当前调性已加载
+  // 监听伴奏模式切换，自动加载默认音频
   useEffect(() => {
     if (accompanimentMode === 'audio' && audioBackingTrackRef.current) {
-      const isAvailable = audioBackingTrackRef.current.isTrackAvailable(audioBackingKey);
       const isPreloaded = audioBackingTrackRef.current.isTrackPreloaded(audioBackingKey);
       
-      // 如果调性可用但未预加载，立即加载
-      if (isAvailable && !isPreloaded) {
-        console.log(`🔄 切换到音频模式，${audioBackingKey} 调未预加载，正在加载...`);
-        loadAudioBacking(audioBackingKey);
-      } else if (isPreloaded) {
-        // 如果已预加载，直接设置为当前调性
+      // 如果当前调性未预加载，自动加载该调的第一个音频文件
+      if (!isPreloaded) {
+        const availableFiles = getAvailableAudioFiles(audioBackingKey);
+        
+        if (availableFiles.length > 0) {
+          const firstAudio = availableFiles[0];
+          console.log(`🔄 切换到音频模式，自动加载 ${audioBackingKey} 调的第一个音频: ${firstAudio.name}`);
+          
+          // 自动加载第一个音频
+          handleSelectAudioFromUrl(
+            audioBackingKey,
+            firstAudio.url,
+            firstAudio.bpm,
+            firstAudio.startOffset,
+            firstAudio.loopStart,
+            firstAudio.loopEnd
+          );
+        } else {
+          console.warn(`⚠️ ${audioBackingKey} 调暂无可用音频文件`);
+        }
+      } else {
         console.log(`✅ ${audioBackingKey} 调已预加载，可直接使用`);
-        loadAudioBacking(audioBackingKey);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accompanimentMode, audioBackingKey]);
+  }, [accompanimentMode]);
 
   return (
     <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 border border-white/10">
@@ -751,31 +815,36 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                 {(['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as BackingTrackKey[]).map(key => {
                   const isCurrent = audioBackingKey === key;
                   const isPreloadedKey = preloadedKeys.includes(key);
+                  const hasAudio = getAvailableAudioFiles(key).length > 0; // 检查是否有可用音频
                   
                   return (
                     <motion.button
                       key={key}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      whileHover={hasAudio ? { scale: 1.05 } : {}}
+                      whileTap={hasAudio ? { scale: 0.95 } : {}}
                       className={`w-full px-2 py-2 rounded-lg text-sm font-medium transition-all relative ${
-                        isCurrent
+                        !hasAudio
+                          ? 'bg-gray-700/30 text-gray-500 cursor-not-allowed opacity-50'
+                          : isCurrent
                           ? 'bg-pink-500 text-white shadow-lg'
                           : isPreloadedKey
                           ? 'bg-green-500/30 hover:bg-green-500/40 border border-green-500/50'
                           : 'bg-white/10 hover:bg-white/20'
                       }`}
                       onClick={() => {
-                        if (isPreloadedKey) {
-                          loadAudioBacking(key);
-                        } else {
+                        if (hasAudio) {
+                          // 同步更新和弦进行的调性
+                          setSelectedKey(key as Note);
+                          // 打开抽屉让用户选择音频
                           setSelectedKeyForDrawer(key);
                           setIsDrawerOpen(true);
                         }
                       }}
-                      disabled={isAudioBackingLoading}
+                      disabled={isAudioBackingLoading || !hasAudio}
+                      title={!hasAudio ? '暂无可用音频' : ''}
                     >
                       {key}
-                      {isPreloadedKey && (
+                      {isPreloadedKey && hasAudio && (
                         <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full" title="已加载"></span>
                       )}
                     </motion.button>
@@ -783,7 +852,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                 })}
               </div>
               <div className="text-xs text-gray-500 mt-2">
-                💡 提示: 点击调式按钮选择音频文件，绿点表示已加载
+                💡 提示: 点击调式按钮选择音频文件 | 绿点=已加载 | 灰色=暂无音频
               </div>
             </div>
 
@@ -1069,7 +1138,14 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className="w-full p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-purple-500/50 transition-all text-left"
-                        onClick={() => handleSelectAudioFromUrl(selectedKeyForDrawer, audio.url)}
+                        onClick={() => handleSelectAudioFromUrl(
+                          selectedKeyForDrawer, 
+                          audio.url, 
+                          audio.bpm,
+                          audio.startOffset,
+                          audio.loopStart,
+                          audio.loopEnd
+                        )}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">

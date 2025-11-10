@@ -277,6 +277,7 @@ const BluesPage: React.FC = () => {
               {practiceMode === 'chord' && (
                 <ChordPractice
                   selectedKey={selectedKey}
+                  setSelectedKey={setSelectedKey}
                   bluesType={bluesType}
                   progression={progression}
                   setProgression={setProgression}
