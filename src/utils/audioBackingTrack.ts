@@ -26,27 +26,7 @@ class AudioBackingTrack {
   private gainNode: GainNode | null = null;
   private preloadedBuffers: Map<BackingTrackKey, AudioBuffer> = new Map(); // 预加载的音频缓存
   private loadingKeys: Set<BackingTrackKey> = new Set(); // 正在加载的调性
-
-  // 12个调的音频配置（目前只有A调，其他调可以后续添加）
-  private backingTracks: Record<BackingTrackKey, BackingTrackConfig> = {
-    'A': { 
-      key: 'A', 
-      url: '/blues-mp3/A.mp3', 
-      originalBPM: 125,
-      startOffset: 5, // 跳过前5秒，从第一小节第一拍开始
-    },
-    'A#': { key: 'A#', url: '', originalBPM: 105 },
-    'B': { key: 'B', url: '', originalBPM: 105 },
-    'C': { key: 'C', url: '', originalBPM: 105 },
-    'C#': { key: 'C#', url: '', originalBPM: 105 },
-    'D': { key: 'D', url: '', originalBPM: 105 },
-    'D#': { key: 'D#', url: '', originalBPM: 105 },
-    'E': { key: 'E', url: '', originalBPM: 105 },
-    'F': { key: 'F', url: '', originalBPM: 105 },
-    'F#': { key: 'F#', url: '', originalBPM: 105 },
-    'G': { key: 'G', url: '', originalBPM: 105 },
-    'G#': { key: 'G#', url: '', originalBPM: 105 },
-  };
+  private trackConfigs: Map<BackingTrackKey, BackingTrackConfig> = new Map(); // 动态配置存储
 
   /**
    * 初始化音频上下文
@@ -71,8 +51,10 @@ class AudioBackingTrack {
 
   /**
    * 预加载指定调的音频文件（不会停止当前播放）
+   * @param key - 调性
+   * @param url - 音频文件 URL（可选，如果已通过 updateTrackConfig 设置则不需要）
    */
-  async preloadTrack(key: BackingTrackKey): Promise<void> {
+  async preloadTrack(key: BackingTrackKey, url?: string): Promise<void> {
     if (!this.isInitialized || !this.audioContext) {
       throw new Error('AudioContext 未初始化');
     }
@@ -89,18 +71,21 @@ class AudioBackingTrack {
       return;
     }
 
-    const trackConfig = this.backingTracks[key];
-    if (!trackConfig.url) {
+    // 获取配置或使用传入的 URL
+    const trackConfig = this.trackConfigs.get(key);
+    const audioUrl = url || trackConfig?.url;
+    
+    if (!audioUrl) {
       throw new Error(`调 ${key} 的音频文件暂未配置`);
     }
 
     this.loadingKeys.add(key);
 
     try {
-      console.log(`🔄 开始预加载 ${key} 调伴奏: ${trackConfig.url}`);
+      console.log(`🔄 开始预加载 ${key} 调伴奏: ${audioUrl}`);
 
       // 加载音频文件
-      const response = await fetch(trackConfig.url);
+      const response = await fetch(audioUrl);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -126,7 +111,7 @@ class AudioBackingTrack {
       if (errorMessage.includes('decodeAudioData')) {
         throw new Error(`音频文件格式错误或文件损坏: ${errorMessage}`);
       } else if (errorMessage.includes('404')) {
-        throw new Error(`音频文件不存在: ${trackConfig.url}`);
+        throw new Error(`音频文件不存在: ${audioUrl}`);
       } else {
         throw new Error(`加载失败: ${errorMessage}`);
       }
@@ -138,14 +123,9 @@ class AudioBackingTrack {
   /**
    * 加载指定调的音频文件（兼容旧接口，会使用预加载的缓存）
    */
-  async loadTrack(key: BackingTrackKey): Promise<void> {
+  async loadTrack(key: BackingTrackKey, url?: string): Promise<void> {
     if (!this.isInitialized || !this.audioContext) {
       throw new Error('AudioContext 未初始化');
-    }
-
-    const trackConfig = this.backingTracks[key];
-    if (!trackConfig.url) {
-      throw new Error(`调 ${key} 的音频文件暂未配置`);
     }
 
     // 停止当前播放
@@ -160,7 +140,7 @@ class AudioBackingTrack {
     }
 
     // 否则立即加载
-    await this.preloadTrack(key);
+    await this.preloadTrack(key, url);
     this.audioBuffer = this.preloadedBuffers.get(key)!;
     this.currentKey = key;
   }
@@ -206,8 +186,9 @@ class AudioBackingTrack {
       this.sourceNode.buffer = this.audioBuffer;
 
       // 计算播放速率（基于原始BPM和目标BPM）
-      const trackConfig = this.backingTracks[this.currentKey];
-      const playbackRate = targetBPM / trackConfig.originalBPM;
+      const trackConfig = this.trackConfigs.get(this.currentKey);
+      const originalBPM = trackConfig?.originalBPM || 120; // 默认 120 BPM
+      const playbackRate = targetBPM / originalBPM;
 
       // 限制播放速率范围（0.5x - 2.0x）
       const clampedRate = Math.max(0.5, Math.min(2.0, playbackRate));
@@ -217,9 +198,9 @@ class AudioBackingTrack {
       this.sourceNode.connect(this.gainNode);
 
       // 获取起始偏移和循环点配置
-      const startOffset = trackConfig.startOffset || 0;
-      const loopStart = trackConfig.loopStart || startOffset;
-      const loopEnd = trackConfig.loopEnd || this.audioBuffer.duration;
+      const startOffset = trackConfig?.startOffset || 0;
+      const loopStart = trackConfig?.loopStart || startOffset;
+      const loopEnd = trackConfig?.loopEnd || this.audioBuffer.duration;
 
       // 设置循环播放
       this.sourceNode.loop = true;
@@ -279,8 +260,9 @@ class AudioBackingTrack {
     }
 
     try {
-      const trackConfig = this.backingTracks[this.currentKey];
-      const playbackRate = targetBPM / trackConfig.originalBPM;
+      const trackConfig = this.trackConfigs.get(this.currentKey);
+      const originalBPM = trackConfig?.originalBPM || 120; // 默认 120 BPM
+      const playbackRate = targetBPM / originalBPM;
 
       // 限制播放速率范围（0.5x - 2.0x）
       const clampedRate = Math.max(0.5, Math.min(2.0, playbackRate));
@@ -332,7 +314,8 @@ class AudioBackingTrack {
    * 检查指定调是否可用
    */
   isTrackAvailable(key: BackingTrackKey): boolean {
-    return !!this.backingTracks[key].url;
+    const config = this.trackConfigs.get(key);
+    return !!config?.url;
   }
 
   /**
@@ -379,9 +362,13 @@ class AudioBackingTrack {
    * 获取所有可用的调
    */
   getAvailableKeys(): BackingTrackKey[] {
-    return Object.keys(this.backingTracks).filter(key =>
-      this.backingTracks[key as BackingTrackKey].url
-    ) as BackingTrackKey[];
+    const keys: BackingTrackKey[] = [];
+    this.trackConfigs.forEach((config, key) => {
+      if (config.url) {
+        keys.push(key);
+      }
+    });
+    return keys;
   }
 
   /**
@@ -390,14 +377,13 @@ class AudioBackingTrack {
    * @param config - 部分配置（可以只更新某些字段）
    */
   updateTrackConfig(key: BackingTrackKey, config: Partial<Omit<BackingTrackConfig, 'key'>>): void {
-    if (!this.backingTracks[key]) {
-      throw new Error(`调 ${key} 不存在`);
-    }
+    const existingConfig = this.trackConfigs.get(key) || { key, url: '', originalBPM: 120 };
     
-    this.backingTracks[key] = {
-      ...this.backingTracks[key],
-      ...config
-    };
+    this.trackConfigs.set(key, {
+      ...existingConfig,
+      ...config,
+      key, // 确保 key 字段正确
+    });
     
     console.log(`✅ 已更新 ${key} 调配置:`, config);
   }
@@ -406,7 +392,8 @@ class AudioBackingTrack {
    * 获取指定调的配置
    */
   getTrackConfig(key: BackingTrackKey): BackingTrackConfig {
-    return { ...this.backingTracks[key] };
+    const config = this.trackConfigs.get(key);
+    return config ? { ...config } : { key, url: '', originalBPM: 120 };
   }
 
   /**
@@ -452,6 +439,56 @@ class AudioBackingTrack {
     if (this.audioContext && this.audioContext.state === 'suspended') {
       await this.audioContext.resume();
       console.log('🎵 AudioContext 已恢复');
+    }
+  }
+
+  /**
+   * 从本地文件加载音频
+   */
+  async loadFromFile(key: BackingTrackKey, file: File): Promise<void> {
+    if (!this.isInitialized || !this.audioContext) {
+      throw new Error('AudioContext 未初始化');
+    }
+
+    this.loadingKeys.add(key);
+
+    try {
+      console.log(`📁 开始从本地文件加载 ${key} 调: ${file.name}`);
+
+      // 读取文件为 ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
+      if (arrayBuffer.byteLength === 0) {
+        throw new Error('文件为空');
+      }
+
+      console.log(`📊 文件大小: ${(arrayBuffer.byteLength / 1024 / 1024).toFixed(2)}MB`);
+
+      // 解码音频数据
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      
+      // 存入缓存
+      this.preloadedBuffers.set(key, audioBuffer);
+      
+      // 更新配置（使用本地文件URL）
+      const existingConfig = this.trackConfigs.get(key) || { key, url: '', originalBPM: 120 };
+      this.trackConfigs.set(key, {
+        ...existingConfig,
+        url: URL.createObjectURL(file),
+        originalBPM: 120, // 默认BPM，可以后续调整
+      });
+
+      console.log(`✅ 成功从本地文件加载 ${key} 调，时长: ${audioBuffer.duration.toFixed(2)}秒`);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : '未知错误';
+      console.error(`❌ 从本地文件加载 ${key} 调失败:`, errorMessage);
+
+      if (errorMessage.includes('decodeAudioData')) {
+        throw new Error(`音频文件格式不支持或文件损坏`);
+      } else {
+        throw new Error(`加载失败: ${errorMessage}`);
+      }
+    } finally {
+      this.loadingKeys.delete(key);
     }
   }
 
