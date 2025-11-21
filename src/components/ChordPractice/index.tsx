@@ -79,17 +79,39 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       try {
         await audioBackingTrackRef.current.init();
         console.log('✅ 音频伴奏初始化成功');
-        
-        // 自动预加载所有可用音频
+
+        // 智能预加载：优先当前调 + 常用调(A, E, G)
         setIsPreloading(true);
         setLoadingKeyName('预加载音频');
         setLoadingProgress(0);
-        
-        await audioBackingTrackRef.current.preloadAllTracks();
+
+        // 设置缓存大小限制（30MB）
+        audioBackingTrackRef.current.setMaxCacheSize(30);
+
+        // 智能预加载所有音频，带实时进度反馈和优先级控制
+        const priorityKeys: BackingTrackKey[] = [selectedKey, 'A', 'E', 'G'];
+        await audioBackingTrackRef.current.preloadAllTracks(
+          (progress, currentKey) => {
+            setLoadingProgress(progress);
+            if (currentKey) {
+              setLoadingKeyName(`${currentKey} 调`);
+            }
+
+            // 实时更新已加载的调性列表
+            const loaded = audioBackingTrackRef.current!.getPreloadedKeys();
+            setPreloadedKeys(loaded);
+          },
+          priorityKeys,
+          2 // 并发加载2个文件
+        );
+
         const loaded = audioBackingTrackRef.current.getPreloadedKeys();
         setPreloadedKeys(loaded);
-        setLoadingProgress(100);
+        
+        // 显示缓存统计
+        const stats = audioBackingTrackRef.current.getCacheStats();
         console.log(`✅ 预加载完成: ${loaded.join(', ')}`);
+        console.log(`📊 缓存: ${stats.itemCount}个文件, ${stats.totalSizeMB.toFixed(2)}MB, 使用率${(stats.usage * 100).toFixed(1)}%`);
       } catch (err) {
         console.error('❌ 音频伴奏初始化或预加载失败:', err);
       } finally {
@@ -754,7 +776,119 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
               transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
             />
           </div>
-          <p className="text-sm text-gray-300 mt-2">⚠️ 请等待音频加载完成后再播放</p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-sm text-gray-300">⚠️ 请等待音频加载完成后再播放</p>
+            {isPreloading && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-sm text-red-400 border border-red-500/30"
+                onClick={() => {
+                  if (audioBackingTrackRef.current) {
+                    audioBackingTrackRef.current.cancelPreload();
+                    setIsPreloading(false);
+                    setLoadingKeyName('');
+                  }
+                }}
+              >
+                取消预加载
+              </motion.button>
+            )}
+          </div>
+        </motion.div>
+      )}
+
+      {/* 缓存统计信息 */}
+      {accompanimentMode === 'audio' && audioBackingTrackRef.current && preloadedKeys.length > 0 && !isPreloading && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-xl p-4 border border-green-500/30"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold text-green-400">
+              💾 音频缓存
+            </h3>
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-gray-300">
+                {(() => {
+                  const stats = audioBackingTrackRef.current?.getCacheStats();
+                  return stats ? `${stats.itemCount}个 | ${stats.totalSizeMB.toFixed(1)}MB / ${stats.maxSizeMB}MB` : '';
+                })()}
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-2 py-1 bg-red-500/20 hover:bg-red-500/30 rounded text-xs text-red-400 border border-red-500/30"
+                onClick={() => {
+                  if (audioBackingTrackRef.current) {
+                    audioBackingTrackRef.current.clearPreloadCache();
+                    setPreloadedKeys([]);
+                  }
+                }}
+              >
+                清空
+              </motion.button>
+            </div>
+          </div>
+          
+          {/* 缓存使用率进度条 */}
+          {(() => {
+            const stats = audioBackingTrackRef.current?.getCacheStats();
+            if (!stats) return null;
+            
+            return (
+              <div className="mb-3">
+                <div className="relative h-2 bg-black/50 rounded-full overflow-hidden">
+                  <div 
+                    className={`absolute inset-y-0 left-0 rounded-full transition-all ${
+                      stats.usage > 0.9 ? 'bg-red-500' : stats.usage > 0.7 ? 'bg-yellow-500' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(stats.usage * 100, 100)}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>{(stats.usage * 100).toFixed(1)}% 使用</span>
+                  <span>{stats.usage > 0.8 && '⚠️ 接近限制'}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 缓存项列表 */}
+          <div className="grid grid-cols-6 gap-2">
+            {(['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as BackingTrackKey[]).map(key => {
+              const isPreloadedKey = preloadedKeys.includes(key);
+              const isCurrent = audioBackingKey === key;
+              const stats = audioBackingTrackRef.current?.getCacheStats();
+              const item = stats?.items.find(i => i.key === key);
+              
+              return (
+                <div
+                  key={key}
+                  className={`relative px-2 py-1 rounded text-center text-sm font-medium transition-all ${
+                    isCurrent && isPreloadedKey
+                      ? 'bg-green-500 text-white shadow-lg'
+                      : isPreloadedKey
+                      ? 'bg-green-500/30 text-green-400 border border-green-500/50'
+                      : 'bg-gray-700/30 text-gray-500'
+                  }`}
+                  title={isPreloadedKey && item ? `访问${item.accessCount}次 | ${item.sizeMB.toFixed(1)}MB` : '未缓存'}
+                >
+                  {key}
+                  {isPreloadedKey && item && item.accessCount > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                      {item.accessCount}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-gray-400 mt-3">
+            <span>🟢 已缓存 | ⚫ 未缓存 | 🔵 访问次数</span>
+          </div>
         </motion.div>
       )}
 
