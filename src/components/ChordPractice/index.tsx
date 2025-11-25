@@ -330,8 +330,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       loopEnd?: number; // 循环结束点（秒）
     }>> = {
       'A': [
-        { name: 'A 调 Blues 伴奏 2', url: `/blues-mp3/A/A2.mp4`, bpm: 105, description: 'Blues 风格变奏', startOffset: 6.5 },
-        { name: 'A 调 Blues 伴奏', url: `/blues-mp3/A/A.mp3`, bpm: 125, description: '经典 12 小节 Blues',startOffset: 5 },
+        { name: 'A 调 Blues 伴奏 2', url: `/blues-mp3/A/A2.mp4`, bpm: 105, description: 'Blues 风格变奏', startOffset: 6.5, loopEnd: 62 },
         // 可以添加更多 A 调的音频,只需放到 public/blues-mp3/A/ 文件夹下
       ],
       'A#': [
@@ -354,7 +353,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         // { name: 'D# 调 Blues 伴奏', url: '/blues-mp3/D#/D#.mp3', bpm: 120 },
       ],
       'E': [
-        { name: 'E 调 Blues 伴奏', url: `/blues-mp3/E/E1.mp4`, bpm: 90, description: '经典 12 小节 Blues', startOffset: 7.5 },
+        { name: 'E 调 Blues 伴奏', url: `/blues-mp3/E/E1.mp4`, bpm: 90, description: '经典 12 小节 Blues', startOffset: 7.5 ,loopEnd: 72},
       ],
       'F': [
         // { name: 'F 调 Blues 伴奏', url: '/blues-mp3/F/F.mp3', bpm: 120 },
