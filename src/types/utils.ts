@@ -9,9 +9,9 @@ export interface IDrumKit {
   playKick(time?: number, volume?: number): void;
   playSnare(time?: number, volume?: number): void;
   playHiHat(time?: number, volume?: number): void;
-  playBluesShuffle(beatNumber: number, volume?: number): void;
-  playStandardBeat(beatNumber: number, volume?: number): void;
-  playSlowBlues(beatNumber: number, volume?: number): void;
+  playBluesShuffle(beatNumber: number, volume?: number, beatsPerBar?: number): void;
+  playStandardBeat(beatNumber: number, volume?: number, beatsPerBar?: number): void;
+  playSlowBlues(beatNumber: number, volume?: number, beatsPerBar?: number): void;
   dispose(): void;
 }
 

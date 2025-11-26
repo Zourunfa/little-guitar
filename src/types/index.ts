@@ -11,7 +11,7 @@ export type BluesType = 'minor' | 'major' | 'mixolydian';
 /**
  * 和弦进行类型
  */
-export type ProgressionType = '12bar' | 'quick';
+export type ProgressionType = '12bar' | 'quick' | '12bar-12beats' | 'custom';
 
 /**
  * 练习模式类型
@@ -35,6 +35,14 @@ export interface ChordSection {
   chord: ChordDegree;
   bars: number;
   name: string;
+}
+
+/**
+ * 和弦进行配置（支持自定义拍号）
+ */
+export interface ProgressionConfig {
+  beatsPerBar: number; // 每小节拍数
+  beatSubdivision: number; // 每拍细分数（4=四分音符，8=八分音符，12=三连音）
 }
 
 /**
@@ -70,7 +78,10 @@ export interface RhythmPattern {
  * 和弦进行配置
  */
 export interface ChordProgressions {
-  [key: string]: ChordSection[];
+  [key: string]: {
+    sections: ChordSection[];
+    config?: ProgressionConfig; // 可选的节拍配置
+  };
 }
 
 /**

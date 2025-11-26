@@ -150,11 +150,16 @@ class DrumKit implements IDrumKit {
 
   /**
    * 播放 Blues Shuffle 节奏型
-   * @param beatNumber - 当前拍号 (1-4)
+   * @param beatNumber - 当前拍号
    * @param volume - 整体音量
+   * @param beatsPerBar - 每小节拍数（默认4，保留供未来扩展）
    */
-  playBluesShuffle(beatNumber: number, volume: number = 0.7): void {
-    switch (beatNumber) {
+  playBluesShuffle(beatNumber: number, volume: number = 0.7, beatsPerBar: number = 4): void {
+    // 将拍号映射到4拍循环模式 (1,2,3,4,1,2,3,4...)
+    // beatsPerBar 参数保留供未来支持更复杂的节奏模式
+    const normalizedBeat = ((beatNumber - 1) % 4) + 1;
+      
+    switch (normalizedBeat) {
       case 1: // 第一拍: 底鼓 + 踩镲
         this.playKick(0, volume * 0.9);
         this.playHiHat(0, volume * 0.4);
@@ -172,15 +177,23 @@ class DrumKit implements IDrumKit {
         this.playHiHat(0, volume * 0.4);
         break;
     }
+      
+    // 消除 TypeScript 未使用参数警告
+    void beatsPerBar;
   }
 
   /**
    * 播放标准四四拍节奏
-   * @param beatNumber - 当前拍号 (1-4)
+   * @param beatNumber - 当前拍号
    * @param volume - 整体音量
+   * @param beatsPerBar - 每小节拍数（默认4，保留供未来扩展）
    */
-  playStandardBeat(beatNumber: number, volume: number = 0.7): void {
-    switch (beatNumber) {
+  playStandardBeat(beatNumber: number, volume: number = 0.7, beatsPerBar: number = 4): void {
+    // 将拍号映射到4拍循环模式
+    // beatsPerBar 参数保留供未来支持更复杂的节奏模式
+    const normalizedBeat = ((beatNumber - 1) % 4) + 1;
+      
+    switch (normalizedBeat) {
       case 1: // 第一拍: 底鼓 + 踩镲(重音)
         this.playKick(0, volume * 0.9);
         this.playHiHat(0, volume * 0.5);
@@ -198,15 +211,23 @@ class DrumKit implements IDrumKit {
         this.playHiHat(0, volume * 0.3);
         break;
     }
+      
+    // 消除 TypeScript 未使用参数警告
+    void beatsPerBar;
   }
 
   /**
    * 播放慢速 Blues 节奏
-   * @param beatNumber - 当前拍号 (1-4)
+   * @param beatNumber - 当前拍号
    * @param volume - 整体音量
+   * @param beatsPerBar - 每小节拍数（默认4，保留供未来扩展）
    */
-  playSlowBlues(beatNumber: number, volume: number = 0.7): void {
-    switch (beatNumber) {
+  playSlowBlues(beatNumber: number, volume: number = 0.7, beatsPerBar: number = 4): void {
+    // 将拍号映射到4拍循环模式
+    // beatsPerBar 参数保留供未来支持更复杂的节奏模式
+    const normalizedBeat = ((beatNumber - 1) % 4) + 1;
+      
+    switch (normalizedBeat) {
       case 1: // 第一拍: 底鼓 + 开镲
         this.playKick(0, volume * 0.9);
         this.playHiHat(0, volume * 0.4, true); // 开镲
@@ -222,6 +243,9 @@ class DrumKit implements IDrumKit {
         this.playHiHat(0, volume * 0.3);
         break;
     }
+      
+    // 消除 TypeScript 未使用参数警告
+    void beatsPerBar;
   }
 
   /**

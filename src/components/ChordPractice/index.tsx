@@ -33,12 +33,14 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   currentChordIndex,
   setCurrentChordIndex,
   bpm,
-  setBpm
+  setBpm,
+  customConfig,
+  setCustomConfig
 }) => {
   const drumKitRef = useRef<DrumKit | null>(null);
   const accompanimentRef = useRef<Accompaniment | null>(null);
   const audioBackingTrackRef = useRef<AudioBackingTrack | null>(null);
-  const [currentBeat, setCurrentBeat] = useState<number>(1); // 当前拍号 (1-4)
+  const [currentBeat, setCurrentBeat] = useState<number>(1); // 当前拍号 (1-4 或更多)
   const [drumPattern, setDrumPattern] = useState<DrumPatternType>('shuffle'); // 鼓声节奏型
   const [drumVolume, setDrumVolume] = useState<number>(0.7); // 鼓声音量
   const [isDrumEnabled, setIsDrumEnabled] = useState<boolean>(true); // 是否启用鼓声
@@ -64,6 +66,10 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   const [loadingKeyName, setLoadingKeyName] = useState<string>(''); // 正在加载的调名
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false); // 抽屉是否打开
   const [selectedKeyForDrawer, setSelectedKeyForDrawer] = useState<BackingTrackKey>('A'); // 当前选择的调
+
+  // 获取当前进行的配置
+  const currentProgressionConfig = chordProgressions[progression]?.config || { beatsPerBar: 4, beatSubdivision: 4 };
+  const beatsPerBar = currentProgressionConfig.beatsPerBar;
 
   // 初始化鼓组和伴奏
   useEffect(() => {
@@ -153,7 +159,10 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   // 展开和弦进行为小节列表
   const expandProgression = () => {
     const expanded: Array<{ chord: string; degree: string; name: string }> = [];
-    chordProgressions[progression].forEach(section => {
+    const progressionData = chordProgressions[progression];
+    if (!progressionData) return expanded;
+    
+    progressionData.sections.forEach(section => {
       for (let i = 0; i < section.bars; i++) {
         expanded.push({
           chord: getChordName(section.chord),
@@ -235,16 +244,16 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
     switch (drumPattern) {
       case 'shuffle':
-        drumKitRef.current.playBluesShuffle(beatNumber, drumVolume);
+        drumKitRef.current.playBluesShuffle(beatNumber, drumVolume, beatsPerBar);
         break;
       case 'standard':
-        drumKitRef.current.playStandardBeat(beatNumber, drumVolume);
+        drumKitRef.current.playStandardBeat(beatNumber, drumVolume, beatsPerBar);
         break;
       case 'slow':
-        drumKitRef.current.playSlowBlues(beatNumber, drumVolume);
+        drumKitRef.current.playSlowBlues(beatNumber, drumVolume, beatsPerBar);
         break;
       default:
-        drumKitRef.current.playBluesShuffle(beatNumber, drumVolume);
+        drumKitRef.current.playBluesShuffle(beatNumber, drumVolume, beatsPerBar);
     }
   };
 
@@ -329,6 +338,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       loopStart?: number; // 循环起始点（秒）
       loopEnd?: number; // 循环结束点（秒）
     }>> = {
+      //startOffset: 音频文件循环开始节点 loopEnd: 音频文件循环结束节点 保证每一次循环都遵循12小节循环
       'A': [
         { name: 'A 调 Blues 伴奏 2', url: `/blues-mp3/A/A2.mp4`, bpm: 105, description: 'Blues 风格变奏', startOffset: 6.5, loopEnd: 62 },
         // 可以添加更多 A 调的音频,只需放到 public/blues-mp3/A/ 文件夹下
@@ -555,7 +565,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     setCurrentBeat(beatCounter);
 
     const beatInterval = setInterval(() => {
-      beatCounter = (beatCounter % 4) + 1; // 循环 1-4 拑
+      beatCounter = (beatCounter % beatsPerBar) + 1; // 循环 1-beatsPerBar
       // 只在合成伴奏模式下播放鼓声和伴奏
       if (accompanimentMode === 'synthesized') {
         playDrum(beatCounter);
@@ -567,13 +577,12 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
     return () => clearInterval(beatInterval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isActuallyPlaying, bpm, drumPattern, drumVolume, isDrumEnabled, isGuitarEnabled, isHarmonicaEnabled, guitarVolume, harmonicaVolume, currentChordIndex, accompanimentMode]);
+  }, [isActuallyPlaying, bpm, drumPattern, drumVolume, isDrumEnabled, isGuitarEnabled, isHarmonicaEnabled, guitarVolume, harmonicaVolume, currentChordIndex, accompanimentMode, beatsPerBar]);
 
-  // 小节控制 - 每4拍切换一次和弦
+  // 小节控制 - 根据 beatsPerBar 切换和弦
   useEffect(() => {
     if (!isActuallyPlaying) return;
 
-    const beatsPerBar = 4;
     const msPerBeat = (60 / bpm) * 1000;
     const msPerBar = msPerBeat * beatsPerBar;
 
@@ -582,7 +591,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     }, msPerBar);
 
     return () => clearInterval(barInterval);
-  }, [isActuallyPlaying, bpm, expandedChords.length, setCurrentChordIndex]);
+  }, [isActuallyPlaying, bpm, expandedChords.length, setCurrentChordIndex, beatsPerBar]);
   
   // 监听BPM变化，实时调整音频伴奏速度
   useEffect(() => {
@@ -637,7 +646,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       {/* 和弦进行选择 */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-3">选择进行类型</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -650,6 +659,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
           >
             <div className="font-bold text-lg">标准 12 小节 Blues</div>
             <div className="text-sm text-gray-300">经典 Blues 进行</div>
+            <div className="text-xs text-gray-400 mt-1">4/4 拍</div>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -663,9 +673,127 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
           >
             <div className="font-bold text-lg">快速 6 小节 Blues</div>
             <div className="text-sm text-gray-300">适合快速练习</div>
+            <div className="text-xs text-gray-400 mt-1">4/4 拍</div>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`p-4 rounded-xl text-left transition-all ${
+              progression === '12bar-12beats'
+                ? 'bg-gradient-to-r from-purple-500 to-blue-500 shadow-lg'
+                : 'bg-white/10 hover:bg-white/20'
+            }`}
+            onClick={() => setProgression('12bar-12beats')}
+          >
+            <div className="font-bold text-lg">12 拍 Blues</div>
+            <div className="text-sm text-gray-300">12/8 拍号</div>
+            <div className="text-xs text-gray-400 mt-1">八分音符</div>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`p-4 rounded-xl text-left transition-all ${
+              progression === 'custom'
+                ? 'bg-gradient-to-r from-purple-500 to-blue-500 shadow-lg'
+                : 'bg-white/10 hover:bg-white/20'
+            }`}
+            onClick={() => setProgression('custom')}
+          >
+            <div className="font-bold text-lg">自定义设置</div>
+            <div className="text-sm text-gray-300">自由配置拍号</div>
+            <div className="text-xs text-gray-400 mt-1">
+              {customConfig ? `${customConfig.beatsPerBar}/${customConfig.beatSubdivision}` : '点击设置'}
+            </div>
           </motion.button>
         </div>
       </div>
+
+      {/* 自定义配置面板 */}
+      {progression === 'custom' && setCustomConfig && customConfig && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="mb-6 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-4 border border-yellow-500/30"
+        >
+          <h3 className="text-lg font-semibold mb-4">⚙️ 自定义拍号设置</h3>
+          
+          {/* 每小节拍数 */}
+          <div className="mb-4">
+            <label className="text-sm font-medium mb-2 block">
+              每小节拍数: <span className="text-yellow-400 text-xl font-bold">{customConfig.beatsPerBar}</span> 拍
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="3"
+                max="16"
+                step="1"
+                value={customConfig.beatsPerBar}
+                onChange={(e) => setCustomConfig({
+                  ...customConfig,
+                  beatsPerBar: parseInt(e.target.value)
+                })}
+                className="flex-1 h-3 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #fbbf24 0%, #fbbf24 ${((customConfig.beatsPerBar - 3) / (16 - 3)) * 100}%, rgba(255,255,255,0.2) ${((customConfig.beatsPerBar - 3) / (16 - 3)) * 100}%, rgba(255,255,255,0.2) 100%)`
+                }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>3 拍</span>
+              <span>8 拍</span>
+              <span>16 拍</span>
+            </div>
+          </div>
+
+          {/* 音符细分 */}
+          <div className="mb-4">
+            <label className="text-sm font-medium mb-2 block">
+              音符细分: <span className="text-yellow-400 text-xl font-bold">{customConfig.beatSubdivision === 4 ? '四分音符' : customConfig.beatSubdivision === 8 ? '八分音符' : '十六分音符'}</span>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: 4, name: '四分音符', symbol: '♪' },
+                { value: 8, name: '八分音符', symbol: '♫' },
+                { value: 16, name: '十六分音符', symbol: '♬' }
+              ].map(option => (
+                <motion.button
+                  key={option.value}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`p-3 rounded-lg text-center transition-all ${
+                    customConfig.beatSubdivision === option.value
+                      ? 'bg-yellow-500 text-black shadow-lg'
+                      : 'bg-white/10 hover:bg-white/20'
+                  }`}
+                  onClick={() => setCustomConfig({
+                    ...customConfig,
+                    beatSubdivision: option.value
+                  })}
+                >
+                  <div className="text-2xl mb-1">{option.symbol}</div>
+                  <div className="text-xs font-medium">{option.name}</div>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          {/* 拍号预览 */}
+          <div className="bg-black/30 p-3 rounded-lg">
+            <div className="text-xs text-gray-400 mb-1">当前拍号:</div>
+            <div className="text-3xl font-bold text-center text-yellow-400">
+              {customConfig.beatsPerBar}/{customConfig.beatSubdivision}
+            </div>
+            <div className="text-xs text-gray-400 text-center mt-2">
+              {customConfig.beatsPerBar === 12 && customConfig.beatSubdivision === 8 && '经典 12/8 Blues 节奏'}
+              {customConfig.beatsPerBar === 4 && customConfig.beatSubdivision === 4 && '标准 4/4 拍'}
+              {customConfig.beatsPerBar === 3 && customConfig.beatSubdivision === 4 && '华尔兹 3/4 拍'}
+              {customConfig.beatsPerBar === 6 && customConfig.beatSubdivision === 8 && '复合 6/8 拍'}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* BPM速度控制 */}
       <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl p-3 md:p-4 mb-6 border border-purple-500/30">
@@ -724,8 +852,8 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         {isActuallyPlaying && (
           <div className="flex items-center gap-3 p-2 bg-black/30 rounded-lg">
             <span className="text-sm font-medium">当前节拍:</span>
-            <div className="flex gap-1.5">
-              {[1, 2, 3, 4].map(beat => (
+            <div className="flex gap-1.5 flex-wrap">
+              {Array.from({ length: beatsPerBar }, (_, i) => i + 1).map(beat => (
                 <div
                   key={beat}
                   className={`w-4 h-4 rounded-full transition-all duration-100 ${
@@ -736,7 +864,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                 />
               ))}
             </div>
-            <span className="text-sm text-gray-400">({currentBeat}/4)</span>
+            <span className="text-sm text-gray-400">({currentBeat}/{beatsPerBar})</span>
           </div>
         )}
 

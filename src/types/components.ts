@@ -4,7 +4,8 @@ import type {
   ProgressionType, 
   ChordProgressions,
   FretboardPosition,
-  RhythmPattern
+  RhythmPattern,
+  ProgressionConfig
 } from './index';
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -35,6 +36,8 @@ export interface ChordPracticeProps {
   setCurrentChordIndex: Dispatch<SetStateAction<number>>;
   bpm: number;
   setBpm: (bpm: number) => void;
+  customConfig?: ProgressionConfig; // 自定义节拍配置
+  setCustomConfig?: (config: ProgressionConfig) => void;
 }
 
 /**
