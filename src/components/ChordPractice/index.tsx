@@ -338,6 +338,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       loopStart?: number; // 循环起始点（秒）
       loopEnd?: number; // 循环结束点（秒）
     }>> = {
+      //startOffset: 音频文件循环开始节点 loopEnd: 音频文件循环结束节点 保证每一次循环都遵循12小节循环
       'A': [
         { name: 'A 调 Blues 伴奏 2', url: `/blues-mp3/A/A2.mp4`, bpm: 105, description: 'Blues 风格变奏', startOffset: 6.5, loopEnd: 62 },
         // 可以添加更多 A 调的音频,只需放到 public/blues-mp3/A/ 文件夹下
