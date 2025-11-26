@@ -4,7 +4,7 @@ import ScalePractice from '../components/ScalePractice';
 import ChordPractice from '../components/ChordPractice';
 import RhythmPractice from '../components/RhythmPractice';
 import Improvisation from '../components/Improvisation';
-import type { Note, BluesType, ProgressionType, PracticeMode, ChordProgressions, BluesScales, RhythmPattern, FretboardPosition } from '../types';
+import type { Note, BluesType, ProgressionType, PracticeMode, ChordProgressions, BluesScales, RhythmPattern, FretboardPosition, ProgressionConfig } from '../types';
 
 const BluesPage: React.FC = () => {
   // 当前选择的调式
@@ -13,6 +13,11 @@ const BluesPage: React.FC = () => {
   const [bluesType, setBluesType] = useState<BluesType>('minor');
   // 当前选择的和弦进行
   const [progression, setProgression] = useState<ProgressionType>('12bar');
+  // 自定义节拍配置
+  const [customConfig, setCustomConfig] = useState<ProgressionConfig>({
+    beatsPerBar: 4,
+    beatSubdivision: 4
+  });
   // 节拍器状态
   const [isMetronomeActive, setIsMetronomeActive] = useState<boolean>(false);
   const [bpm, setBpm] = useState<number>(90);
@@ -34,22 +39,52 @@ const BluesPage: React.FC = () => {
 
   // 12小节 Blues 和弦进行
   const chordProgressions: ChordProgressions = {
-    '12bar': [
-      { bars: 4, chord: 'I7', name: '主和弦' },
-      { bars: 2, chord: 'IV7', name: '下属和弦' },
-      { bars: 2, chord: 'I7', name: '主和弦' },
-      { bars: 1, chord: 'V7', name: '属和弦' },
-      { bars: 1, chord: 'IV7', name: '下属和弦' },
-      { bars: 1, chord: 'I7', name: '主和弦' },
-      { bars: 1, chord: 'V7', name: '属和弦终止' }
-    ],
-    'quick': [
-      { bars: 2, chord: 'I7', name: '主和弦' },
-      { bars: 1, chord: 'IV7', name: '下属和弦' },
-      { bars: 1, chord: 'I7', name: '主和弦' },
-      { bars: 1, chord: 'V7', name: '属和弦' },
-      { bars: 1, chord: 'I7', name: '主和弦' }
-    ]
+    '12bar': {
+      sections: [
+        { bars: 4, chord: 'I7', name: '主和弦' },
+        { bars: 2, chord: 'IV7', name: '下属和弦' },
+        { bars: 2, chord: 'I7', name: '主和弦' },
+        { bars: 1, chord: 'V7', name: '属和弦' },
+        { bars: 1, chord: 'IV7', name: '下属和弦' },
+        { bars: 1, chord: 'I7', name: '主和弦' },
+        { bars: 1, chord: 'V7', name: '属和弦终止' }
+      ],
+      config: { beatsPerBar: 4, beatSubdivision: 4 }
+    },
+    'quick': {
+      sections: [
+        { bars: 2, chord: 'I7', name: '主和弦' },
+        { bars: 1, chord: 'IV7', name: '下属和弦' },
+        { bars: 1, chord: 'I7', name: '主和弦' },
+        { bars: 1, chord: 'V7', name: '属和弦' },
+        { bars: 1, chord: 'I7', name: '主和弦' }
+      ],
+      config: { beatsPerBar: 4, beatSubdivision: 4 }
+    },
+    '12bar-12beats': {
+      sections: [
+        { bars: 4, chord: 'I7', name: '主和弦' },
+        { bars: 2, chord: 'IV7', name: '下属和弦' },
+        { bars: 2, chord: 'I7', name: '主和弦' },
+        { bars: 1, chord: 'V7', name: '属和弦' },
+        { bars: 1, chord: 'IV7', name: '下属和弦' },
+        { bars: 1, chord: 'I7', name: '主和弦' },
+        { bars: 1, chord: 'V7', name: '属和弦终止' }
+      ],
+      config: { beatsPerBar: 12, beatSubdivision: 8 } // 12拍/小节，八分音符
+    },
+    'custom': {
+      sections: [
+        { bars: 4, chord: 'I7', name: '主和弦' },
+        { bars: 2, chord: 'IV7', name: '下属和弦' },
+        { bars: 2, chord: 'I7', name: '主和弦' },
+        { bars: 1, chord: 'V7', name: '属和弦' },
+        { bars: 1, chord: 'IV7', name: '下属和弦' },
+        { bars: 1, chord: 'I7', name: '主和弦' },
+        { bars: 1, chord: 'V7', name: '属和弦终止' }
+      ],
+      config: customConfig // 使用用户自定义配置
+    }
   };
 
   // 节奏型定义
@@ -288,6 +323,8 @@ const BluesPage: React.FC = () => {
                   setCurrentChordIndex={setCurrentChordIndex}
                   bpm={bpm}
                   setBpm={setBpm}
+                  customConfig={customConfig}
+                  setCustomConfig={setCustomConfig}
                 />
               )}
 
@@ -440,7 +477,7 @@ const BluesPage: React.FC = () => {
                       <div className="text-center">
                         <div className="text-xs text-gray-400">小节</div>
                         <div className="text-xl font-bold text-blue-400">
-                          {currentChordIndex + 1}/{chordProgressions[progression].reduce((sum, section) => sum + section.bars, 0)}
+                          {currentChordIndex + 1}/{chordProgressions[progression].sections.reduce((sum, section) => sum + section.bars, 0)}
                         </div>
                       </div>
                     </div>
