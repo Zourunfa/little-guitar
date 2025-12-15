@@ -1,0 +1,324 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "play": "Play",
+    "pause": "Pause",
+    "stop": "Stop",
+    "start": "Start",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "finish": "Finish"
+  },
+  "navbar": {
+    "title": "Little Guitar",
+    "blues": "🎵 Blues Improv",
+    "tuner": "🎸 Tuner"
+  },
+  "blues": {
+    "title": "🎸 Blues Practice Studio",
+    "subtitle": "Systematic Training · Melody · Chords · Rhythm",
+    "selectMode": "Select Practice Mode",
+    "modes": {
+      "chord": {
+        "name": "Chord Progression",
+        "desc": "Master chord changes"
+      },
+      "scale": {
+        "name": "Scale Practice",
+        "desc": "Learn Blues scales"
+      },
+      "rhythm": {
+        "name": "Rhythm Training",
+        "desc": "Develop groove"
+      },
+      "improv": {
+        "name": "Improvisation",
+        "desc": "Comprehensive practice"
+      }
+    },
+    "selectKey": "Select Key",
+    "bluesType": "Blues Type",
+    "bluesTypes": {
+      "minor": {
+        "name": "Minor Blues",
+        "desc": "Most common, emotionally rich"
+      },
+      "major": {
+        "name": "Major Blues",
+        "desc": "Bright and cheerful"
+      },
+      "mixolydian": {
+        "name": "Mixolydian",
+        "desc": "Jazz flavor"
+      }
+    },
+    "tips": {
+      "title": "💡 Practice Tips",
+      "scale": [
+        "Start from the root note, familiarize with ascending and descending",
+        "Try different fingerings and positions",
+        "Pay attention to bends and slides",
+        "The b5 is the key note in Blues scale"
+      ],
+      "chord": [
+        "Blues typically uses dominant 7th chords",
+        "Focus on smooth chord transitions",
+        "Try adding 9th, 13th extensions",
+        "Listen to the chord colors"
+      ],
+      "rhythm": [
+        "Shuffle rhythm is the soul of Blues",
+        "Feel the swing of triplets",
+        "Syncopation adds groove",
+        "Use metronome to maintain steady tempo"
+      ],
+      "improv": [
+        "Start with simple melodic motifs",
+        "Repetition and variation are key to improvisation",
+        "Space is also part of music",
+        "Listen with your ears, feel with your heart"
+      ]
+    },
+    "playControl": {
+      "playing": "Playing",
+      "paused": "Paused",
+      "bar": "Bar",
+      "speed": "Speed"
+    },
+    "chordPractice": {
+      "title": "🎹 {{key}} Blues Chord Progression",
+      "progression": "Chord Progression",
+      "selectProgression": "Select Progression Type",
+      "progressions": {
+        "12bar": {
+          "name": "Standard 12-Bar Blues",
+          "desc": "Classic Blues progression",
+          "time": "4/4 time"
+        },
+        "quick": {
+          "name": "Quick 6-Bar Blues",
+          "desc": "For quick practice",
+          "time": "4/4 time"
+        },
+        "12bar-12beats": {
+          "name": "12-Beat Blues",
+          "desc": "12/8 time signature",
+          "time": "Eighth notes"
+        },
+        "custom": {
+          "name": "Custom Settings",
+          "desc": "Configure time signature",
+          "time": "Click to set"
+        }
+      },
+      "customConfig": {
+        "title": "⚙️ Custom Time Signature Settings",
+        "beatsPerBar": "Beats per bar",
+        "beats": "beats",
+        "subdivision": "Note subdivision",
+        "quarter": "Quarter note",
+        "eighth": "Eighth note",
+        "sixteenth": "Sixteenth note",
+        "currentTime": "Current time signature"
+      },
+      "bpm": "Tempo (BPM)",
+      "current": "Current",
+      "quickSet": "Quick set",
+      "currentBeat": "Current beat",
+      "bpmDesc": {
+        "slow": "🐌 Slow - Suitable for beginners",
+        "medium": "🚶 Medium - Standard practice tempo",
+        "fast": "🏃 Fast - Advanced practice",
+        "veryFast": "🚀 Very Fast - Professional level challenge"
+      },
+      "accompaniment": {
+        "title": "🎵 Accompaniment Mode",
+        "synthesized": {
+          "name": "🎹 Synthesized",
+          "desc": "Real-time synthesis"
+        },
+        "audio": {
+          "name": "🎸 Audio Track",
+          "desc": "Real recording"
+        },
+        "selectKey": "Select key",
+        "volume": "Volume",
+        "status": "Audio status",
+        "loading": "Loading...",
+        "playing": "Playing",
+        "stopped": "Stopped",
+        "description": {
+          "title": "🎼 Audio Accompaniment Info:",
+          "item1": "• Uses real Blues recordings",
+          "item2": "• Auto-adjusts speed based on BPM",
+          "item3": "• Seamless loop playback"
+        }
+      },
+      "drum": {
+        "title": "🥁 Drum Rhythm",
+        "enable": "Enable",
+        "patterns": {
+          "shuffle": {
+            "name": "Shuffle",
+            "desc": "Blues swing"
+          },
+          "standard": {
+            "name": "Standard",
+            "desc": "Standard 4/4"
+          },
+          "slow": {
+            "name": "Slow Blues",
+            "desc": "Slow Blues"
+          }
+        },
+        "volume": "Volume"
+      },
+      "chordSequence": "Chord Sequence",
+      "bars": "bars",
+      "tips": {
+        "title": "🎸 Practice Tips",
+        "tip1": "▸ Dominant 7th chords typically use E or A shape",
+        "tip2": "▸ Follow drum rhythm, play chords on each beat",
+        "tip3": "▸ Try adding grace notes between chords",
+        "tip4": "▸ Add 9th, 13th extensions for more color"
+      },
+      "improvGuide": {
+        "title": "🎯 Current Chord Improv Guide",
+        "currentChord": "Now playing",
+        "canUse": "Use",
+        "scale": "scale for improv",
+        "hint": "💡 Tip: Yellow dots are root notes, blue dots are other scale notes. Follow chord changes and improvise on the corresponding scale!"
+      },
+      "audioDrawer": {
+        "title": "🎵 Select {{key}} Audio",
+        "subtitle": "Choose backing track from library",
+        "originalBPM": "Original BPM",
+        "noFiles": "No audio files available",
+        "addFiles": "Please add {{key}}.mp3 file to public/blues-mp3 directory"
+      },
+      "loading": {
+        "title": "🎵 Loading {{key}}...",
+        "wait": "⚠️ Please wait for audio to load before playing",
+        "cancel": "Cancel preload"
+      },
+      "cache": {
+        "title": "💾 Audio Cache",
+        "clear": "Clear",
+        "usage": "usage",
+        "nearLimit": "⚠️ Near limit",
+        "cached": "🟢 Cached",
+        "notCached": "⚫ Not cached",
+        "accessCount": "🔵 Access count"
+      },
+      "alerts": {
+        "noAudio": "❌ No audio file for {{key}} key, please select another key or upload local audio!",
+        "notLoaded": "⏳ {{key}} audio not loaded, please wait...",
+        "loading": "⏳ Audio is loading, please wait..."
+      }
+    },
+    "scalePractice": {
+      "title": "Scale Practice",
+      "scaleNotes": "Scale Notes",
+      "fretboard": "Guitar Fretboard",
+      "fretboardHint": "First 15 frets visible · 👉Scroll for more",
+      "rootNote": "Root",
+      "scaleNote": "Scale Note",
+      "scaleStructure": "🎼 Interval Structure",
+      "minorBlues": "Minor Blues: Root - Minor 3rd - Perfect 4th - Diminished 5th - Perfect 5th - Minor 7th",
+      "majorBlues": "Major Blues: Root - Major 2nd - Minor 3rd - Major 3rd - Perfect 5th - Major 6th",
+      "mixolydian": "Mixolydian: Root - Major 2nd - Major 3rd - Perfect 4th - Perfect 5th - Major 6th - Minor 7th"
+    },
+    "rhythmPractice": {
+      "title": "Rhythm Training",
+      "selectPattern": "Select Rhythm Pattern",
+      "patterns": {
+        "shuffle": {
+          "name": "Shuffle",
+          "desc": "Triplet swing rhythm - long-short-long-short"
+        },
+        "straight": {
+          "name": "Straight",
+          "desc": "Even triplets - three notes per beat"
+        },
+        "swing": {
+          "name": "Swing",
+          "desc": "Swing rhythm - relaxed groove"
+        },
+        "syncopated": {
+          "name": "Syncopated",
+          "desc": "Syncopated rhythm - emphasize off-beats"
+        }
+      },
+      "metronome": "Metronome",
+      "startMetronome": "Start Metronome",
+      "stopMetronome": "Stop Metronome"
+    },
+    "improvisation": {
+      "title": "Improvisation",
+      "subtitle": "Comprehensive practice combining scales, chords and rhythm",
+      "currentKey": "Current Key",
+      "currentProgression": "Current Progression",
+      "playBacking": "Play Backing Track",
+      "stopBacking": "Stop Backing Track"
+    }
+  },
+  "tuner": {
+    "title": "🎸 Guitar Tuner",
+    "subtitle": "Pure frontend tuning tool based on Web Audio API",
+    "currentNote": "Current Note",
+    "frequency": "Frequency",
+    "target": "Target",
+    "selectString": "Select String to Tune",
+    "string": "String {{number}}",
+    "startTuning": "Start Tuning",
+    "stopTuning": "Stop Tuning",
+    "tuningActive": "Tuner is active, please play the selected string",
+    "tuningInactive": "Click 'Start Tuning' and allow microphone access",
+    "waitingInput": "Waiting for audio input...",
+    "clickToStart": "Click 'Start Tuning' to view real-time waveform",
+    "accuracy": {
+      "perfect": "Perfect!",
+      "veryClose": "Very Close",
+      "close": "Close",
+      "needAdjust": "Need Adjustment",
+      "tooFar": "Too Far",
+      "standardPitch": "Standard Pitch",
+      "low": "Low",
+      "high": "High",
+      "accurateZone": "Accurate Zone",
+      "cents": "cents"
+    },
+    "instructions": {
+      "title": "📖 Instructions",
+      "steps": {
+        "title": "🎯 Tuning Steps",
+        "step1": "Click 'Start Tuning' and allow microphone access",
+        "step2": "Select the string to tune",
+        "step3": "Play the string and observe the waveform",
+        "step4": "Adjust the string until the waveform is in the center green zone"
+      },
+      "waveform": {
+        "title": "💡 Waveform Guide",
+        "green": "Green waveform = Accurate pitch",
+        "yellow": "Yellow waveform = Close to target",
+        "red": "Red waveform = Needs adjustment",
+        "scroll": "Waveform scrolls from bottom to top showing time changes"
+      }
+    },
+    "errors": {
+      "notSupported": "Your browser doesn't support tuning functionality. Please use modern browsers like Chrome, Firefox or Edge",
+      "micDenied": "Microphone permission denied. Please allow microphone access.",
+      "micNotFound": "Microphone device not found. Please check your microphone connection.",
+      "micNotSupported": "Your browser doesn't support microphone functionality.",
+      "micError": "Microphone error: {{message}}",
+      "cannotAccess": "Cannot access microphone."
+    }
+  }
+}

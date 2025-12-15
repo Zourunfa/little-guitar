@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import DrumKit from '../../utils/drumKit';
 import Accompaniment from '../../utils/accompaniment';
 import AudioBackingTrack, { type BackingTrackKey } from '../../utils/audioBackingTrack';
@@ -37,6 +38,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   customConfig,
   setCustomConfig
 }) => {
+  const { t } = useTranslation();
   const drumKitRef = useRef<DrumKit | null>(null);
   const accompanimentRef = useRef<Accompaniment | null>(null);
   const audioBackingTrackRef = useRef<AudioBackingTrack | null>(null);
@@ -469,13 +471,13 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         
         if (!isAvailable) {
           setIsPlaying(false);
-          alert(`❌ ${audioBackingKey} 调暂无音频文件，请选择其他调或上传本地音频！`);
+          alert(t('blues.chordPractice.alerts.noAudio', { key: audioBackingKey }));
           return;
         }
         
         if (!isPreloaded && !isAudioBackingLoading) {
           setIsPlaying(false);
-          alert(`⏳ ${audioBackingKey} 调音频未加载，请稍候...`);
+          alert(t('blues.chordPractice.alerts.notLoaded', { key: audioBackingKey }));
           // 自动开始加载
           loadAudioBacking(audioBackingKey);
           return;
@@ -483,7 +485,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         
         if (isAudioBackingLoading) {
           setIsPlaying(false);
-          alert('⏳ 音频正在加载中，请稍候...');
+          alert(t('blues.chordPractice.alerts.loading'));
           return;
         }
       }
@@ -641,11 +643,11 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
   return (
     <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 border border-white/10">
-      <h2 className="text-xl md:text-2xl font-bold mb-4">🎹 {selectedKey} Blues 和弦进行</h2>
+      <h2 className="text-xl md:text-2xl font-bold mb-4">{t('blues.chordPractice.title', { key: selectedKey })}</h2>
 
       {/* 和弦进行选择 */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-3">选择进行类型</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('blues.chordPractice.selectProgression')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -657,9 +659,9 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             }`}
             onClick={() => setProgression('12bar')}
           >
-            <div className="font-bold text-lg">标准 12 小节 Blues</div>
-            <div className="text-sm text-gray-300">经典 Blues 进行</div>
-            <div className="text-xs text-gray-400 mt-1">4/4 拍</div>
+            <div className="font-bold text-lg">{t('blues.chordPractice.progressions.12bar.name')}</div>
+            <div className="text-sm text-gray-300">{t('blues.chordPractice.progressions.12bar.desc')}</div>
+            <div className="text-xs text-gray-400 mt-1">{t('blues.chordPractice.progressions.12bar.time')}</div>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -671,9 +673,9 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             }`}
             onClick={() => setProgression('quick')}
           >
-            <div className="font-bold text-lg">快速 6 小节 Blues</div>
-            <div className="text-sm text-gray-300">适合快速练习</div>
-            <div className="text-xs text-gray-400 mt-1">4/4 拍</div>
+            <div className="font-bold text-lg">{t('blues.chordPractice.progressions.quick.name')}</div>
+            <div className="text-sm text-gray-300">{t('blues.chordPractice.progressions.quick.desc')}</div>
+            <div className="text-xs text-gray-400 mt-1">{t('blues.chordPractice.progressions.quick.time')}</div>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -685,9 +687,9 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             }`}
             onClick={() => setProgression('12bar-12beats')}
           >
-            <div className="font-bold text-lg">12 拍 Blues</div>
-            <div className="text-sm text-gray-300">12/8 拍号</div>
-            <div className="text-xs text-gray-400 mt-1">八分音符</div>
+            <div className="font-bold text-lg">{t('blues.chordPractice.progressions.12bar-12beats.name')}</div>
+            <div className="text-sm text-gray-300">{t('blues.chordPractice.progressions.12bar-12beats.desc')}</div>
+            <div className="text-xs text-gray-400 mt-1">{t('blues.chordPractice.progressions.12bar-12beats.time')}</div>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -699,10 +701,10 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             }`}
             onClick={() => setProgression('custom')}
           >
-            <div className="font-bold text-lg">自定义设置</div>
-            <div className="text-sm text-gray-300">自由配置拍号</div>
+            <div className="font-bold text-lg">{t('blues.chordPractice.progressions.custom.name')}</div>
+            <div className="text-sm text-gray-300">{t('blues.chordPractice.progressions.custom.desc')}</div>
             <div className="text-xs text-gray-400 mt-1">
-              {customConfig ? `${customConfig.beatsPerBar}/${customConfig.beatSubdivision}` : '点击设置'}
+              {customConfig ? `${customConfig.beatsPerBar}/${customConfig.beatSubdivision}` : t('blues.chordPractice.progressions.custom.time')}
             </div>
           </motion.button>
         </div>
@@ -716,12 +718,12 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
           exit={{ opacity: 0, height: 0 }}
           className="mb-6 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-4 border border-yellow-500/30"
         >
-          <h3 className="text-lg font-semibold mb-4">⚙️ 自定义拍号设置</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('blues.chordPractice.customConfig.title')}</h3>
           
           {/* 每小节拍数 */}
           <div className="mb-4">
             <label className="text-sm font-medium mb-2 block">
-              每小节拍数: <span className="text-yellow-400 text-xl font-bold">{customConfig.beatsPerBar}</span> 拍
+              {t('blues.chordPractice.customConfig.beatsPerBar')}: <span className="text-yellow-400 text-xl font-bold">{customConfig.beatsPerBar}</span> {t('blues.chordPractice.customConfig.beats')}
             </label>
             <div className="flex items-center gap-3">
               <input
@@ -741,22 +743,22 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
               />
             </div>
             <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>3 拍</span>
-              <span>8 拍</span>
-              <span>16 拍</span>
+              <span>3 {t('blues.chordPractice.customConfig.beats')}</span>
+              <span>8 {t('blues.chordPractice.customConfig.beats')}</span>
+              <span>16 {t('blues.chordPractice.customConfig.beats')}</span>
             </div>
           </div>
 
           {/* 音符细分 */}
           <div className="mb-4">
             <label className="text-sm font-medium mb-2 block">
-              音符细分: <span className="text-yellow-400 text-xl font-bold">{customConfig.beatSubdivision === 4 ? '四分音符' : customConfig.beatSubdivision === 8 ? '八分音符' : '十六分音符'}</span>
+              {t('blues.chordPractice.customConfig.subdivision')}: <span className="text-yellow-400 text-xl font-bold">{customConfig.beatSubdivision === 4 ? t('blues.chordPractice.customConfig.quarter') : customConfig.beatSubdivision === 8 ? t('blues.chordPractice.customConfig.eighth') : t('blues.chordPractice.customConfig.sixteenth')}</span>
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { value: 4, name: '四分音符', symbol: '♪' },
-                { value: 8, name: '八分音符', symbol: '♫' },
-                { value: 16, name: '十六分音符', symbol: '♬' }
+                { value: 4, name: t('blues.chordPractice.customConfig.quarter'), symbol: '♪' },
+                { value: 8, name: t('blues.chordPractice.customConfig.eighth'), symbol: '♫' },
+                { value: 16, name: t('blues.chordPractice.customConfig.sixteenth'), symbol: '♬' }
               ].map(option => (
                 <motion.button
                   key={option.value}
@@ -781,7 +783,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
           {/* 拍号预览 */}
           <div className="bg-black/30 p-3 rounded-lg">
-            <div className="text-xs text-gray-400 mb-1">当前拍号:</div>
+            <div className="text-xs text-gray-400 mb-1">{t('blues.chordPractice.customConfig.currentTime')}:</div>
             <div className="text-3xl font-bold text-center text-yellow-400">
               {customConfig.beatsPerBar}/{customConfig.beatSubdivision}
             </div>
@@ -797,11 +799,11 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
       {/* BPM速度控制 */}
       <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl p-3 md:p-4 mb-6 border border-purple-500/30">
-        <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">⏱️ 节拍速度 (BPM)</h3>
+        <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">⏱️ {t('blues.chordPractice.bpm')}</h3>
 
         <div className="flex items-center gap-3 md:gap-4 mb-4">
           <div className="flex items-center gap-2 min-w-[80px] md:min-w-[100px]">
-            <span className="text-xs md:text-sm font-medium">当前:</span>
+            <span className="text-xs md:text-sm font-medium">{t('blues.chordPractice.current')}:</span>
             <span className="text-2xl md:text-3xl font-bold text-yellow-400">{bpm}</span>
           </div>
           
@@ -828,7 +830,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
         {/* 快捷BPM按钮 */}
         <div className="mb-3">
-          <div className="text-xs md:text-sm text-gray-400 mb-2">快速设置:</div>
+          <div className="text-xs md:text-sm text-gray-400 mb-2">{t('blues.chordPractice.quickSet')}:</div>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {[60, 80, 100, 120, 140, 160].map(speed => (
               <motion.button
@@ -851,7 +853,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         {/* 节拍指示器 */}
         {isActuallyPlaying && (
           <div className="flex items-center gap-3 p-2 bg-black/30 rounded-lg">
-            <span className="text-sm font-medium">当前节拍:</span>
+            <span className="text-sm font-medium">{t('blues.chordPractice.currentBeat')}:</span>
             <div className="flex gap-1.5 flex-wrap">
               {Array.from({ length: beatsPerBar }, (_, i) => i + 1).map(beat => (
                 <div
@@ -870,10 +872,10 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
         {/* BPM描述 */}
         <div className="mt-3 text-xs text-gray-400 text-center">
-          {bpm < 80 && "🐌 慢速 - 适合初学者练习"}
-          {bpm >= 80 && bpm < 120 && "🚶 中速 - 标准练习速度"}
-          {bpm >= 120 && bpm < 150 && "🏃 快速 - 进阶练习"}
-          {bpm >= 150 && "🚀 极速 - 专业水平挑战"}
+          {bpm < 80 && t('blues.chordPractice.bpmDesc.slow')}
+          {bpm >= 80 && bpm < 120 && t('blues.chordPractice.bpmDesc.medium')}
+          {bpm >= 120 && bpm < 150 && t('blues.chordPractice.bpmDesc.fast')}
+          {bpm >= 150 && t('blues.chordPractice.bpmDesc.veryFast')}
         </div>
       </div>
 
@@ -886,7 +888,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         >
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-bold text-yellow-400">
-              🎵 {loadingKeyName}加载中...
+              {t('blues.chordPractice.loading.title', { key: loadingKeyName })}
             </h3>
             <span className="text-2xl font-bold text-yellow-400">{loadingProgress}%</span>
           </div>
@@ -904,7 +906,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             />
           </div>
           <div className="flex items-center justify-between mt-2">
-            <p className="text-sm text-gray-300">⚠️ 请等待音频加载完成后再播放</p>
+            <p className="text-sm text-gray-300">{t('blues.chordPractice.loading.wait')}</p>
             {isPreloading && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -918,7 +920,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                   }
                 }}
               >
-                取消预加载
+                {t('blues.chordPractice.loading.cancel')}
               </motion.button>
             )}
           </div>
@@ -934,7 +936,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-bold text-green-400">
-              💾 音频缓存
+              {t('blues.chordPractice.cache.title')}
             </h3>
             <div className="flex items-center gap-3">
               <div className="text-sm text-gray-300">
@@ -954,7 +956,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                   }
                 }}
               >
-                清空
+                {t('blues.chordPractice.cache.clear')}
               </motion.button>
             </div>
           </div>
@@ -1021,7 +1023,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
       {/* 伴奏模式选择 */}
       <div className="bg-gradient-to-r from-orange-500/20 to-pink-500/20 rounded-xl p-3 md:p-4 mb-6 border border-orange-500/30">
-        <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">🎵 伴奏模式</h3>
+        <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">{t('blues.chordPractice.accompaniment.title')}</h3>
         
         {/* 模式切换 */}
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -1035,8 +1037,8 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             }`}
             onClick={() => setAccompanimentMode('synthesized')}
           >
-            <div className="font-bold text-sm md:text-base">🎹 原生合成</div>
-            <div className="text-xs text-gray-300">实时合成伴奏</div>
+            <div className="font-bold text-sm md:text-base">{t('blues.chordPractice.accompaniment.synthesized.name')}</div>
+            <div className="text-xs text-gray-300">{t('blues.chordPractice.accompaniment.synthesized.desc')}</div>
           </motion.button>
           
           <motion.button
@@ -1049,8 +1051,8 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             }`}
             onClick={() => setAccompanimentMode('audio')}
           >
-            <div className="font-bold text-sm md:text-base">🎸 经典音频</div>
-            <div className="text-xs text-gray-300">真实录音伴奏</div>
+            <div className="font-bold text-sm md:text-base">{t('blues.chordPractice.accompaniment.audio.name')}</div>
+            <div className="text-xs text-gray-300">{t('blues.chordPractice.accompaniment.audio.desc')}</div>
           </motion.button>
         </div>
 
@@ -1065,7 +1067,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             {/* 调性选择 */}
             <div>
               <div className="text-xs md:text-sm text-gray-400 mb-2">
-                选择调性:
+                {t('blues.chordPractice.accompaniment.selectKey')}:
                 {isPreloading && (
                   <span className="ml-2 text-yellow-400 text-xs">
                     ⏳ 正在预加载音频...
@@ -1121,24 +1123,24 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             {accompanimentMode === 'audio' && (
               <div className="bg-black/30 p-3 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">音频状态:</span>
+                  <span className="text-sm font-medium">{t('blues.chordPractice.accompaniment.status')}:</span>
                   <div className="flex items-center gap-2">
                     {isAudioBackingLoading && (
                       <div className="flex items-center gap-2 text-yellow-400">
                         <div className="animate-spin rounded-full h-3 w-3 border-2 border-yellow-400 border-t-transparent"></div>
-                        <span className="text-xs">加载中...</span>
+                        <span className="text-xs">{t('blues.chordPractice.accompaniment.loading')}</span>
                       </div>
                     )}
                     {!isAudioBackingLoading && isAudioBackingPlaying && (
                       <div className="flex items-center gap-2 text-green-400">
                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                        <span className="text-xs">正在播放</span>
+                        <span className="text-xs">{t('blues.chordPractice.accompaniment.playing')}</span>
                       </div>
                     )}
                     {!isAudioBackingLoading && !isAudioBackingPlaying && isActuallyPlaying && (
                       <div className="flex items-center gap-2 text-gray-400">
                         <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                        <span className="text-xs">已停止</span>
+                        <span className="text-xs">{t('blues.chordPractice.accompaniment.stopped')}</span>
                       </div>
                     )}
                   </div>
@@ -1155,7 +1157,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
             {/* 音量控制 */}
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-400 whitespace-nowrap">音量:</span>
+              <span className="text-sm text-gray-400 whitespace-nowrap">{t('blues.chordPractice.accompaniment.volume')}:</span>
               <input
                 type="range"
                 min="0"
@@ -1170,11 +1172,11 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
             {/* 说明 */}
             <div className="text-xs text-gray-400 bg-black/30 p-3 rounded-lg">
-              <div className="font-semibold mb-1">🎼 音频伴奏说明:</div>
+              <div className="font-semibold mb-1">{t('blues.chordPractice.accompaniment.description.title')}</div>
               <ul className="space-y-1 ml-4">
-                <li>• 使用真实录音的Blues伴奏</li>
-                <li>• 自动根据BPM调整播放速度</li>
-                <li>• 循环播放，无缝衔接</li>
+                <li>{t('blues.chordPractice.accompaniment.description.item1')}</li>
+                <li>{t('blues.chordPractice.accompaniment.description.item2')}</li>
+                <li>{t('blues.chordPractice.accompaniment.description.item3')}</li>
               </ul>
             </div>
           </motion.div>
@@ -1184,7 +1186,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       {/* 鼓声节奏设置 */}
       <div className="bg-black/50 rounded-xl p-3 md:p-4 mb-6">
         <div className="flex items-center justify-between mb-3 md:mb-4">
-          <h3 className="text-base md:text-lg font-semibold">🥁 鼓声节奏</h3>
+          <h3 className="text-base md:text-lg font-semibold">{t('blues.chordPractice.drum.title')}</h3>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
@@ -1192,16 +1194,16 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
               onChange={(e) => setIsDrumEnabled(e.target.checked)}
               className="w-4 h-4 md:w-5 md:h-5 rounded"
             />
-            <span className="text-xs md:text-sm">启用</span>
+            <span className="text-xs md:text-sm">{t('blues.chordPractice.drum.enable')}</span>
           </label>
         </div>
 
         {/* 节奏型选择 */}
         <div className="grid grid-cols-3 gap-2 mb-3 md:mb-4">
           {[
-            { id: 'shuffle' as DrumPatternType, name: 'Shuffle', desc: 'Blues 摇摆' },
-            { id: 'standard' as DrumPatternType, name: 'Standard', desc: '标准四四拍' },
-            { id: 'slow' as DrumPatternType, name: 'Slow Blues', desc: '慢板 Blues' }
+            { id: 'shuffle' as DrumPatternType },
+            { id: 'standard' as DrumPatternType },
+            { id: 'slow' as DrumPatternType }
           ].map(pattern => (
             <motion.button
               key={pattern.id}
@@ -1215,15 +1217,15 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
               onClick={() => setDrumPattern(pattern.id)}
               disabled={!isDrumEnabled}
             >
-              <div className="font-bold text-sm">{pattern.name}</div>
-              <div className="text-xs text-gray-400">{pattern.desc}</div>
+              <div className="font-bold text-sm">{t(`blues.chordPractice.drum.patterns.${pattern.id}.name`)}</div>
+              <div className="text-xs text-gray-400">{t(`blues.chordPractice.drum.patterns.${pattern.id}.desc`)}</div>
             </motion.button>
           ))}
         </div>
 
         {/* 音量控制 */}
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-400 whitespace-nowrap">音量:</span>
+          <span className="text-sm text-gray-400 whitespace-nowrap">{t('blues.chordPractice.drum.volume')}:</span>
           <input
             type="range"
             min="0"
@@ -1263,8 +1265,8 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       {/* 和弦进行展示 */}
       <div className="bg-black/50 rounded-xl p-2 md:p-3 mb-4">
         <div className="flex justify-between items-center mb-2">
-          <h3 className="text-sm md:text-base font-semibold">和弦序列</h3>
-          <div className="text-[10px] md:text-xs text-gray-400">{expandedChords.length}小节</div>
+          <h3 className="text-sm md:text-base font-semibold">{t('blues.chordPractice.chordSequence')}</h3>
+          <div className="text-[10px] md:text-xs text-gray-400">{expandedChords.length}{t('blues.chordPractice.bars')}</div>
         </div>
         <div className="grid grid-cols-4 gap-1.5">
           {expandedChords.map((item, index) => (
@@ -1325,12 +1327,12 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
       {/* 和弦指法提示 */}
       <div className="bg-purple-500/20 rounded-xl p-4 mt-4 border border-purple-500/30">
-        <h3 className="text-sm md:text-base font-semibold mb-2">🎸 练习提示</h3>
+        <h3 className="text-sm md:text-base font-semibold mb-2">{t('blues.chordPractice.tips.title')}</h3>
         <ul className="text-xs md:text-sm text-gray-300 space-y-1">
-          <li>▸ 属七和弦通常使用 E 型或 A 型把位</li>
-          <li>▸ 跟随鼓声节奏,在每拍上弹奏和弦</li>
-          <li>▸ 尝试在和弦之间加入装饰音</li>
-          <li>▸ 可以加入九音、十三音等延伸音增加色彩</li>
+          <li>{t('blues.chordPractice.tips.tip1')}</li>
+          <li>{t('blues.chordPractice.tips.tip2')}</li>
+          <li>{t('blues.chordPractice.tips.tip3')}</li>
+          <li>{t('blues.chordPractice.tips.tip4')}</li>
         </ul>
       </div>
 
@@ -1338,14 +1340,14 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       <div className="mt-4 md:mt-6">
         <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-3 md:p-4 mb-4 border border-yellow-500/30">
           <h3 className="text-base md:text-xl font-bold mb-2">
-            🎯 当前和弦即兴指南
+            {t('blues.chordPractice.improvGuide.title')}
           </h3>
           <p className="text-xs md:text-base text-gray-300">
-            当前播放: <span className="text-yellow-400 font-bold text-lg md:text-xl">{getCurrentChordRoot}7</span> 和弦
-            → 可使用 <span className="text-blue-400 font-bold">{getCurrentChordRoot} 小调 Blues</span> 音阶即兴
+            {t('blues.chordPractice.improvGuide.currentChord')}: <span className="text-yellow-400 font-bold text-lg md:text-xl">{getCurrentChordRoot}7</span> 和弦
+            → {t('blues.chordPractice.improvGuide.canUse')} <span className="text-blue-400 font-bold">{getCurrentChordRoot} 小调 Blues</span> {t('blues.chordPractice.improvGuide.scale')}
           </p>
           <p className="text-[10px] md:text-sm text-gray-400 mt-2">
-            💡 提示: 纸板上的黄色圆点是根音位置,蓝色圆点是其他音阶音符。跟随和弦变化,在对应的音阶上即兴演奏!
+            {t('blues.chordPractice.improvGuide.hint')}
           </p>
         </div>
       </div>
@@ -1375,7 +1377,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
               <div className="p-6 border-b border-white/10 bg-gradient-to-r from-purple-500/20 to-pink-500/20">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-2xl font-bold text-white">
-                    🎵 选择 {selectedKeyForDrawer} 调音频
+                    {t('blues.chordPractice.audioDrawer.title', { key: selectedKeyForDrawer })}
                   </h3>
                   <button
                     onClick={() => setIsDrawerOpen(false)}
@@ -1386,7 +1388,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                     </svg>
                   </button>
                 </div>
-                <p className="text-sm text-gray-400">从项目音频库中选择伴奏文件</p>
+                <p className="text-sm text-gray-400">{t('blues.chordPractice.audioDrawer.subtitle')}</p>
               </div>
 
               {/* 音频文件列表 */}
@@ -1419,7 +1421,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                               </div>
                             )}
                             <div className="text-sm text-gray-400">
-                              原始 BPM: {audio.bpm}
+                              {t('blues.chordPractice.audioDrawer.originalBPM')}: {audio.bpm}
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
                               {audio.url}
@@ -1437,9 +1439,9 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                 ) : (
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">📁</div>
-                    <p className="text-gray-400 mb-2">暂无可用的音频文件</p>
+                    <p className="text-gray-400 mb-2">{t('blues.chordPractice.audioDrawer.noFiles')}</p>
                     <p className="text-sm text-gray-500">
-                      请在 public/blues-mp3 目录下添加 {selectedKeyForDrawer}.mp3 文件
+                      {t('blues.chordPractice.audioDrawer.addFiles', { key: selectedKeyForDrawer })}
                     </p>
                   </div>
                 )}

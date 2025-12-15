@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import type { ScalePracticeProps } from '../../types/components';
 
 /**
@@ -12,6 +13,8 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
   scaleDegrees,
   fretboardPositions 
 }) => {
+  const { t } = useTranslation();
+  
   // 动态计算指板显示范围
   const getDisplayRange = () => {
     if (!fretboardPositions || fretboardPositions.length === 0) {
@@ -89,9 +92,9 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
       {/* 吉他指板图 */}
       <div className="bg-black/50 rounded-xl p-3 md:p-8 lg:p-12 overflow-x-auto">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm md:text-lg font-semibold">吉他指板</h3>
+          <h3 className="text-sm md:text-lg font-semibold">{t('blues.scalePractice.fretboard')}</h3>
           <div className="text-[10px] md:text-xs text-gray-400">
-            <span className="md:hidden">前15品可见 · 👉滑动查看更多</span>
+            <span className="md:hidden">{t('blues.scalePractice.fretboardHint')}</span>
             <span className="hidden md:inline">品位范围: {startFret}-{endFret} 品</span>
           </div>
         </div>
@@ -190,11 +193,11 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
 
       {/* 音程说明 */}
       <div className="bg-blue-500/20 rounded-xl p-4 mt-4 border border-blue-500/30">
-        <h3 className="text-sm md:text-base font-semibold mb-2">🎼 音程结构</h3>
+        <h3 className="text-sm md:text-base font-semibold mb-2">{t('blues.scalePractice.scaleStructure')}</h3>
         <p className="text-xs md:text-sm text-gray-300">
-          {bluesType === 'minor' && '小调 Blues: 根音 - 小三度 - 纯四度 - 减五度 - 纯五度 - 小七度'}
-          {bluesType === 'major' && '大调 Blues: 根音 - 大二度 - 小三度 - 大三度 - 纯五度 - 大六度'}
-          {bluesType === 'mixolydian' && 'Mixolydian: 根音 - 大二度 - 大三度 - 纯四度 - 纯五度 - 大六度 - 小七度'}
+          {bluesType === 'minor' && t('blues.scalePractice.minorBlues')}
+          {bluesType === 'major' && t('blues.scalePractice.majorBlues')}
+          {bluesType === 'mixolydian' && t('blues.scalePractice.mixolydian')}
         </p>
       </div>
     </div>

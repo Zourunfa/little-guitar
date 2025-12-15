@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 // 类型定义
 type StringNumber = '1' | '2' | '3' | '4' | '5' | '6';
@@ -20,6 +21,7 @@ type NoteFrequencies = {
 };
 
 const TunerPage: React.FC = () => {
+  const { t } = useTranslation();
   // 基础状态
   const [isTuning, setIsTuning] = useState<boolean>(false);
   const [currentNote, setCurrentNote] = useState<string>('--');
@@ -171,29 +173,29 @@ const TunerPage: React.FC = () => {
   // 更新精度显示
   const updateAccuracyDisplay = useCallback((centsOff: number): void => {
     const absCents = Math.abs(centsOff);
-    let text = '';
+    let textKey = '';
     let color = '';
     if (absCents < 2) {
-      text = "完美!";
+      textKey = "tuner.accuracy.perfect";
       color = "#4CAF50";
     } else if (absCents < 5) {
-      text = "非常接近";
+      textKey = "tuner.accuracy.veryClose";
       color = "#8BC34A";
     } else if (absCents < 10) {
-      text = "接近";
+      textKey = "tuner.accuracy.close";
       color = "#FFC107";
     } else if (absCents < 20) {
-      text = "需要调整";
+      textKey = "tuner.accuracy.needAdjust";
       color = "#FF9800";
     } else {
-      text = "偏离太多";
+      textKey = "tuner.accuracy.tooFar";
       color = "#F44336";
     }
     const sign = centsOff > 0 ? '+' : '-';
-    text = `${text} (${sign}${Math.abs(centsOff).toFixed(1)}音分)`;
+    const text = `${t(textKey)} (${sign}${Math.abs(centsOff).toFixed(1)}${t('tuner.accuracy.cents')})`;
     setAccuracyText(text);
     setAccuracyColor(color);
-  }, []);
+  }, [t]);
 
   // 更新显示
   const updateDisplay = useCallback((detectedFrequency: number): void => {
@@ -248,7 +250,7 @@ const TunerPage: React.FC = () => {
   const startTuning = async (): Promise<void> => {
     try {
       if (!navigator.mediaDevices || !window.AudioContext) {
-        setError("您的浏览器不支持调音功能，请使用Chrome、Firefox或Edge等现代浏览器");
+        setError(t('tuner.errors.notSupported'));
         return;
       }
       let stream: MediaStream;
@@ -274,15 +276,15 @@ const TunerPage: React.FC = () => {
       console.log('音频设置完成');
     } catch (err: any) {
       console.error("麦克风访问错误:", err);
-      let errorMessage = '无法访问麦克风。';
+      let errorMessage = t('tuner.errors.cannotAccess');
       if (err.name === 'NotAllowedError') {
-        errorMessage = '麦克风权限被拒绝。请允许网站访问麦克风权限。';
+        errorMessage = t('tuner.errors.micDenied');
       } else if (err.name === 'NotFoundError') {
-        errorMessage = '未找到麦克风设备。请检查您的麦克风连接。';
+        errorMessage = t('tuner.errors.micNotFound');
       } else if (err.name === 'NotSupportedError') {
-        errorMessage = '您的浏览器不支持麦克风功能。';
+        errorMessage = t('tuner.errors.micNotSupported');
       } else {
-        errorMessage = `麦克风错误: ${err.message}`;
+        errorMessage = t('tuner.errors.micError', { message: err.message });
       }
       setError(errorMessage);
       setIsTuning(false);
@@ -359,33 +361,33 @@ const TunerPage: React.FC = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent mb-4">
-              🎸 吉他调音器
+              {t('tuner.title')}
             </h1>
-            <p className="text-xl text-gray-300">基于Web Audio API的纯前端调音工具</p>
+            <p className="text-xl text-gray-300">{t('tuner.subtitle')}</p>
           </div>
           <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-8 mb-8 border border-white/10">
             <div className="bg-black/50 rounded-2xl p-6 mb-8 border-2 border-green-500/30">
               <div className="flex justify-between items-center mb-4">
                 <div className="text-left">
                   <div className="text-6xl font-bold text-yellow-400 mb-2">{currentNote}</div>
-                  <div className="text-xl text-gray-300">频率: {frequency.toFixed(2)} Hz</div>
+                  <div className="text-xl text-gray-300">{t('tuner.frequency')}: {frequency.toFixed(2)} Hz</div>
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold mb-2" style={{ color: accuracyColor }}>{accuracyText}</div>
-                  <div className="text-lg text-gray-400">目标: {guitarStrings[selectedString].note} ({guitarStrings[selectedString].frequency.toFixed(2)} Hz)</div>
+                  <div className="text-lg text-gray-400">{t('tuner.target')}: {guitarStrings[selectedString].note} ({guitarStrings[selectedString].frequency.toFixed(2)} Hz)</div>
                 </div>
               </div>
               <div className="relative bg-black/70 rounded-xl p-4 border border-green-500/20" style={{ height: '500px' }}>
                 <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-green-500 transform -translate-x-1/2 z-10">
-                  <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">标准音高</div>
+                  <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">{t('tuner.accuracy.standardPitch')}</div>
                 </div>
                 <div className="absolute inset-0 flex">
-                  <div className="flex-1 bg-red-500/5 border-r-2 border-red-500/20"><div className="absolute left-2 top-2 text-red-400 text-sm">偏低</div></div>
-                  <div className="w-32 bg-green-500/10"><div className="absolute left-1/2 transform -translate-x-1/2 top-2 text-green-400 text-sm">准确区域</div></div>
-                  <div className="flex-1 bg-blue-500/5 border-l-2 border-blue-500/20"><div className="absolute right-2 top-2 text-blue-400 text-sm">偏高</div></div>
+                  <div className="flex-1 bg-red-500/5 border-r-2 border-red-500/20"><div className="absolute left-2 top-2 text-red-400 text-sm">{t('tuner.accuracy.low')}</div></div>
+                  <div className="w-32 bg-green-500/10"><div className="absolute left-1/2 transform -translate-x-1/2 top-2 text-green-400 text-sm">{t('tuner.accuracy.accurateZone')}</div></div>
+                  <div className="flex-1 bg-blue-500/5 border-l-2 border-blue-500/20"><div className="absolute right-2 top-2 text-blue-400 text-sm">{t('tuner.accuracy.high')}</div></div>
                 </div>
                 <div className="absolute inset-x-0 top-12 flex justify-between px-4 text-xs text-gray-500">
-                  <span>-50音分</span><span>-25</span><span className="text-green-400 font-bold">0</span><span>+25</span><span>+50音分</span>
+                  <span>-50{t('tuner.accuracy.cents')}</span><span>-25</span><span className="text-green-400 font-bold">0</span><span>+25</span><span>+50{t('tuner.accuracy.cents')}</span>
                 </div>
                 <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 20 }}>
                   {pitchHistory.length > 1 && pitchHistory.map((point, index) => {
@@ -427,21 +429,21 @@ const TunerPage: React.FC = () => {
                     return (<circle cx={`${x}%`} cy="95%" r="6" fill={getColor(lastPoint.cents)} stroke="white" strokeWidth="2"><animate attributeName="r" values="6;8;6" dur="1s" repeatCount="indefinite" /></circle>);
                   })()}
                 </svg>
-                {pitchHistory.length === 0 && (<div className="absolute inset-0 flex items-center justify-center"><div className="text-gray-500 text-xl">{isTuning ? '等待音频输入...' : '点击"开始调音"查看实时波形'}</div></div>)}
+                {pitchHistory.length === 0 && (<div className="absolute inset-0 flex items-center justify-center"><div className="text-gray-500 text-xl">{isTuning ? t('tuner.waitingInput') : t('tuner.clickToStart')}</div></div>)}
               </div>
             </div>
             <div className="text-center mb-8">
-              <p className="text-lg mb-4">{isTuning ? '调音器已启动，请弹响选中的琴弦' : '点击"开始调音"按钮并允许麦克风访问'}</p>
+              <p className="text-lg mb-4">{isTuning ? t('tuner.tuningActive') : t('tuner.tuningInactive')}</p>
               {error && (<div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg mb-4">{error}</div>)}
             </div>
             <div className="mb-8">
-              <h3 className="text-xl font-bold text-center mb-4 text-gray-300">选择要调的弦</h3>
+              <h3 className="text-xl font-bold text-center mb-4 text-gray-300">{t('tuner.selectString')}</h3>
               <div className="grid grid-cols-6 gap-3">
                 {(Object.entries(guitarStrings) as [StringNumber, GuitarString][]).map(([stringNum, stringData]) => (
                   <motion.button key={stringNum} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={`relative p-4 rounded-xl transition-all duration-200 ${selectedString === stringNum ? 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg shadow-green-500/50' : 'bg-white/10 hover:bg-white/15 border border-white/20 hover:border-green-400/50'}`} onClick={() => handleStringSelect(stringNum)}>
                     <div className="text-center">
                       <div className="text-2xl font-bold mb-1">{stringData.note}</div>
-                      <div className={`text-xs ${selectedString === stringNum ? 'text-white/90' : 'text-gray-400'}`}>第{stringNum}弦</div>
+                      <div className={`text-xs ${selectedString === stringNum ? 'text-white/90' : 'text-gray-400'}`}>{t('tuner.string', { number: stringNum })}</div>
                     </div>
                     {selectedString === stringNum && (<div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center"><span className="text-xs text-black font-bold">✓</span></div>)}
                   </motion.button>
@@ -449,27 +451,27 @@ const TunerPage: React.FC = () => {
               </div>
             </div>
             <div className="flex justify-center gap-4 mb-8">
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 ${isTuning ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`} onClick={toggleTuning}>{isTuning ? '停止调音' : '开始调音'}</motion.button>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 ${isTuning ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`} onClick={toggleTuning}>{isTuning ? t('tuner.stopTuning') : t('tuner.startTuning')}</motion.button>
             </div>
             <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-              <h2 className="text-xl font-bold mb-4 text-center text-yellow-400">📖 使用说明</h2>
+              <h2 className="text-xl font-bold mb-4 text-center text-yellow-400">{t('tuner.instructions.title')}</h2>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-base font-semibold mb-3 text-green-400">🎯 调音步骤</h3>
+                  <h3 className="text-base font-semibold mb-3 text-green-400">{t('tuner.instructions.steps.title')}</h3>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-gray-300">
-                    <li>点击"开始调音"并允许麦克风访问</li>
-                    <li>选择要调的琴弦</li>
-                    <li>弹响琴弦,观察波形图</li>
-                    <li>调整琴弦至波形线在中央绿色区域</li>
+                    <li>{t('tuner.instructions.steps.step1')}</li>
+                    <li>{t('tuner.instructions.steps.step2')}</li>
+                    <li>{t('tuner.instructions.steps.step3')}</li>
+                    <li>{t('tuner.instructions.steps.step4')}</li>
                   </ol>
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold mb-3 text-blue-400">💡 波形说明</h3>
+                  <h3 className="text-base font-semibold mb-3 text-blue-400">{t('tuner.instructions.waveform.title')}</h3>
                   <ul className="space-y-2 text-sm text-gray-300">
-                    <li><span className="text-green-400">●</span> 绿色波形 = 音准准确</li>
-                    <li><span className="text-yellow-400">●</span> 黄色波形 = 接近目标</li>
-                    <li><span className="text-red-400">●</span> 红色波形 = 需要调整</li>
-                    <li>波形从下往上滚动显示时间变化</li>
+                    <li><span className="text-green-400">●</span> {t('tuner.instructions.waveform.green')}</li>
+                    <li><span className="text-yellow-400">●</span> {t('tuner.instructions.waveform.yellow')}</li>
+                    <li><span className="text-red-400">●</span> {t('tuner.instructions.waveform.red')}</li>
+                    <li>{t('tuner.instructions.waveform.scroll')}</li>
                   </ul>
                 </div>
               </div>

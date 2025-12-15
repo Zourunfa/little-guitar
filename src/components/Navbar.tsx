@@ -1,8 +1,11 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
+  const { t } = useTranslation();
   
   // 检测是否是活跃路由
   const isActive = (path: string): boolean => location.pathname === path;
@@ -22,8 +25,8 @@ const Navbar: React.FC = () => {
             </svg>
           </div>
           <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-            <li><Link to="/blues" className={isActive('/blues') ? 'active' : ''}>🎵 Blues 即兴</Link></li>
-            <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>🎸 调音器</Link></li>
+            <li><Link to="/blues" className={isActive('/blues') ? 'active' : ''}>{t('navbar.blues')}</Link></li>
+            <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>{t('navbar.tuner')}</Link></li>
           </ul>
         </div>
         <Link to="/tuner" className="btn btn-ghost text-xl normal-case">
@@ -39,12 +42,12 @@ const Navbar: React.FC = () => {
       </div>
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1">
-          <li><Link to="/blues" className={isActive('/blues') ? 'active' : ''}>🎵 Blues 即兴</Link></li>
-          <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>🎸 调音器</Link></li>
+          <li><Link to="/blues" className={isActive('/blues') ? 'active' : ''}>{t('navbar.blues')}</Link></li>
+          <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>{t('navbar.tuner')}</Link></li>
         </ul>
       </div>
       <div className="navbar-end">
-        {/* 占位元素,保持导航栏平衡 */}
+        <LanguageSwitcher />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import ScalePractice from '../components/ScalePractice';
 import ChordPractice from '../components/ChordPractice';
 import RhythmPractice from '../components/RhythmPractice';
@@ -7,6 +8,7 @@ import Improvisation from '../components/Improvisation';
 import type { Note, BluesType, ProgressionType, PracticeMode, ChordProgressions, BluesScales, RhythmPattern, FretboardPosition, ProgressionConfig } from '../types';
 
 const BluesPage: React.FC = () => {
+  const { t } = useTranslation();
   // 当前选择的调式
   const [selectedKey, setSelectedKey] = useState<Note>('A');
   // 当前选择的 Blues 类型
@@ -157,33 +159,7 @@ const BluesPage: React.FC = () => {
 
   // 练习提示
   const getPracticeTips = (): string[] => {
-    const tips: Record<PracticeMode, string[]> = {
-      scale: [
-        '从根音开始,熟悉音阶的上下行',
-        '尝试不同的指型和把位',
-        '注意弯音和滑音的运用',
-        'Blues 音阶的 b5 是关键音符'
-      ],
-      chord: [
-        'Blues 通常使用属七和弦 (Dominant 7th)',
-        '注意和弦转换的流畅性',
-        '尝试加入九音、十三音等延伸音',
-        '听和弦色彩的变化'
-      ],
-      rhythm: [
-        'Shuffle 节奏是 Blues 的灵魂',
-        '注意三连音的摇摆感',
-        '切分音增加律动感',
-        '用节拍器保持稳定的节奏'
-      ],
-      improv: [
-        '从简单的旋律动机开始',
-        '重复和变化是即兴的核心',
-        '留白也是音乐的一部分',
-        '用耳朵听,用心感受'
-      ]
-    };
-    return tips[practiceMode] || [];
+    return t(`blues.tips.${practiceMode}`, { returnObjects: true }) as string[];
   };
 
   return (
@@ -198,20 +174,20 @@ const BluesPage: React.FC = () => {
           {/* 标题 */}
           <div className="text-center mb-6 md:mb-8">
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-3">
-              🎸 Blues 即兴练习室
+              {t('blues.title')}
             </h1>
-            <p className="text-lg md:text-xl text-gray-300">系统化训练 · 旋律 · 和弦 · 节奏</p>
+            <p className="text-lg md:text-xl text-gray-300">{t('blues.subtitle')}</p>
           </div>
 
           {/* 练习模式选择 */}
           <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 mb-6 border border-white/10">
-            <h2 className="text-xl md:text-2xl font-bold mb-4 text-center">选择练习模式</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-4 text-center">{t('blues.selectMode')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {[
-                { id: 'chord' as PracticeMode, icon: '🎹', name: '和弦进行', desc: '熟悉和弦变化' },
-                { id: 'scale' as PracticeMode, icon: '🎵', name: '音阶练习', desc: '掌握 Blues 音阶' },
-                { id: 'rhythm' as PracticeMode, icon: '🥁', name: '节奏训练', desc: '培养律动感' },
-                { id: 'improv' as PracticeMode, icon: '✨', name: '即兴创作', desc: '综合实战' }
+                { id: 'chord' as PracticeMode, icon: '🎹' },
+                { id: 'scale' as PracticeMode, icon: '🎵' },
+                { id: 'rhythm' as PracticeMode, icon: '🥁' },
+                { id: 'improv' as PracticeMode, icon: '✨' }
               ].map(mode => (
                 <motion.button
                   key={mode.id}
@@ -225,8 +201,8 @@ const BluesPage: React.FC = () => {
                   onClick={() => setPracticeMode(mode.id)}
                 >
                   <div className="text-3xl md:text-4xl mb-2">{mode.icon}</div>
-                  <div className="text-sm md:text-base font-bold mb-1">{mode.name}</div>
-                  <div className="text-xs text-gray-300">{mode.desc}</div>
+                  <div className="text-sm md:text-base font-bold mb-1">{t(`blues.modes.${mode.id}.name`)}</div>
+                  <div className="text-xs text-gray-300">{t(`blues.modes.${mode.id}.desc`)}</div>
                 </motion.button>
               ))}
             </div>
@@ -237,7 +213,7 @@ const BluesPage: React.FC = () => {
             <div className="grid md:grid-cols-2 gap-6">
               {/* 调式选择 */}
               <div>
-                <h3 className="text-lg md:text-xl font-bold mb-3">选择调式</h3>
+                <h3 className="text-lg md:text-xl font-bold mb-3">{t('blues.selectKey')}</h3>
                 <div className="grid grid-cols-4 gap-2">
                   {notes.map(note => (
                     <motion.button
@@ -259,12 +235,12 @@ const BluesPage: React.FC = () => {
 
               {/* Blues 类型选择 */}
               <div>
-                <h3 className="text-lg md:text-xl font-bold mb-3">Blues 类型</h3>
+                <h3 className="text-lg md:text-xl font-bold mb-3">{t('blues.bluesType')}</h3>
                 <div className="space-y-2">
                   {[
-                    { id: 'minor' as BluesType, name: '小调 Blues', desc: '最常用,情感丰富' },
-                    { id: 'major' as BluesType, name: '大调 Blues', desc: '明亮欢快' },
-                    { id: 'mixolydian' as BluesType, name: 'Mixolydian', desc: '爵士色彩' }
+                    { id: 'minor' as BluesType },
+                    { id: 'major' as BluesType },
+                    { id: 'mixolydian' as BluesType }
                   ].map(type => (
                     <motion.button
                       key={type.id}
@@ -277,8 +253,8 @@ const BluesPage: React.FC = () => {
                       }`}
                       onClick={() => setBluesType(type.id)}
                     >
-                      <div className="font-bold">{type.name}</div>
-                      <div className="text-xs text-gray-300">{type.desc}</div>
+                      <div className="font-bold">{t(`blues.bluesTypes.${type.id}.name`)}</div>
+                      <div className="text-xs text-gray-300">{t(`blues.bluesTypes.${type.id}.desc`)}</div>
                     </motion.button>
                   ))}
                 </div>
@@ -353,7 +329,7 @@ const BluesPage: React.FC = () => {
 
           {/* 练习提示 */}
           <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 mt-6 border border-white/10">
-            <h3 className="text-lg md:text-xl font-bold mb-4 text-yellow-400">💡 练习提示</h3>
+            <h3 className="text-lg md:text-xl font-bold mb-4 text-yellow-400">{t('blues.tips.title')}</h3>
             <ul className="space-y-2 text-sm md:text-base text-gray-300">
               {getPracticeTips().map((tip, index) => (
                 <li key={index} className="flex items-start">
@@ -393,10 +369,10 @@ const BluesPage: React.FC = () => {
                     </div>
                     <div className="hidden md:block">
                       <div className="text-sm font-bold text-white">
-                        {isPlaying ? '播放中' : '已暂停'}
+                        {isPlaying ? t('blues.playControl.playing') : t('blues.playControl.paused')}
                       </div>
                       <div className="text-xs text-gray-400">
-                        {isPlaying ? `小节 ${currentChordIndex + 1}` : `${bpm} BPM`}
+                        {isPlaying ? `${t('blues.playControl.bar')} ${currentChordIndex + 1}` : `${bpm} BPM`}
                       </div>
                     </div>
                   </div>
@@ -433,14 +409,14 @@ const BluesPage: React.FC = () => {
                               <rect x="5" y="3" width="3" height="14" rx="1" />
                               <rect x="12" y="3" width="3" height="14" rx="1" />
                             </svg>
-                            <span>暂停</span>
+                            <span>{t('common.pause')}</span>
                           </>
                         ) : (
                           <>
                             <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                             </svg>
-                            <span>播放</span>
+                            <span>{t('common.play')}</span>
                           </>
                         )}
                       </div>
@@ -459,7 +435,7 @@ const BluesPage: React.FC = () => {
                         <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 20 20">
                           <rect x="5" y="5" width="10" height="10" rx="1" />
                         </svg>
-                        <span className="hidden md:inline">停止</span>
+                        <span className="hidden md:inline">{t('common.stop')}</span>
                       </div>
                     </motion.button>
                   </div>
@@ -468,14 +444,14 @@ const BluesPage: React.FC = () => {
                   <div className="hidden lg:flex items-center gap-4 min-w-[180px]">
                     <div className="flex items-center gap-3 bg-gradient-to-r from-purple-500/20 to-blue-500/20 px-4 py-3 rounded-xl border border-purple-500/30">
                       <div className="text-center">
-                        <div className="text-xs text-gray-400">速度</div>
+                        <div className="text-xs text-gray-400">{t('blues.playControl.speed')}</div>
                         <div className="text-xl font-bold text-yellow-400">
                           {bpm}
                         </div>
                       </div>
                       <div className="w-px h-10 bg-white/20"></div>
                       <div className="text-center">
-                        <div className="text-xs text-gray-400">小节</div>
+                        <div className="text-xs text-gray-400">{t('blues.playControl.bar')}</div>
                         <div className="text-xl font-bold text-blue-400">
                           {currentChordIndex + 1}/{chordProgressions[progression].sections.reduce((sum, section) => sum + section.bars, 0)}
                         </div>

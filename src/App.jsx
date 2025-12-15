@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import cloudbase from './utils/cloudbase'
 import TunerPage from './pages/TunerPage'
 import BluesPage from './pages/BluesPage'
@@ -8,6 +9,7 @@ import Footer from './components/Footer'
 import './App.css'
 
 function App() {
+  const { t } = useTranslation()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -34,7 +36,7 @@ function App() {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="loading loading-spinner loading-lg text-primary"></div>
-        <p className="ml-2">加载中...</p>
+        <p className="ml-2">{t('common.loading')}</p>
       </div>
     )
   }
