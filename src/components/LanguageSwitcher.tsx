@@ -9,6 +9,8 @@ const LanguageSwitcher: React.FC = () => {
     const newLang = i18n.language === 'zh-CN' ? 'en-US' : 'zh-CN';
     i18n.changeLanguage(newLang);
     localStorage.setItem('language', newLang);
+    // 清除自动检测标记，表示用户手动选择了语言
+    localStorage.removeItem('language-auto-detected');
   };
 
   return (
