@@ -6,11 +6,12 @@ import TunerPage from './pages/TunerPage'
 import BluesPage from './pages/BluesPage'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import ContactFloat from './components/ContactFloat'
 import './App.css'
 
 function App() {
   const { t } = useTranslation()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [, setIsLoggedIn] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -56,6 +57,7 @@ function App() {
           </Routes>
         </main>
         <Footer />
+        <ContactFloat />
       </div>
     </Router>
   )

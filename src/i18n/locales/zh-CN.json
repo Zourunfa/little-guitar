@@ -269,6 +269,10 @@
       "stopBacking": "停止伴奏"
     }
   },
+  "contact": {
+    "title": "联系我",
+    "scanWeChat": "扫码添加微信"
+  },
   "tuner": {
     "title": "🎸 吉他调音器",
     "subtitle": "基于Web Audio API的纯前端调音工具",

@@ -269,6 +269,10 @@
       "stopBacking": "Stop Backing Track"
     }
   },
+  "contact": {
+    "title": "Contact",
+    "scanWeChat": "Scan to add WeChat"
+  },
   "tuner": {
     "title": "🎸 Guitar Tuner",
     "subtitle": "Pure frontend tuning tool based on Web Audio API",

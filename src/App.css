@@ -44,3 +44,9 @@
 .read-the-docs {
   color: #888;
 }
+
+/* 垂直文字样式 */
+.writing-mode-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
