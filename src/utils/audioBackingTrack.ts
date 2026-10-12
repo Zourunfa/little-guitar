@@ -1,6 +1,8 @@
+import type { SoundTouchNode } from '@soundtouchjs/audio-worklet';
+
 /**
  * 音频伴奏轨道管理器
- * 用于播放和控制经典音频伴奏，支持速度调节
+ * 用于播放和控制经典音频伴奏，支持保音高变速
  */
 
 export type BackingTrackKey = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
@@ -18,7 +20,11 @@ class AudioBackingTrack {
   private audioContext: AudioContext | null = null;
   private audioBuffer: AudioBuffer | null = null;
   private sourceNode: AudioBufferSourceNode | null = null;
+  private soundTouchNode: SoundTouchNode | null = null;
+  private soundTouchNodeConstructor: typeof SoundTouchNode | null = null;
   private isInitialized: boolean = false;
+  private isPitchPreservingReady: boolean = false;
+  private processorLoadError: string | null = null;
   private isPlaying: boolean = false;
   private currentKey: BackingTrackKey = 'A';
   private currentBPM: number = 105;
@@ -55,12 +61,34 @@ class AudioBackingTrack {
     if (this.isInitialized) return;
 
     try {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      this.audioContext = audioContext;
       
       // 创建增益节点用于音量控制
-      this.gainNode = this.audioContext.createGain();
+      this.gainNode = audioContext.createGain();
       this.gainNode.gain.value = this.volume;
-      this.gainNode.connect(this.audioContext.destination);
+      this.gainNode.connect(audioContext.destination);
+
+      if (!audioContext.audioWorklet) {
+        this.processorLoadError = '当前浏览器不支持 AudioWorklet';
+      } else {
+        try {
+          const [{ SoundTouchNode: SoundTouchNodeClass }, { default: processorUrl }] = await Promise.all([
+            import('@soundtouchjs/audio-worklet'),
+            import('@soundtouchjs/audio-worklet/processor?url'),
+          ]);
+          // React StrictMode 可在动态导入期间清理组件并释放此实例。
+          if (!this.isCurrentAudioContext(audioContext)) return;
+          await SoundTouchNodeClass.register(audioContext, processorUrl);
+          if (!this.isCurrentAudioContext(audioContext)) return;
+          this.soundTouchNodeConstructor = SoundTouchNodeClass;
+          this.isPitchPreservingReady = true;
+        } catch (error) {
+          if (!this.isCurrentAudioContext(audioContext)) return;
+          this.processorLoadError = error instanceof Error ? error.message : 'AudioWorklet 加载失败';
+          console.error('❌ 保音高变速处理器加载失败:', this.processorLoadError);
+        }
+      }
       
       this.isInitialized = true;
     } catch (e) {
@@ -191,6 +219,9 @@ class AudioBackingTrack {
       console.warn('音频未准备好，无法播放');
       throw new Error('音频未准备好，请先加载音频文件');
     }
+    if (!this.isPitchPreservingReady) {
+      throw new Error(`当前浏览器无法启用保音高变速：${this.processorLoadError || '音频处理器未就绪'}`);
+    }
 
     // 检查AudioContext状态
     if (this.audioContext.state === 'suspended') {
@@ -204,17 +235,22 @@ class AudioBackingTrack {
       // 创建新的音频源节点
       this.sourceNode = this.audioContext.createBufferSource();
       this.sourceNode.buffer = this.audioBuffer;
+      if (!this.soundTouchNodeConstructor) {
+        throw new Error('保音高变速处理器未初始化');
+      }
+      this.soundTouchNode = new this.soundTouchNodeConstructor({ context: this.audioContext });
 
-      // 计算播放速率（基于原始BPM和目标BPM）
+      // 速度由 BufferSource 提供，SoundTouch 根据相同速率补偿音高。
       const trackConfig = this.backingTracks[this.currentKey];
       const playbackRate = targetBPM / trackConfig.originalBPM;
+      const rate = this.clampPlaybackRate(playbackRate);
+      this.setPlaybackRate(rate);
+      this.soundTouchNode.pitch.value = 1;
+      this.soundTouchNode.pitchSemitones.value = 0;
 
-      // 限制播放速率范围（0.5x - 2.0x）
-      const clampedRate = Math.max(0.5, Math.min(2.0, playbackRate));
-      this.sourceNode.playbackRate.value = clampedRate;
-
-      // 连接到增益节点
-      this.sourceNode.connect(this.gainNode);
+      // 连接保音高处理器和增益节点
+      this.sourceNode.connect(this.soundTouchNode);
+      this.soundTouchNode.connect(this.gainNode);
 
       // 获取起始偏移和循环点配置
       const startOffset = trackConfig.startOffset || 0;
@@ -227,8 +263,9 @@ class AudioBackingTrack {
       this.sourceNode.loopEnd = loopEnd;
 
       // 添加结束事件监听器（用于错误处理）
-      this.sourceNode.onended = () => {
-        if (this.isPlaying && this.sourceNode === this.sourceNode) {
+      const sourceNode = this.sourceNode;
+      sourceNode.onended = () => {
+        if (this.isPlaying && this.sourceNode === sourceNode) {
           // 正常循环不会触发这个，但如果意外停止会触发
           console.log('音频播放结束');
           this.isPlaying = false;
@@ -240,15 +277,16 @@ class AudioBackingTrack {
       this.isPlaying = true;
       this.currentBPM = targetBPM;
 
-      console.log(`🎵 开始播放 ${this.currentKey} 调伴奏，速度: ${targetBPM} BPM (播放速率: ${clampedRate.toFixed(2)}x)`);
+      console.log(`🎵 开始播放 ${this.currentKey} 调伴奏，速度: ${targetBPM} BPM (播放速率: ${rate.toFixed(2)}x，保留原调)`);
       console.log(`📍 播放参数: 起始=${startOffset.toFixed(2)}s, 循环=${loopStart.toFixed(2)}s~${loopEnd.toFixed(2)}s`);
 
-      if (clampedRate !== playbackRate) {
-        console.warn(`⚠️ 播放速率已限制为 ${clampedRate.toFixed(2)}x (原始请求: ${playbackRate.toFixed(2)}x)`);
+      if (rate !== playbackRate) {
+        console.warn(`⚠️ 播放速率已限制为 ${rate.toFixed(2)}x (原始请求: ${playbackRate.toFixed(2)}x)`);
       }
     } catch (error) {
       console.error('❌ 播放失败:', error);
       this.isPlaying = false;
+      this.disconnectPlaybackNodes();
       throw new Error(`播放失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
@@ -266,6 +304,10 @@ class AudioBackingTrack {
       this.sourceNode.disconnect();
       this.sourceNode = null;
     }
+    if (this.soundTouchNode) {
+      this.soundTouchNode.disconnect();
+      this.soundTouchNode = null;
+    }
     this.isPlaying = false;
   }
 
@@ -281,16 +323,14 @@ class AudioBackingTrack {
     try {
       const trackConfig = this.backingTracks[this.currentKey];
       const playbackRate = targetBPM / trackConfig.originalBPM;
-
-      // 限制播放速率范围（0.5x - 2.0x）
-      const clampedRate = Math.max(0.5, Math.min(2.0, playbackRate));
-      this.sourceNode.playbackRate.value = clampedRate;
+      const rate = this.clampPlaybackRate(playbackRate);
+      this.setPlaybackRate(rate);
       this.currentBPM = targetBPM;
 
-      console.log(`⚡ 调整速度: ${targetBPM} BPM (播放速率: ${clampedRate.toFixed(2)}x)`);
+      console.log(`⚡ 调整速度: ${targetBPM} BPM (播放速率: ${rate.toFixed(2)}x，保留原调)`);
 
-      if (clampedRate !== playbackRate) {
-        console.warn(`⚠️ 播放速率已限制为 ${clampedRate.toFixed(2)}x (原始请求: ${playbackRate.toFixed(2)}x)`);
+      if (rate !== playbackRate) {
+        console.warn(`⚠️ 播放速率已限制为 ${rate.toFixed(2)}x (原始请求: ${playbackRate.toFixed(2)}x)`);
       }
     } catch (error) {
       console.error('❌ 调整速度失败:', error);
@@ -476,7 +516,42 @@ class AudioBackingTrack {
     this.audioContext = null;
     this.audioBuffer = null;
     this.gainNode = null;
+    this.isPitchPreservingReady = false;
+    this.soundTouchNodeConstructor = null;
+    this.processorLoadError = null;
     this.isInitialized = false;
+  }
+
+  private clampPlaybackRate(rate: number): number {
+    // SoundTouchJS 处理器参数范围为 0.1–8.0；限制在当前 UI 的音乐使用范围内。
+    return Math.max(0.48, Math.min(1.44, rate));
+  }
+
+  private isCurrentAudioContext(context: AudioContext): boolean {
+    return this.audioContext === context && context.state !== 'closed';
+  }
+
+  private setPlaybackRate(rate: number): void {
+    if (!this.audioContext || !this.sourceNode || !this.soundTouchNode) return;
+
+    // 两个参数在同一 AudioContext 时间点平滑更新，保持处理器与输入源同步。
+    const now = this.audioContext.currentTime;
+    const timeConstant = 0.03;
+    this.sourceNode.playbackRate.cancelScheduledValues(now);
+    this.soundTouchNode.playbackRate.cancelScheduledValues(now);
+    this.sourceNode.playbackRate.setTargetAtTime(rate, now, timeConstant);
+    this.soundTouchNode.playbackRate.setTargetAtTime(rate, now, timeConstant);
+  }
+
+  private disconnectPlaybackNodes(): void {
+    if (this.sourceNode) {
+      this.sourceNode.disconnect();
+      this.sourceNode = null;
+    }
+    if (this.soundTouchNode) {
+      this.soundTouchNode.disconnect();
+      this.soundTouchNode = null;
+    }
   }
 }
 

@@ -68,37 +68,41 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     accompanimentRef.current.init();
     
     // 初始化音频伴奏并预加载
+    let cancelled = false;
+    const backingTrack = new AudioBackingTrack();
+    audioBackingTrackRef.current = backingTrack;
+
     const initAudioBacking = async () => {
-      audioBackingTrackRef.current = new AudioBackingTrack();
       try {
-        await audioBackingTrackRef.current.init();
+        await backingTrack.init();
+        if (cancelled) return;
         console.log('✅ 音频伴奏初始化成功');
         
         // 自动预加载所有可用音频
         setIsPreloading(true);
-        await audioBackingTrackRef.current.preloadAllTracks();
-        const loaded = audioBackingTrackRef.current.getPreloadedKeys();
+        await backingTrack.preloadAllTracks();
+        if (cancelled) return;
+        const loaded = backingTrack.getPreloadedKeys();
         setPreloadedKeys(loaded);
         console.log(`✅ 预加载完成: ${loaded.join(', ')}`);
       } catch (err) {
-        console.error('❌ 音频伴奏初始化或预加载失败:', err);
+        if (!cancelled) console.error('❌ 音频伴奏初始化或预加载失败:', err);
       } finally {
-        setIsPreloading(false);
+        if (!cancelled) setIsPreloading(false);
       }
     };
     
     initAudioBacking();
 
     return () => {
+      cancelled = true;
       if (drumKitRef.current) {
         drumKitRef.current.dispose();
       }
       if (accompanimentRef.current) {
         accompanimentRef.current.dispose();
       }
-      if (audioBackingTrackRef.current) {
-        audioBackingTrackRef.current.dispose();
-      }
+      backingTrack.dispose();
     };
   }, []);
 
@@ -328,6 +332,8 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
               const errorMsg = err instanceof Error ? err.message : '播放失败';
               setAudioBackingError(errorMsg);
               setIsAudioBackingPlaying(false);
+              setIsActuallyPlaying(false);
+              setIsPlaying(false);
             }
           }
         } else {

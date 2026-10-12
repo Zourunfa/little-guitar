@@ -319,9 +319,14 @@
   resolved "https://registry.npmmirror.com/@cloudbase/wx-cloud-client-sdk/-/wx-cloud-client-sdk-1.6.1.tgz"
   integrity sha512-TeLhz+LMlTe1bZiCbwflU2nXX4FHXnLk1ojbrOfY9ki1gO1gYll9Snl2g3zBhiTGye/OfhzBEDCwVhGxzOxs4Q==
 
+"@esbuild/darwin-arm64@0.25.10":
+  version "0.25.10"
+  resolved "https://registry.npmmirror.com/@esbuild/darwin-arm64/-/darwin-arm64-0.25.10.tgz"
+  integrity sha512-JC74bdXcQEpW9KkV326WpZZjLguSZ3DfS8wrrvPMHgQOIEIG/sPXEN/V8IssoJhbefLRcRqw6RQH2NnpdprtMA==
+
 "@esbuild/win32-x64@0.25.10":
   version "0.25.10"
-  resolved "https://registry.npmmirror.com/@esbuild/win32-x64/-/win32-x64-0.25.10.tgz"
+  resolved "https://registry.npmmirror.com/@esbuild/win32-x64/-/esbuild-win32-x64-0.25.10.tgz"
   integrity sha512-9KpxSVFCu0iK1owoez6aC/s/EdUQLDN3adTxGCqxMVhrPDj6bt5dbrHDXUuq+Bs2vATFBBrQS5vdQ/Ed2P+nbw==
 
 "@eslint-community/eslint-utils@^4.8.0":
@@ -507,6 +512,11 @@
   resolved "https://registry.npmmirror.com/@rolldown/pluginutils/-/pluginutils-1.0.0-beta.27.tgz"
   integrity sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==
 
+"@rollup/rollup-darwin-arm64@4.52.4":
+  version "4.52.4"
+  resolved "https://registry.npmmirror.com/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.52.4.tgz"
+  integrity sha512-QRWSW+bVccAvZF6cbNZBJwAehmvG9NwfWHwMy4GbWi/BQIA/laTIktebT2ipVjNncqE6GLPxOok5hsECgAxGZg==
+
 "@rollup/rollup-win32-x64-gnu@4.52.4":
   version "4.52.4"
   resolved "https://registry.npmmirror.com/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.52.4.tgz"
@@ -516,6 +526,34 @@
   version "4.52.4"
   resolved "https://registry.npmmirror.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.52.4.tgz"
   integrity sha512-bf9PtUa0u8IXDVxzRToFQKsNCRz9qLYfR/MpECxl4mRoWYjAeFjgxj1XdZr2M/GNVpT05p+LgQOHopYDlUu6/w==
+
+"@soundtouchjs/audio-worklet@2.1.1":
+  version "2.1.1"
+  resolved "https://registry.npmmirror.com/@soundtouchjs/audio-worklet/-/audio-worklet-2.1.1.tgz"
+  integrity sha512-itxSW62gbtDKoFo6eEr4PXzVz3oF+wCVREupFi5JiUR31tWWwCizr+2XezYD1SnkrSDfdmZvvviTtoyejYeD0Q==
+  dependencies:
+    "@soundtouchjs/core" "2.1.1"
+    "@soundtouchjs/interpolation-strategy-lanczos" "2.1.1"
+    "@soundtouchjs/worklet-base" "2.1.1"
+
+"@soundtouchjs/core@2.1.1":
+  version "2.1.1"
+  resolved "https://registry.npmmirror.com/@soundtouchjs/core/-/core-2.1.1.tgz"
+  integrity sha512-ccBiG9/zHdM1Sx1RUkXWBgRYFI1HCiUHHwRK8gAvVNgmcafBgUzRP6Czn7pUPcHgSQus+i3Eu3DlfBR24wqspA==
+  dependencies:
+    "@soundtouchjs/interpolation-strategy-lanczos" "2.1.1"
+
+"@soundtouchjs/interpolation-strategy-lanczos@2.1.1":
+  version "2.1.1"
+  resolved "https://registry.npmmirror.com/@soundtouchjs/interpolation-strategy-lanczos/-/interpolation-strategy-lanczos-2.1.1.tgz"
+  integrity sha512-EX4qVLnOJ9pKfL7iSPJSJDKDAoZ4d7JO7KTKMPVo2XIhlmT/2hTZC5dWL/R9Jv3XC7kyQeteeGcogWP6DPi47A==
+
+"@soundtouchjs/worklet-base@2.1.1":
+  version "2.1.1"
+  resolved "https://registry.npmmirror.com/@soundtouchjs/worklet-base/-/worklet-base-2.1.1.tgz"
+  integrity sha512-H/QMyW8yB91WX1CVSVCeOXNPdv1m71Zi0KQlvcX3f+159GNUo8kckmXV0cHpni9SCqVhCHMS/lapbBKl4tc6nQ==
+  dependencies:
+    "@soundtouchjs/core" "2.1.1"
 
 "@tonejs/midi@^2.0.28":
   version "2.0.28"
@@ -1150,6 +1188,11 @@ framer-motion@^12.23.3:
     motion-dom "^12.23.23"
     motion-utils "^12.23.6"
     tslib "^2.4.0"
+
+fsevents@~2.3.2, fsevents@~2.3.3:
+  version "2.3.3"
+  resolved "https://registry.npmmirror.com/fsevents/-/fsevents-2.3.3.tgz"
+  integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
 
 function-bind@^1.1.2:
   version "1.1.2"
