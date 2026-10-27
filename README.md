@@ -147,7 +147,7 @@ todo:
 ### 前提条件
 
 - Node.js 20.19+ 或 22.12+
-- npm 或 yarn
+- npm（统一使用 `package-lock.json`，不要生成 `yarn.lock`）
 
 ### 安装依赖
 
@@ -174,6 +174,14 @@ npm run build
 ---
 
 ## 📦 部署
+
+### 部署到 Cloudflare Pages
+
+项目已连接 GitHub 的 `main` 分支。构建命令使用 `npm run build`，输出目录为 `dist`，根目录留空。推送代码后由 Cloudflare 自动构建和部署。
+
+依赖统一使用 npm，提交并维护 `package-lock.json`；`.node-version` 固定 Node.js 22，`package.json` 声明 npm 10.9.2。CI 可用 `npm ci` 干净安装后执行构建。不要同时提交 Yarn 锁文件，否则 Cloudflare 可能自动选择 Yarn 4，迁移旧锁文件时因 CI 禁止修改而报 `YN0028`。
+
+如果控制台已有 `NODE_VERSION` 环境变量，请与 `.node-version` 保持一致。若明确配置了 Yarn 安装命令，应改回 npm；修复后查看新提交的部署记录。部署成功后可通过 [Blues 练习](https://little-guitar.pages.dev/#/blues) 和 [调音器](https://little-guitar.pages.dev/#/tuner) 验证。
 
 ### 部署到腾讯云开发静态托管
 
