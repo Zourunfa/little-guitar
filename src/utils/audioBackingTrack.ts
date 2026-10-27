@@ -31,13 +31,15 @@ class AudioBackingTrack {
   private volume: number = 0.7;
   private gainNode: GainNode | null = null;
   private preloadedBuffers: Map<BackingTrackKey, AudioBuffer> = new Map(); // 预加载的音频缓存
-  private loadingKeys: Set<BackingTrackKey> = new Set(); // 正在加载的调性
+  private loadingTracks: Map<BackingTrackKey, Promise<void>> = new Map(); // 相同调性的调用共享同一次加载
+  private loadControllers: Set<AbortController> = new Set();
+  private isDisposed: boolean = false;
 
   // 12个调的音频配置（目前只有A调，其他调可以后续添加）
   private backingTracks: Record<BackingTrackKey, BackingTrackConfig> = {
     'A': { 
       key: 'A', 
-      url: '/blues-mp3/A.mp3', 
+      url: `${import.meta.env.BASE_URL}blues-mp3/A.mp3`,
       originalBPM: 125,
       startOffset: 5, // 跳过前5秒，从第一小节第一拍开始
     },
@@ -60,6 +62,7 @@ class AudioBackingTrack {
   async init(): Promise<void> {
     if (this.isInitialized) return;
 
+    this.isDisposed = false;
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       this.audioContext = audioContext;
@@ -111,10 +114,11 @@ class AudioBackingTrack {
       return;
     }
 
-    // 如果正在加载，避免重复加载
-    if (this.loadingKeys.has(key)) {
-      console.log(`⏳ ${key} 调音频正在加载中...`);
-      return;
+    // 预加载和用户点击可能同时发生；所有调用必须等待同一个 Promise，不能提前返回。
+    const pending = this.loadingTracks.get(key);
+    if (pending) {
+      console.log(`⏳ ${key} 调音频正在加载中，等待本次加载完成...`);
+      return pending;
     }
 
     const trackConfig = this.backingTracks[key];
@@ -122,44 +126,12 @@ class AudioBackingTrack {
       throw new Error(`调 ${key} 的音频文件暂未配置`);
     }
 
-    this.loadingKeys.add(key);
-
+    const loading = this.fetchAndDecodeTrack(key, trackConfig.url);
+    this.loadingTracks.set(key, loading);
     try {
-      console.log(`🔄 开始预加载 ${key} 调伴奏: ${trackConfig.url}`);
-
-      // 加载音频文件
-      const response = await fetch(trackConfig.url);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      if (arrayBuffer.byteLength === 0) {
-        throw new Error('音频文件为空或不存在');
-      }
-
-      console.log(`📊 音频文件大小: ${(arrayBuffer.byteLength / 1024).toFixed(1)}KB`);
-
-      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-      
-      // 存入缓存
-      this.preloadedBuffers.set(key, audioBuffer);
-
-      console.log(`✅ 成功预加载 ${key} 调伴奏，时长: ${audioBuffer.duration.toFixed(2)}秒，采样率: ${audioBuffer.sampleRate}Hz`);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : '未知错误';
-      console.error(`❌ 预加载 ${key} 调伴奏失败:`, errorMessage);
-
-      // 提供更具体的错误信息
-      if (errorMessage.includes('decodeAudioData')) {
-        throw new Error(`音频文件格式错误或文件损坏: ${errorMessage}`);
-      } else if (errorMessage.includes('404')) {
-        throw new Error(`音频文件不存在: ${trackConfig.url}`);
-      } else {
-        throw new Error(`加载失败: ${errorMessage}`);
-      }
+      await loading;
     } finally {
-      this.loadingKeys.delete(key);
+      if (this.loadingTracks.get(key) === loading) this.loadingTracks.delete(key);
     }
   }
 
@@ -187,9 +159,11 @@ class AudioBackingTrack {
       return;
     }
 
-    // 否则立即加载
+    // 否则立即加载（若后台正在预加载，会等待同一个任务完成）
     await this.preloadTrack(key);
-    this.audioBuffer = this.preloadedBuffers.get(key)!;
+    const buffer = this.preloadedBuffers.get(key);
+    if (!buffer) throw new Error('音频加载未完成，请重新加载');
+    this.audioBuffer = buffer;
     this.currentKey = key;
   }
 
@@ -379,7 +353,7 @@ class AudioBackingTrack {
    * 检查音频是否已加载（包括预加载缓存）
    */
   isAudioLoaded(): boolean {
-    return !!this.audioBuffer || this.preloadedBuffers.has(this.currentKey);
+    return this.audioBuffer !== null && this.preloadedBuffers.get(this.currentKey) === this.audioBuffer;
   }
 
   /**
@@ -393,7 +367,7 @@ class AudioBackingTrack {
    * 检查指定调的音频是否正在加载
    */
   isTrackLoading(key: BackingTrackKey): boolean {
-    return this.loadingKeys.has(key);
+    return this.loadingTracks.has(key);
   }
 
   /**
@@ -500,7 +474,6 @@ class AudioBackingTrack {
    */
   clearPreloadCache(): void {
     this.preloadedBuffers.clear();
-    this.loadingKeys.clear();
     console.log('🗑️ 已清除所有预加载缓存');
   }
 
@@ -508,7 +481,11 @@ class AudioBackingTrack {
    * 释放资源
    */
   dispose(): void {
+    this.isDisposed = true;
     this.stop();
+    this.loadControllers.forEach(controller => controller.abort());
+    this.loadControllers.clear();
+    this.loadingTracks.clear();
     this.clearPreloadCache();
     if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close();
@@ -520,6 +497,64 @@ class AudioBackingTrack {
     this.soundTouchNodeConstructor = null;
     this.processorLoadError = null;
     this.isInitialized = false;
+  }
+
+  private async fetchAndDecodeTrack(key: BackingTrackKey, url: string): Promise<void> {
+    const context = this.audioContext;
+    if (!context) throw new Error('AudioContext 未初始化');
+
+    try {
+      console.log(`🔄 开始加载 ${key} 调伴奏: ${url}`);
+      const arrayBuffer = await this.fetchWithRetry(url);
+      if (this.isDisposed || !this.isCurrentAudioContext(context)) throw new Error('音频加载已取消');
+      if (arrayBuffer.byteLength === 0) throw new Error('音频文件为空或不存在');
+
+      console.log(`📊 音频文件大小: ${(arrayBuffer.byteLength / 1024 / 1024).toFixed(1)}MB`);
+      const audioBuffer = await context.decodeAudioData(arrayBuffer);
+      if (this.isDisposed || !this.isCurrentAudioContext(context)) return;
+
+      this.preloadedBuffers.set(key, audioBuffer);
+      console.log(`✅ 成功预加载 ${key} 调伴奏，时长: ${audioBuffer.duration.toFixed(2)}秒，采样率: ${audioBuffer.sampleRate}Hz`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '未知错误';
+      console.error(`❌ 加载 ${key} 调伴奏失败:`, message);
+      if (this.isDisposed || message === '音频加载已取消') throw error;
+      if (message.includes('404')) throw new Error(`音频文件不存在: ${url}`);
+      if (message.includes('超时')) throw new Error('音频加载超时，请检查网络后点击重新加载');
+      if (message.includes('decode') || message.includes('Decode')) {
+        throw new Error(`音频文件格式错误或文件损坏: ${message}`);
+      }
+      throw new Error(`音频加载失败: ${message}`);
+    }
+  }
+
+  private async fetchWithRetry(url: string): Promise<ArrayBuffer> {
+    let lastError: unknown;
+
+    // 首次下载约 4.6MB。弱网失败后自动再试一次，避免请求永久挂起。
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 20000);
+      this.loadControllers.add(controller);
+
+      try {
+        const response = await fetch(url, { signal: controller.signal, cache: 'force-cache' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        return await response.arrayBuffer();
+      } catch (error) {
+        lastError = error;
+        if (this.isDisposed) throw new Error('音频加载已取消');
+        if (controller.signal.aborted) lastError = new Error('音频加载超时');
+        // 404 等客户端错误重试也不会恢复，直接反馈。
+        if (lastError instanceof Error && /^HTTP 4\d\d/.test(lastError.message)) throw lastError;
+        if (attempt === 0) console.warn(`⚠️ 音频下载失败，正在自动重试: ${url}`);
+      } finally {
+        window.clearTimeout(timeout);
+        this.loadControllers.delete(controller);
+      }
+    }
+
+    throw lastError instanceof Error ? lastError : new Error('音频下载失败');
   }
 
   private clampPlaybackRate(rate: number): number {
