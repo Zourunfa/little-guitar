@@ -86,7 +86,10 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         setPreloadedKeys(loaded);
         console.log(`✅ 预加载完成: ${loaded.join(', ')}`);
       } catch (err) {
-        if (!cancelled) console.error('❌ 音频伴奏初始化或预加载失败:', err);
+        if (!cancelled) {
+          console.error('❌ 音频伴奏初始化或预加载失败:', err);
+          setAudioBackingError(err instanceof Error ? err.message : '音频伴奏初始化失败，请重新加载');
+        }
       } finally {
         if (!cancelled) setIsPreloading(false);
       }
@@ -593,7 +596,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                 选择调性:
                 {isPreloading && (
                   <span className="ml-2 text-amber-700 text-xs">
-                    ⏳ 正在预加载音频...
+                    ⏳ 后台加载音频中...
                   </span>
                 )}
               </div>
@@ -640,7 +643,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                     {isAudioBackingLoading && (
                       <div className="flex items-center gap-2 text-amber-700">
                         <div className="animate-spin rounded-full h-3 w-3 border-2 border-yellow-400 border-t-transparent"></div>
-                        <span className="text-xs">加载中...</span>
+                        <span className="text-xs">下载 / 解码中...</span>
                       </div>
                     )}
                     {!isAudioBackingLoading && isAudioBackingPlaying && (
@@ -655,13 +658,31 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                         <span className="text-xs">已停止</span>
                       </div>
                     )}
+                    {!isAudioBackingLoading && !isAudioBackingPlaying && !isActuallyPlaying && preloadedKeys.includes(audioBackingKey) && (
+                      <div className="flex items-center gap-2 text-emerald-700">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        <span className="text-xs">已就绪</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
+                {isAudioBackingLoading && (
+                  <p className="text-xs text-slate-500 mt-2">首次需下载约 4.6 MB 音频；网络失败会自动重试一次，加载完成后会优先使用缓存。</p>
+                )}
+
                 {/* 错误提示 */}
                 {audioBackingError && (
-                  <div className="text-sm text-red-700 bg-red-50 p-2 rounded-lg mt-2">
-                    ⚠️ {audioBackingError}
+                  <div className="flex items-center justify-between gap-3 text-sm text-red-700 bg-red-50 p-2 rounded-lg mt-2">
+                    <span>⚠️ {audioBackingError}</span>
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-md bg-white px-2 py-1 text-xs font-medium text-red-700 border border-red-200 hover:bg-red-100 disabled:opacity-50"
+                      onClick={() => void loadAudioBacking(audioBackingKey)}
+                      disabled={isAudioBackingLoading}
+                    >
+                      重新加载
+                    </button>
                   </div>
                 )}
               </div>
