@@ -5,12 +5,12 @@ import type { ScalePracticeProps } from '../../types/components';
 /**
  * 音阶练习组件
  */
-const ScalePractice: React.FC<ScalePracticeProps> = ({ 
-  selectedKey, 
-  bluesType, 
+const ScalePractice: React.FC<ScalePracticeProps> = ({
+  selectedKey,
+  bluesType,
   scaleNotes,
   scaleDegrees,
-  fretboardPositions 
+  fretboardPositions
 }) => {
   // 动态计算指板显示范围
   const getDisplayRange = () => {
@@ -30,7 +30,7 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
     // 否则，从最小品位-2开始，确保有一些空间
     const startFret = Math.max(0, minFret - 2);
     const endFret = Math.min(20, startFret + 15);
-    
+
     return { startFret, endFret, displayFrets: endFret - startFret };
   };
 
@@ -43,20 +43,20 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
   }));
 
   return (
-    <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 border border-white/10">
+    <div className="practice-panel rounded-2xl p-4 md:p-6 border border-slate-200">
       <h2 className="text-xl md:text-2xl font-bold mb-4">
         🎵 {selectedKey} {bluesType.charAt(0).toUpperCase() + bluesType.slice(1)} Blues 音阶
       </h2>
-      
+
       {/* 临时调试信息 */}
       {!scaleDegrees && (
-        <div className="bg-red-500/20 border border-red-500 rounded p-2 mb-4 text-sm">
+        <div className="bg-red-50 border border-red-500 rounded p-2 mb-4 text-sm">
           ⚠️ scaleDegrees 未传递！
         </div>
       )}
 
       {/* 音阶音符展示 - 移动端隐藏 */}
-      <div className="hidden md:block bg-black/50 rounded-xl p-2 mb-3">
+      <div className="hidden md:block bg-slate-50 rounded-xl p-2 mb-3">
         <h3 className="text-sm font-semibold mb-2">音阶音符</h3>
         <div className="flex flex-wrap gap-2 justify-center">
           {scaleNotes.map((note, index) => (
@@ -71,14 +71,14 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold ${
                   note === selectedKey
-                    ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black'
-                    : 'bg-blue-500 text-white'
+                    ? 'practice-highlight text-black'
+                    : 'practice-selected text-slate-800'
                 }`}
               >
                 {note}
               </div>
               {/* 音程标记 */}
-              <div className="text-xs font-bold text-gray-400">
+              <div className="text-xs font-bold text-slate-500">
                 {scaleDegrees && scaleDegrees[index] ? scaleDegrees[index] : (index + 1)}
               </div>
             </motion.div>
@@ -87,10 +87,10 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
       </div>
 
       {/* 吉他指板图 */}
-      <div className="bg-black/50 rounded-xl p-3 md:p-8 lg:p-12 overflow-x-auto">
+      <div className="bg-slate-50 rounded-xl p-3 md:p-8 lg:p-12 overflow-x-auto">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm md:text-lg font-semibold">吉他指板</h3>
-          <div className="text-[10px] md:text-xs text-gray-400">
+          <div className="text-[10px] md:text-xs text-slate-500">
             <span className="md:hidden">前15品可见 · 👉滑动查看更多</span>
             <span className="hidden md:inline">品位范围: {startFret}-{endFret} 品</span>
           </div>
@@ -116,9 +116,9 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
                     style={{ maxWidth: `${100 / (displayFrets + 1)}%` }}
                   >
                     <div className={`inline-block px-2 py-1 rounded text-sm font-bold ${
-                      isSpecialFret 
-                        ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/50' 
-                        : 'bg-gray-700/50 text-gray-300'
+                      isSpecialFret
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                        : 'bg-slate-100 text-slate-600'
                     }`}>
                       {fret}
                     </div>
@@ -131,11 +131,11 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
               {['E', 'B', 'G', 'D', 'A', 'E'].map((stringName, stringIndex) => (
                 <div key={stringIndex} className="relative h-[2px]">
                   {/* 弦名 */}
-                  <div className="absolute -left-6 md:-left-8 top-0 transform -translate-y-1/2 text-xs md:text-sm font-bold text-gray-400">
+                  <div className="absolute -left-6 md:-left-8 top-0 transform -translate-y-1/2 text-xs md:text-sm font-bold text-slate-500">
                     {stringName}
                   </div>
                   {/* 弦线 */}
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gray-600">
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-slate-200">
                     {/* 品丝 */}
                     {Array.from({ length: displayFrets + 1 }).map((_, index) => {
                       const fret = startFret + index;
@@ -144,16 +144,16 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
                         <div
                           key={fret}
                           className={`absolute top-0 transform -translate-y-1/2 h-8 md:h-10 border-l ${
-                            isSpecialFret ? 'border-yellow-500/50 border-l-2' : 'border-gray-500'
+                            isSpecialFret ? 'border-amber-200 border-l-2' : 'border-slate-300'
                           }`}
                           style={{ left: `${(index / displayFrets) * 100}%` }}
                         >
                           {/* 品位标记 - 底部 */}
                           {stringIndex === 5 && (
                             <div className={`absolute -bottom-6 md:-bottom-8 left-1/2 transform -translate-x-1/2 ${
-                              isSpecialFret 
-                                ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/50 px-2 py-0.5 rounded text-xs md:text-sm font-bold' 
-                                : 'text-xs md:text-sm text-gray-400 font-medium'
+                              isSpecialFret
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded text-xs md:text-sm font-bold'
+                                : 'text-xs md:text-sm text-slate-500 font-medium'
                             }`}>
                               {fret}
                             </div>
@@ -172,8 +172,8 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
                           transition={{ delay: idx * 0.02 }}
                           className={`absolute -top-3 transform -translate-y-1/2 -translate-x-1/2 w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold ${
                             pos.isRoot
-                              ? 'bg-yellow-500 text-black border-2 border-yellow-300'
-                              : 'bg-blue-500 text-white'
+                              ? 'practice-highlight text-black border-2 border-yellow-300'
+                              : 'practice-selected text-slate-800'
                           }`}
                           style={{ left: `${((pos.displayFret + 0.5) / displayFrets) * 100}%` }}
                         >
@@ -189,9 +189,9 @@ const ScalePractice: React.FC<ScalePracticeProps> = ({
       </div>
 
       {/* 音程说明 */}
-      <div className="bg-blue-500/20 rounded-xl p-4 mt-4 border border-blue-500/30">
+      <div className="bg-emerald-50 rounded-xl p-4 mt-4 border border-emerald-200">
         <h3 className="text-sm md:text-base font-semibold mb-2">🎼 音程结构</h3>
-        <p className="text-xs md:text-sm text-gray-300">
+        <p className="text-xs md:text-sm text-slate-600">
           {bluesType === 'minor' && '小调 Blues: 根音 - 小三度 - 纯四度 - 减五度 - 纯五度 - 小七度'}
           {bluesType === 'major' && '大调 Blues: 根音 - 大二度 - 小三度 - 大三度 - 纯五度 - 大六度'}
           {bluesType === 'mixolydian' && 'Mixolydian: 根音 - 大二度 - 大三度 - 纯四度 - 纯五度 - 大六度 - 小七度'}

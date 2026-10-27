@@ -31,7 +31,7 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
   useEffect(() => {
     const loadInstrument = async () => {
       setIsLoading(true);
-      
+
       // 清理旧的采样器
       if (samplerRef.current) {
         samplerRef.current.dispose();
@@ -61,7 +61,7 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
               release: 0.1
             }
           }).toDestination();
-          
+
           samplerRef.current.volume.value = volume;
           setIsLoading(false);
           console.log('✅ 钢琴音色加载成功！');
@@ -81,7 +81,7 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
               release: 1.4
             }
           }).toDestination();
-          
+
           samplerRef.current.volume.value = volume;
           setIsLoading(false);
           console.log('✅ 吉他音色加载成功！');
@@ -110,7 +110,7 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
               release: 0.2
             }
           }).toDestination();
-          
+
           samplerRef.current.volume.value = volume;
           setIsLoading(false);
           console.log('✅ 口琴音色加载成功！');
@@ -149,16 +149,16 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
       // 音符映射表
       const notes: Note[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
       const rootIndex = notes.indexOf(key);
-      
+
       // 根据半音间隔计算音符
       const getNoteFromInterval = (semitones: number, octave: number = 3): string => {
         const noteIndex = (rootIndex + semitones) % 12;
         const octaveShift = Math.floor((rootIndex + semitones) / 12);
         return notes[noteIndex] + (octave + octaveShift);
       };
-      
+
       const I = key + '3';
-      
+
       switch (patternType) {
         case 'train': {
           // 火车节奏：I - IV - I - V 的低音行进
@@ -166,14 +166,14 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
           const V = getNoteFromInterval(7);   // 纯五度 = 7 半音
           return [I, I, IV, IV, I, I, V, I];
         }
-        
+
         case 'shuffle': {
           // Shuffle 节奏：使用三度和五度
           const third = getNoteFromInterval(4);  // 大三度 = 4 半音
           const fifth = getNoteFromInterval(7);  // 纯五度 = 7 半音
           return [I, third, fifth, third, I, third, fifth, I];
         }
-        
+
         case 'wail': {
           // 哀鸣风格：使用小三度和大三度交替（Blues 特色）
           const minorThird = getNoteFromInterval(3);  // 小三度 = 3 半音
@@ -181,7 +181,7 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
           const fifth = getNoteFromInterval(7);       // 纯五度 = 7 半音
           return [I, minorThird, majorThird, fifth, majorThird, minorThird, I, I];
         }
-        
+
         case 'riff': {
           // Riff 风格：使用五声音阶
           const minorThird = getNoteFromInterval(3);   // 小三度 = 3 半音
@@ -190,7 +190,7 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
           const minorSeventh = getNoteFromInterval(10); // 小七度 = 10 半音
           return [I, minorThird, fourth, fifth, minorSeventh, fifth, fourth, I];
         }
-        
+
         default:
           return [I];
       }
@@ -225,12 +225,12 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
     sequenceRef.current = new Tone.Sequence(
       (time) => {
         const note = notes[noteIndex % notes.length];
-        
+
         // 使用 Tone.js 播放
         if (samplerRef.current) {
           samplerRef.current.triggerAttackRelease(note, '4n', time);
         }
-        
+
         noteIndex++;
       },
       Array.from({ length: notes.length }, (_, i) => i),
@@ -273,7 +273,7 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-br from-orange-500/20 to-yellow-500/20 rounded-xl p-4 md:p-6 border border-orange-500/30">
+    <div className="practice-tint rounded-xl p-4 md:p-6 border border-emerald-200">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <span className="text-3xl">
@@ -281,23 +281,23 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
           </span>
           <div>
             <h3 className="text-lg md:text-xl font-bold">乐器伴奏</h3>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-slate-500">
               {isLoading ? '⏳ 加载中...' : `✅ ${instrument === 'piano' ? '钢琴' : instrument === 'guitar' ? '吉他' : '口琴'}音色`}
             </p>
           </div>
         </div>
-        
+
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => (isPlaying ? stopHarmonica() : playHarmonica())}
           disabled={isLoading}
-          className={`px-6 py-3 rounded-lg font-bold transition-all shadow-lg ${
+          className={`px-6 py-3 rounded-lg font-bold transition-all shadow-sm ${
             isLoading
-              ? 'bg-gray-500 cursor-not-allowed text-white'
+              ? 'bg-slate-300 cursor-not-allowed text-slate-800'
               : isPlaying
-              ? 'bg-red-500 hover:bg-red-600 text-white'
-              : 'bg-green-500 hover:bg-green-600 text-white'
+              ? 'practice-danger text-slate-800'
+              : 'bg-emerald-100 hover:bg-emerald-200 text-slate-800'
           }`}
         >
           {isLoading ? '⏳ 加载中' : isPlaying ? '⏹️ 停止' : '▶️ 播放'}
@@ -306,7 +306,7 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
 
       {/* 乐器选择 */}
       <div className="mb-4">
-        <label className="text-sm text-gray-400 mb-2 block">选择乐器</label>
+        <label className="text-sm text-slate-500 mb-2 block">选择乐器</label>
         <div className="grid grid-cols-3 gap-2">
           {(['piano', 'guitar', 'harmonica'] as const).map((inst) => (
             <motion.button
@@ -321,8 +321,8 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
               }}
               className={`p-3 rounded-lg text-center transition-all ${
                 instrument === inst
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                  : 'bg-white/10 hover:bg-white/20 text-gray-300'
+                  ? 'practice-selected text-slate-800 shadow-sm'
+                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
               }`}
             >
               <div className="text-2xl mb-1">
@@ -337,22 +337,22 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
       </div>
 
       {/* 当前设置 */}
-      <div className="bg-black/30 rounded-lg p-3 mb-4">
+      <div className="bg-white rounded-lg p-3 mb-4">
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <span className="text-gray-400">调式：</span>
-            <span className="font-bold text-yellow-400">{selectedKey}</span>
+            <span className="text-slate-500">调式：</span>
+            <span className="font-bold text-amber-700">{selectedKey}</span>
           </div>
           <div>
-            <span className="text-gray-400">速度：</span>
-            <span className="font-bold text-yellow-400">{bpm} BPM</span>
+            <span className="text-slate-500">速度：</span>
+            <span className="font-bold text-amber-700">{bpm} BPM</span>
           </div>
         </div>
       </div>
 
       {/* 模式选择 */}
       <div className="mb-4">
-        <label className="text-sm text-gray-400 mb-2 block">选择伴奏模式</label>
+        <label className="text-sm text-slate-500 mb-2 block">选择伴奏模式</label>
         <div className="grid grid-cols-2 gap-2">
           {(['train', 'shuffle', 'wail', 'riff'] as const).map((p) => (
             <motion.button
@@ -368,8 +368,8 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
               }}
               className={`p-3 rounded-lg text-left transition-all ${
                 pattern === p
-                  ? 'bg-orange-500 text-white shadow-lg'
-                  : 'bg-white/10 hover:bg-white/20 text-gray-300'
+                  ? 'practice-selected text-slate-800 shadow-sm'
+                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
               }`}
             >
               <div className="font-bold text-sm capitalize">{p}</div>
@@ -379,16 +379,16 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
       </div>
 
       {/* 模式说明 */}
-      <div className="bg-blue-500/20 rounded-lg p-3 mb-4 border border-blue-500/30">
-        <p className="text-xs text-gray-300">
-          <span className="font-bold text-blue-400">💡 {pattern}:</span>{' '}
+      <div className="bg-emerald-50 rounded-lg p-3 mb-4 border border-emerald-200">
+        <p className="text-xs text-slate-600">
+          <span className="font-bold text-emerald-700">💡 {pattern}:</span>{' '}
           {patternDescriptions[pattern]}
         </p>
       </div>
 
       {/* 音量控制 */}
       <div>
-        <label className="text-sm text-gray-400 mb-2 block">
+        <label className="text-sm text-slate-500 mb-2 block">
           音量：{volume} dB
         </label>
         <input
@@ -398,17 +398,17 @@ const HarmonicaAccompaniment: React.FC<HarmonicaAccompanimentProps> = ({
           step="1"
           value={volume}
           onChange={(e) => setVolume(Number(e.target.value))}
-          className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider"
           style={{
-            background: `linear-gradient(to right, #f97316 0%, #f97316 ${((volume + 30) / 30) * 100}%, rgba(255,255,255,0.2) ${((volume + 30) / 30) * 100}%, rgba(255,255,255,0.2) 100%)`
+            background: `linear-gradient(to right, #059669 0%, #059669 ${((volume + 30) / 30) * 100}%, #e2e8f0 ${((volume + 30) / 30) * 100}%, #e2e8f0 100%)`
           }}
         />
       </div>
 
       {/* 使用说明 */}
-      <div className="mt-4 pt-4 border-t border-white/10">
-        <h4 className="text-sm font-semibold mb-2 text-yellow-400">🎓 使用技巧</h4>
-        <ul className="text-xs text-gray-400 space-y-1">
+      <div className="mt-4 pt-4 border-t border-slate-200">
+        <h4 className="text-sm font-semibold mb-2 text-amber-700">🎓 使用技巧</h4>
+        <ul className="text-xs text-slate-500 space-y-1">
           <li>• 🎹 <strong>钢琴</strong>：AM 合成，明亮清脆的钢琴音色</li>
           <li>• 🎸 <strong>吉他</strong>：Membrane 合成，模拟拨弦打击感</li>
           <li>• 🎺 <strong>口琴</strong>：FM 合成，模拟簧片振动</li>

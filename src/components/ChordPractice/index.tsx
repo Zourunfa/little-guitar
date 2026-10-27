@@ -42,13 +42,13 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   const [isDrumEnabled, setIsDrumEnabled] = useState<boolean>(true); // 是否启用鼓声
   const [countdown, setCountdown] = useState<number>(0); // 倒计时状态 (0表示不倒计时, 3/2/1表示倒计时中)
   const [isActuallyPlaying, setIsActuallyPlaying] = useState<boolean>(false); // 真正的播放状态
-  
+
   // 伴奏相关状态
   const [isHarmonicaEnabled] = useState<boolean>(false); // 是否启用口琴
   const [isGuitarEnabled] = useState<boolean>(false); // 是否启用吉他
   const [harmonicaVolume] = useState<number>(0.4); // 口琴音量
   const [guitarVolume] = useState<number>(0.4); // 吉他音量
-  
+
   // 音频伴奏相关状态
   const [accompanimentMode, setAccompanimentMode] = useState<'synthesized' | 'audio'>('synthesized'); // 伴奏模式
   const [audioBackingKey, setAudioBackingKey] = useState<BackingTrackKey>('A'); // 音频伴奏调性
@@ -63,10 +63,10 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   useEffect(() => {
     drumKitRef.current = new DrumKit();
     drumKitRef.current.init();
-    
+
     accompanimentRef.current = new Accompaniment();
     accompanimentRef.current.init();
-    
+
     // 初始化音频伴奏并预加载
     let cancelled = false;
     const backingTrack = new AudioBackingTrack();
@@ -77,7 +77,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         await backingTrack.init();
         if (cancelled) return;
         console.log('✅ 音频伴奏初始化成功');
-        
+
         // 自动预加载所有可用音频
         setIsPreloading(true);
         await backingTrack.preloadAllTracks();
@@ -91,7 +91,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
         if (!cancelled) setIsPreloading(false);
       }
     };
-    
+
     initAudioBacking();
 
     return () => {
@@ -230,7 +230,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     if (isGuitarEnabled) {
       // 第12小节使用特殊的低音行进节奏型
       const customPattern = currentChordIndex === 11 ? '1111 4411 5415' : undefined;
-      
+
       accompanimentRef.current.playGuitarBluesRhythm(
         rootNote,
         beatNumber,
@@ -280,7 +280,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       setIsAudioBackingLoading(false);
     }
   };
-  
+
   // 监听isPlaying变化，启动倒计时或停止播放
   useEffect(() => {
     if (isPlaying && !isActuallyPlaying && countdown === 0) {
@@ -306,14 +306,14 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
     if (countdown > 0) {
       // 计算每拍的时长（毫秒）
       const msPerBeat = (60 / bpm) * 1000;
-      
+
       const timer = setTimeout(async () => {
         if (countdown === 1) {
           // 倒计时结束,开始播放
           setCountdown(0);
           setIsActuallyPlaying(true);
           setIsPlaying(true);
-          
+
           // 如果是音频伴奏模式，启动音频播放
           if (accompanimentMode === 'audio' && audioBackingTrackRef.current) {
             try {
@@ -322,7 +322,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                 console.log(`⏳ 音频未加载，正在加载 ${audioBackingKey} 调伴奏...`);
                 await loadAudioBacking(audioBackingKey);
               }
-              
+
               // 播放音频
               audioBackingTrackRef.current.play(bpm);
               setIsAudioBackingPlaying(true);
@@ -391,27 +391,27 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
     return () => clearInterval(barInterval);
   }, [isActuallyPlaying, bpm, expandedChords.length, setCurrentChordIndex]);
-  
+
   // 监听BPM变化，实时调整音频伴奏速度
   useEffect(() => {
     if (accompanimentMode === 'audio' && isActuallyPlaying && audioBackingTrackRef.current) {
       audioBackingTrackRef.current.adjustSpeed(bpm);
     }
   }, [bpm, accompanimentMode, isActuallyPlaying]);
-  
+
   // 监听音频伴奏音量变化
   useEffect(() => {
     if (audioBackingTrackRef.current) {
       audioBackingTrackRef.current.setVolume(audioBackingVolume);
     }
   }, [audioBackingVolume]);
-  
+
   // 监听伴奏模式切换，确保当前调性已加载
   useEffect(() => {
     if (accompanimentMode === 'audio' && audioBackingTrackRef.current) {
       const isAvailable = audioBackingTrackRef.current.isTrackAvailable(audioBackingKey);
       const isPreloaded = audioBackingTrackRef.current.isTrackPreloaded(audioBackingKey);
-      
+
       // 如果调性可用但未预加载，立即加载
       if (isAvailable && !isPreloaded) {
         console.log(`🔄 切换到音频模式，${audioBackingKey} 调未预加载，正在加载...`);
@@ -426,7 +426,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
   }, [accompanimentMode, audioBackingKey]);
 
   return (
-    <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 border border-white/10">
+    <div className="practice-panel rounded-2xl p-4 md:p-6 border border-slate-200">
       <h2 className="text-xl md:text-2xl font-bold mb-4">🎹 {selectedKey} Blues 和弦进行</h2>
 
       {/* 和弦进行选择 */}
@@ -438,40 +438,40 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             whileTap={{ scale: 0.98 }}
             className={`p-4 rounded-xl text-left transition-all ${
               progression === '12bar'
-                ? 'bg-gradient-to-r from-purple-500 to-blue-500 shadow-lg'
-                : 'bg-white/10 hover:bg-white/20'
+                ? 'practice-selected shadow-sm'
+                : 'bg-slate-50 hover:bg-slate-100'
             }`}
             onClick={() => setProgression('12bar')}
           >
             <div className="font-bold text-lg">标准 12 小节 Blues</div>
-            <div className="text-sm text-gray-300">经典 Blues 进行</div>
+            <div className="text-sm text-slate-600">经典 Blues 进行</div>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={`p-4 rounded-xl text-left transition-all ${
               progression === 'quick'
-                ? 'bg-gradient-to-r from-purple-500 to-blue-500 shadow-lg'
-                : 'bg-white/10 hover:bg-white/20'
+                ? 'practice-selected shadow-sm'
+                : 'bg-slate-50 hover:bg-slate-100'
             }`}
             onClick={() => setProgression('quick')}
           >
             <div className="font-bold text-lg">快速 6 小节 Blues</div>
-            <div className="text-sm text-gray-300">适合快速练习</div>
+            <div className="text-sm text-slate-600">适合快速练习</div>
           </motion.button>
         </div>
       </div>
 
       {/* BPM速度控制 */}
-      <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl p-3 md:p-4 mb-6 border border-purple-500/30">
+      <div className="practice-tint rounded-xl p-3 md:p-4 mb-6 border border-emerald-200">
         <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">⏱️ 节拍速度 (BPM)</h3>
 
         <div className="flex items-center gap-3 md:gap-4 mb-4">
           <div className="flex items-center gap-2 min-w-[80px] md:min-w-[100px]">
             <span className="text-xs md:text-sm font-medium">当前:</span>
-            <span className="text-2xl md:text-3xl font-bold text-yellow-400">{bpm}</span>
+            <span className="text-2xl md:text-3xl font-bold text-amber-700">{bpm}</span>
           </div>
-          
+
           <div className="flex-1">
             <input
               type="range"
@@ -480,12 +480,12 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
               step="5"
               value={bpm}
               onChange={(e) => setBpm(parseInt(e.target.value))}
-              className="w-full h-3 bg-white/20 rounded-lg appearance-none cursor-pointer"
+              className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer"
               style={{
-                background: `linear-gradient(to right, #fbbf24 0%, #fbbf24 ${((bpm - 60) / (180 - 60)) * 100}%, rgba(255,255,255,0.2) ${((bpm - 60) / (180 - 60)) * 100}%, rgba(255,255,255,0.2) 100%)`
+                background: `linear-gradient(to right, #059669 0%, #059669 ${((bpm - 60) / (180 - 60)) * 100}%, #e2e8f0 ${((bpm - 60) / (180 - 60)) * 100}%, #e2e8f0 100%)`
               }}
             />
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <div className="flex justify-between text-xs text-slate-500 mt-1">
               <span>60</span>
               <span>120</span>
               <span>180</span>
@@ -495,7 +495,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
         {/* 快捷BPM按钮 */}
         <div className="mb-3">
-          <div className="text-xs md:text-sm text-gray-400 mb-2">快速设置:</div>
+          <div className="text-xs md:text-sm text-slate-500 mb-2">快速设置:</div>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {[60, 80, 100, 120, 140, 160].map(speed => (
               <motion.button
@@ -504,8 +504,8 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                 whileTap={{ scale: 0.95 }}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   bpm === speed
-                    ? 'bg-yellow-500 text-black shadow-lg'
-                    : 'bg-white/10 hover:bg-white/20'
+                    ? 'practice-highlight text-black shadow-sm'
+                    : 'bg-slate-50 hover:bg-slate-100'
                 }`}
                 onClick={() => setBpm(speed)}
               >
@@ -517,26 +517,26 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
         {/* 节拍指示器 */}
         {isActuallyPlaying && (
-          <div className="flex items-center gap-3 p-2 bg-black/30 rounded-lg">
+          <div className="flex items-center gap-3 p-2 bg-white rounded-lg">
             <span className="text-sm font-medium">当前节拍:</span>
             <div className="flex gap-1.5">
               {[1, 2, 3, 4].map(beat => (
                 <div
                   key={beat}
                   className={`w-4 h-4 rounded-full transition-all duration-100 ${
-                    currentBeat === beat 
-                      ? 'bg-yellow-400 scale-125 shadow-lg shadow-yellow-400/50' 
-                      : 'bg-white/20'
+                    currentBeat === beat
+                      ? 'practice-highlight scale-125 shadow-sm '
+                      : 'bg-slate-200'
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm text-gray-400">({currentBeat}/4)</span>
+            <span className="text-sm text-slate-500">({currentBeat}/4)</span>
           </div>
         )}
 
         {/* BPM描述 */}
-        <div className="mt-3 text-xs text-gray-400 text-center">
+        <div className="mt-3 text-xs text-slate-500 text-center">
           {bpm < 80 && "🐌 慢速 - 适合初学者练习"}
           {bpm >= 80 && bpm < 120 && "🚶 中速 - 标准练习速度"}
           {bpm >= 120 && bpm < 150 && "🏃 快速 - 进阶练习"}
@@ -545,9 +545,9 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       </div>
 
       {/* 伴奏模式选择 */}
-      <div className="bg-gradient-to-r from-orange-500/20 to-pink-500/20 rounded-xl p-3 md:p-4 mb-6 border border-orange-500/30">
+      <div className="practice-tint rounded-xl p-3 md:p-4 mb-6 border border-emerald-200">
         <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">🎵 伴奏模式</h3>
-        
+
         {/* 模式切换 */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <motion.button
@@ -555,27 +555,27 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             whileTap={{ scale: 0.98 }}
             className={`p-3 rounded-xl text-center transition-all ${
               accompanimentMode === 'synthesized'
-                ? 'bg-gradient-to-r from-orange-500 to-pink-500 shadow-lg'
-                : 'bg-white/10 hover:bg-white/20'
+                ? 'practice-selected shadow-sm'
+                : 'bg-slate-50 hover:bg-slate-100'
             }`}
             onClick={() => setAccompanimentMode('synthesized')}
           >
             <div className="font-bold text-sm md:text-base">🎹 原生合成</div>
-            <div className="text-xs text-gray-300">实时合成伴奏</div>
+            <div className="text-xs text-slate-600">实时合成伴奏</div>
           </motion.button>
-          
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={`p-3 rounded-xl text-center transition-all ${
               accompanimentMode === 'audio'
-                ? 'bg-gradient-to-r from-orange-500 to-pink-500 shadow-lg'
-                : 'bg-white/10 hover:bg-white/20'
+                ? 'practice-selected shadow-sm'
+                : 'bg-slate-50 hover:bg-slate-100'
             }`}
             onClick={() => setAccompanimentMode('audio')}
           >
             <div className="font-bold text-sm md:text-base">🎸 经典音频</div>
-            <div className="text-xs text-gray-300">真实录音伴奏</div>
+            <div className="text-xs text-slate-600">真实录音伴奏</div>
           </motion.button>
         </div>
 
@@ -589,10 +589,10 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
           >
             {/* 调性选择 */}
             <div>
-              <div className="text-xs md:text-sm text-gray-400 mb-2">
+              <div className="text-xs md:text-sm text-slate-500 mb-2">
                 选择调性:
                 {isPreloading && (
-                  <span className="ml-2 text-yellow-400 text-xs">
+                  <span className="ml-2 text-amber-700 text-xs">
                     ⏳ 正在预加载音频...
                   </span>
                 )}
@@ -602,7 +602,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                   const isAvailable = audioBackingTrackRef.current?.isTrackAvailable(key);
                   const isCurrent = audioBackingKey === key;
                   const isPreloadedKey = preloadedKeys.includes(key);
-                  
+
                   return (
                     <motion.button
                       key={key}
@@ -610,48 +610,48 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                       whileTap={isAvailable ? { scale: 0.95 } : {}}
                       className={`px-2 py-2 rounded-lg text-sm font-medium transition-all relative ${
                         isCurrent && isAvailable
-                          ? 'bg-pink-500 text-white shadow-lg'
+                          ? 'practice-selected text-slate-800 shadow-sm'
                           : isAvailable
-                          ? 'bg-white/10 hover:bg-white/20'
-                          : 'bg-white/5 text-gray-600 cursor-not-allowed'
+                          ? 'bg-slate-50 hover:bg-slate-100'
+                          : 'bg-slate-50 text-gray-600 cursor-not-allowed'
                       }`}
                       onClick={() => isAvailable && loadAudioBacking(key)}
                       disabled={!isAvailable || isAudioBackingLoading}
                     >
                       {key}
                       {isPreloadedKey && isAvailable && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full" title="已预加载"></span>
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full" title="已预加载"></span>
                       )}
                     </motion.button>
                   );
                 })}
               </div>
-              <div className="text-xs text-gray-500 mt-2">
+              <div className="text-xs text-slate-500 mt-2">
                 💡 提示: 灰色按钮表示该调暂未配置音频文件，绿点表示已预加载
               </div>
             </div>
 
             {/* 播放状态显示 */}
             {accompanimentMode === 'audio' && (
-              <div className="bg-black/30 p-3 rounded-lg">
+              <div className="bg-white p-3 rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">音频状态:</span>
                   <div className="flex items-center gap-2">
                     {isAudioBackingLoading && (
-                      <div className="flex items-center gap-2 text-yellow-400">
+                      <div className="flex items-center gap-2 text-amber-700">
                         <div className="animate-spin rounded-full h-3 w-3 border-2 border-yellow-400 border-t-transparent"></div>
                         <span className="text-xs">加载中...</span>
                       </div>
                     )}
                     {!isAudioBackingLoading && isAudioBackingPlaying && (
-                      <div className="flex items-center gap-2 text-green-400">
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <div className="flex items-center gap-2 text-emerald-700">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                         <span className="text-xs">正在播放</span>
                       </div>
                     )}
                     {!isAudioBackingLoading && !isAudioBackingPlaying && isActuallyPlaying && (
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
                         <span className="text-xs">已停止</span>
                       </div>
                     )}
@@ -660,7 +660,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
                 {/* 错误提示 */}
                 {audioBackingError && (
-                  <div className="text-sm text-red-400 bg-red-500/10 p-2 rounded-lg mt-2">
+                  <div className="text-sm text-red-700 bg-red-50 p-2 rounded-lg mt-2">
                     ⚠️ {audioBackingError}
                   </div>
                 )}
@@ -669,7 +669,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
             {/* 音量控制 */}
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-400 whitespace-nowrap">音量:</span>
+              <span className="text-sm text-slate-500 whitespace-nowrap">音量:</span>
               <input
                 type="range"
                 min="0"
@@ -683,7 +683,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             </div>
 
             {/* 说明 */}
-            <div className="text-xs text-gray-400 bg-black/30 p-3 rounded-lg">
+            <div className="text-xs text-slate-500 bg-white p-3 rounded-lg">
               <div className="font-semibold mb-1">🎼 音频伴奏说明:</div>
               <ul className="space-y-1 ml-4">
                 <li>• 使用真实录音的Blues伴奏</li>
@@ -696,7 +696,7 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
       </div>
 
       {/* 鼓声节奏设置 */}
-      <div className="bg-black/50 rounded-xl p-3 md:p-4 mb-6">
+      <div className="bg-slate-50 rounded-xl p-3 md:p-4 mb-6">
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <h3 className="text-base md:text-lg font-semibold">🥁 鼓声节奏</h3>
           <label className="flex items-center gap-2 cursor-pointer">
@@ -723,21 +723,21 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
               whileTap={{ scale: 0.95 }}
               className={`p-3 rounded-lg text-center transition-all ${
                 drumPattern === pattern.id
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white/10 hover:bg-white/20'
+                  ? 'practice-selected text-slate-800'
+                  : 'bg-slate-50 hover:bg-slate-100'
               }`}
               onClick={() => setDrumPattern(pattern.id)}
               disabled={!isDrumEnabled}
             >
               <div className="font-bold text-sm">{pattern.name}</div>
-              <div className="text-xs text-gray-400">{pattern.desc}</div>
+              <div className="text-xs text-slate-500">{pattern.desc}</div>
             </motion.button>
           ))}
         </div>
 
         {/* 音量控制 */}
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-400 whitespace-nowrap">音量:</span>
+          <span className="text-sm text-slate-500 whitespace-nowrap">音量:</span>
           <input
             type="range"
             min="0"
@@ -759,8 +759,8 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
                 key={beat}
                 className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
                   currentBeat === beat
-                    ? 'bg-gradient-to-br from-green-400 to-blue-500 text-white shadow-lg'
-                    : 'bg-white/10 text-gray-400'
+                    ? 'practice-selected text-slate-800 shadow-sm'
+                    : 'bg-slate-50 text-slate-500'
                 }`}
                 animate={currentBeat === beat ? { scale: [1, 1.2, 1] } : {}}
                 transition={{ duration: 0.2 }}
@@ -775,10 +775,10 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
 
       {/* 和弦进行展示 */}
-      <div className="bg-black/50 rounded-xl p-2 md:p-3 mb-4">
+      <div className="bg-slate-50 rounded-xl p-2 md:p-3 mb-4">
         <div className="flex justify-between items-center mb-2">
           <h3 className="text-sm md:text-base font-semibold">和弦序列</h3>
-          <div className="text-[10px] md:text-xs text-gray-400">{expandedChords.length}小节</div>
+          <div className="text-[10px] md:text-xs text-slate-500">{expandedChords.length}小节</div>
         </div>
         <div className="grid grid-cols-4 gap-1.5">
           {expandedChords.map((item, index) => (
@@ -789,15 +789,15 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
               transition={{ delay: index * 0.03 }}
               className={`relative p-2 rounded text-center transition-all ${
                 isActuallyPlaying && index === currentChordIndex
-                  ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black shadow-md scale-105'
-                  : 'bg-white/10'
+                  ? 'practice-highlight text-black shadow-md scale-105'
+                  : 'bg-slate-50'
               }`}
             >
-              <div className="text-[8px] text-gray-400">#{index + 1}</div>
+              <div className="text-[8px] text-slate-500">#{index + 1}</div>
               <div className="text-xs md:text-sm font-bold">{item.chord}</div>
               {isActuallyPlaying && index === currentChordIndex && (
                 <motion.div
-                  className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-green-500 rounded-full"
+                  className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-100 rounded-full"
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 0.5, repeat: Infinity }}
                 />
@@ -826,10 +826,10 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 2, opacity: 0 }}
-            transition={{ 
+            transition={{
               duration: Math.min((60 / bpm) * 0.8, 0.8) // 动画时长为一拍的80%，最长0.8秒
             }}
-            className="text-[120px] md:text-[200px] font-bold bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(251,191,36,0.5)]"
+            className="text-[120px] md:text-[200px] font-bold text-emerald-700"
           >
             {countdown}
           </motion.div>
@@ -838,9 +838,9 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
 
       {/* 和弦指法提示 */}
-      <div className="bg-purple-500/20 rounded-xl p-4 mt-4 border border-purple-500/30">
+      <div className="bg-emerald-50 rounded-xl p-4 mt-4 border border-emerald-200">
         <h3 className="text-sm md:text-base font-semibold mb-2">🎸 练习提示</h3>
-        <ul className="text-xs md:text-sm text-gray-300 space-y-1">
+        <ul className="text-xs md:text-sm text-slate-600 space-y-1">
           <li>▸ 属七和弦通常使用 E 型或 A 型把位</li>
           <li>▸ 跟随鼓声节奏,在每拍上弹奏和弦</li>
           <li>▸ 尝试在和弦之间加入装饰音</li>
@@ -850,16 +850,16 @@ const ChordPractice: React.FC<ChordPracticeProps> = ({
 
       {/* 当前和弦对应的Blues纸板 */}
       <div className="mt-4 md:mt-6">
-        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-3 md:p-4 mb-4 border border-yellow-500/30">
+        <div className="practice-tint rounded-xl p-3 md:p-4 mb-4 border border-amber-200">
           <h3 className="text-base md:text-xl font-bold mb-2">
             🎯 当前和弦即兴指南
           </h3>
-          <p className="text-xs md:text-base text-gray-300">
-            当前播放: <span className="text-yellow-400 font-bold text-lg md:text-xl">{getCurrentChordRoot}7</span> 和弦
-            → 可使用 <span className="text-blue-400 font-bold">{getCurrentChordRoot} 小调 Blues</span> 音阶即兴
+          <p className="text-xs md:text-base text-slate-600">
+            当前播放: <span className="text-amber-700 font-bold text-lg md:text-xl">{getCurrentChordRoot}7</span> 和弦
+            → 可使用 <span className="text-emerald-700 font-bold">{getCurrentChordRoot} 小调 Blues</span> 音阶即兴
           </p>
-          <p className="text-[10px] md:text-sm text-gray-400 mt-2">
-            💡 提示: 纸板上的黄色圆点是根音位置,蓝色圆点是其他音阶音符。跟随和弦变化,在对应的音阶上即兴演奏!
+          <p className="text-[10px] md:text-sm text-slate-500 mt-2">
+            💡 提示: 指板上的琥珀色圆点是根音位置，绿色圆点是其他音阶音符。跟随和弦变化,在对应的音阶上即兴演奏!
           </p>
         </div>
       </div>

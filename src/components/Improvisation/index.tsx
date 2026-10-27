@@ -34,7 +34,7 @@ const Improvisation: React.FC<ImprovisationProps> = ({
   ];
 
   return (
-    <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 border border-white/10">
+    <div className="practice-panel rounded-2xl p-4 md:p-6 border border-slate-200">
       <h2 className="text-xl md:text-2xl font-bold mb-4">✨ {selectedKey} Blues 即兴创作</h2>
 
       {/* 标签页切换 */}
@@ -43,8 +43,8 @@ const Improvisation: React.FC<ImprovisationProps> = ({
           onClick={() => setActiveTab('techniques')}
           className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
             activeTab === 'techniques'
-              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
-              : 'bg-white/10 text-gray-400 hover:bg-white/20'
+              ? 'practice-selected text-slate-800'
+              : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
           }`}
         >
           🎓 即兴技巧
@@ -53,8 +53,8 @@ const Improvisation: React.FC<ImprovisationProps> = ({
           onClick={() => setActiveTab('licks')}
           className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
             activeTab === 'licks'
-              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
-              : 'bg-white/10 text-gray-400 hover:bg-white/20'
+              ? 'practice-selected text-slate-800'
+              : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
           }`}
         >
           🎸 经典乐句库
@@ -63,8 +63,8 @@ const Improvisation: React.FC<ImprovisationProps> = ({
           onClick={() => setActiveTab('harmonica')}
           className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
             activeTab === 'harmonica'
-              ? 'bg-gradient-to-r from-orange-500 to-yellow-500 text-white'
-              : 'bg-white/10 text-gray-400 hover:bg-white/20'
+              ? 'practice-selected text-slate-800'
+              : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
           }`}
         >
           🎺 口琴伴奏
@@ -72,23 +72,23 @@ const Improvisation: React.FC<ImprovisationProps> = ({
       </div>
 
       {/* 当前设置总结 */}
-      <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl p-4 mb-6 border border-blue-500/30">
+      <div className="practice-tint rounded-xl p-4 mb-6 border border-emerald-200">
         <h3 className="text-lg font-semibold mb-3">🎯 当前练习设置</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-          <div className="bg-black/30 rounded-lg p-3">
-            <div className="text-gray-400 text-xs mb-1">调式</div>
+          <div className="bg-white rounded-lg p-3">
+            <div className="text-slate-500 text-xs mb-1">调式</div>
             <div className="font-bold text-lg">{selectedKey}</div>
           </div>
-          <div className="bg-black/30 rounded-lg p-3">
-            <div className="text-gray-400 text-xs mb-1">类型</div>
+          <div className="bg-white rounded-lg p-3">
+            <div className="text-slate-500 text-xs mb-1">类型</div>
             <div className="font-bold">{bluesType}</div>
           </div>
-          <div className="bg-black/30 rounded-lg p-3">
-            <div className="text-gray-400 text-xs mb-1">进行</div>
+          <div className="bg-white rounded-lg p-3">
+            <div className="text-slate-500 text-xs mb-1">进行</div>
             <div className="font-bold">{progression === '12bar' ? '12小节' : '6小节'}</div>
           </div>
-          <div className="bg-black/30 rounded-lg p-3">
-            <div className="text-gray-400 text-xs mb-1">速度</div>
+          <div className="bg-white rounded-lg p-3">
+            <div className="text-slate-500 text-xs mb-1">速度</div>
             <div className="font-bold">{bpm} BPM</div>
           </div>
         </div>
@@ -98,7 +98,7 @@ const Improvisation: React.FC<ImprovisationProps> = ({
       {activeTab === 'techniques' ? (
         <>
           {/* 可用音符 */}
-          <div className="bg-black/50 rounded-xl p-4 mb-6">
+          <div className="bg-slate-50 rounded-xl p-4 mb-6">
             <h3 className="text-lg font-semibold mb-3">可用音符</h3>
             <div className="flex flex-wrap gap-2 justify-center">
               {scaleNotes.map((note, index) => (
@@ -111,14 +111,14 @@ const Improvisation: React.FC<ImprovisationProps> = ({
                   <div
                     className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-base md:text-lg font-bold ${
                       note === selectedKey
-                        ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-black'
-                        : 'bg-blue-500 text-white hover:bg-blue-400'
+                        ? 'practice-highlight text-black'
+                        : 'practice-selected text-slate-800 hover:bg-emerald-100'
                     }`}
                   >
                     {note}
                   </div>
                   {/* 音程标记 */}
-                  <div className="text-xs font-bold text-gray-400">
+                  <div className="text-xs font-bold text-slate-500">
                     {scaleDegrees?.[index] || (index + 1)}
                   </div>
                 </motion.div>
@@ -127,7 +127,7 @@ const Improvisation: React.FC<ImprovisationProps> = ({
           </div>
 
           {/* 即兴技巧 */}
-          <div className="bg-black/50 rounded-xl p-4 mb-6">
+          <div className="bg-slate-50 rounded-xl p-4 mb-6">
             <h3 className="text-lg font-semibold mb-3">即兴技巧工具箱</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {improvTechniques.map((tech, index) => (
@@ -136,26 +136,26 @@ const Improvisation: React.FC<ImprovisationProps> = ({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-white/10 hover:bg-white/20 rounded-lg p-3 transition-all cursor-pointer"
+                  className="bg-slate-50 hover:bg-slate-100 rounded-lg p-3 transition-all cursor-pointer"
                 >
                   <div className="text-2xl mb-1">{tech.icon}</div>
                   <div className="font-bold text-sm mb-1">{tech.name}</div>
-                  <div className="text-xs text-gray-400">{tech.desc}</div>
+                  <div className="text-xs text-slate-500">{tech.desc}</div>
                 </motion.div>
               ))}
             </div>
           </div>
 
           {/* 练习步骤 */}
-          <div className="bg-purple-500/20 rounded-xl p-4 border border-purple-500/30">
+          <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
             <h3 className="text-base md:text-lg font-semibold mb-3">🎓 即兴练习步骤</h3>
-            <ol className="space-y-2 text-sm text-gray-300">
-              <li><span className="text-yellow-400 font-bold">1.</span> 先在和弦进行上练习音阶,熟悉音符位置</li>
-              <li><span className="text-yellow-400 font-bold">2.</span> 选择一个简单的2-3音符动机,在不同把位重复</li>
-              <li><span className="text-yellow-400 font-bold">3.</span> 尝试改变动机的节奏,保持音高</li>
-              <li><span className="text-yellow-400 font-bold">4.</span> 在动机之间留出空白,让音乐呼吸</li>
-              <li><span className="text-yellow-400 font-bold">5.</span> 逐渐增加变化,但保持连贯性</li>
-              <li><span className="text-yellow-400 font-bold">6.</span> 录下自己的演奏,回听并改进</li>
+            <ol className="space-y-2 text-sm text-slate-600">
+              <li><span className="text-amber-700 font-bold">1.</span> 先在和弦进行上练习音阶,熟悉音符位置</li>
+              <li><span className="text-amber-700 font-bold">2.</span> 选择一个简单的2-3音符动机,在不同把位重复</li>
+              <li><span className="text-amber-700 font-bold">3.</span> 尝试改变动机的节奏,保持音高</li>
+              <li><span className="text-amber-700 font-bold">4.</span> 在动机之间留出空白,让音乐呼吸</li>
+              <li><span className="text-amber-700 font-bold">5.</span> 逐渐增加变化,但保持连贯性</li>
+              <li><span className="text-amber-700 font-bold">6.</span> 录下自己的演奏,回听并改进</li>
             </ol>
           </div>
         </>

@@ -14,13 +14,6 @@ interface Window {
 /**
  * 第三方库类型声明
  */
-declare module 'pitchy' {
-  export class PitchDetector {
-    constructor(sampleRate: number);
-    findPitch(buffer: Float32Array, sampleRate: number): [number, number];
-  }
-}
-
 declare module 'teoria' {
   export function note(name: string): {
     name(): string;

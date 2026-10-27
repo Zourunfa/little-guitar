@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:tuner": "node scripts/test-tuner.mjs && node scripts/test-tuner-audio.mjs"
   },
   "dependencies": {
     "@cloudbase/js-sdk": "^2.16.0",

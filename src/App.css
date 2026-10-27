@@ -1,46 +1,23 @@
-#root {
-  margin: 0 auto;
-  /* padding: 2rem 0; */
+#root { min-height: 100vh; }
+.site-header { background: #fff; border-bottom: 1px solid #e8edf1; }
+.site-brand { display: inline-flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 650; letter-spacing: -.5px; color: #1e293b; white-space: nowrap; }
+.site-brand-icon { display: grid; place-items: center; width: 32px; height: 32px; background: #ecfdf5; color: #047857; border-radius: 9px; }
+.site-nav-link { padding: 9px 16px; border-radius: 8px; color: #64748b; font-size: 14px; font-weight: 500; transition: background 150ms; }
+.site-nav-link:hover { background: #f8fafc; color: #334155; }
+.site-nav-link.active { color: #047857; background: #ecfdf5; }
+.blues-page { background: #f5f7f8; color: #1e293b; }
+.blues-page h2 { letter-spacing: -.025em; }
+.blues-page .practice-panel { border-radius: 18px; }
+.blues-page button { transition: background 150ms, border-color 150ms; }
+.blues-page .practice-selected .text-slate-500, .blues-page .practice-selected .text-slate-600 { color: #047857; }
+.blues-page .practice-play { background: #059669; color: #fff; border-color: #059669; box-shadow: none; }
+.blues-page .practice-play:hover { background: #047857; }
+.blues-page .practice-pause { background: #fff1f2; color: #be123c; border-color: #fecdd3; box-shadow: none; }
+.blues-page .practice-mode-icon { font-size: 20px; opacity: .8; }
+@media (max-width: 480px) {
+  .site-brand { font-size: 15px; gap: 6px; }
+  .site-nav-link { font-size: 12px; padding: 8px 10px; }
 }
-
-@media (min-width: 768px) {
-  #root {
-    /* padding: 2rem;  */
-  }
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }

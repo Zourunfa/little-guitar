@@ -48,9 +48,9 @@ export default function VisitorCounter() {
   return (
     <div className="flex items-center gap-4 text-sm">
       {/* 总访问量 */}
-      <div className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-1.5 rounded-lg border border-blue-200">
+      <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
         <svg 
-          className="w-4 h-4 text-blue-600" 
+          className="w-4 h-4 text-emerald-700"
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24"
@@ -69,12 +69,12 @@ export default function VisitorCounter() {
           />
         </svg>
         <span className="text-gray-700 font-medium">
-          总访问: <span className="text-blue-600 font-bold">{analytics.totalViews.toLocaleString()}</span>
+          总访问: <span className="text-emerald-700 font-bold">{analytics.totalViews.toLocaleString()}</span>
         </span>
       </div>
 
       {/* 今日访问量 */}
-      <div className="flex items-center gap-2 bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-1.5 rounded-lg border border-green-200">
+      <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-lg border border-green-200">
         <svg 
           className="w-4 h-4 text-green-600" 
           fill="none" 

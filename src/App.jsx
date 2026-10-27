@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import cloudbase from './utils/cloudbase'
 import TunerPage from './pages/TunerPage'
@@ -8,9 +8,6 @@ import Footer from './components/Footer'
 import './App.css'
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [loading, setLoading] = useState(true)
-
   useEffect(() => {
     // 初始化登录
     const initAuth = async () => {
@@ -18,26 +15,13 @@ function App() {
         console.log('开始登录...');
         await cloudbase.ensureLogin()
         console.log('登录成功');
-        setIsLoggedIn(true)
       } catch (error) {
         console.error('登录失败', error)
-      } finally {
-        console.log('设置loading状态为false');
-        setLoading(false)
       }
     }
 
     initAuth()
   }, [])
-
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg text-primary"></div>
-        <p className="ml-2">加载中...</p>
-      </div>
-    )
-  }
 
   console.log('渲染主应用UI');
   

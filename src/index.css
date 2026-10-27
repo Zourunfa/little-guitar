@@ -2,70 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+@layer base {
+  :root, [data-theme="light"] {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color-scheme: light;
+    color: #1e293b;
+    background: #f8fafb;
+    --color-base-100: #ffffff;
+    --color-base-200: #f8fafb;
+    --color-base-300: #e2e8f0;
+    --color-base-content: #1e293b;
+    --color-primary: #059669;
+    --color-primary-content: #ffffff;
+    --color-secondary: #047857;
+    --color-secondary-content: #ffffff;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+  body { margin: 0; min-width: 320px; min-height: 100vh; }
+  a { color: inherit; text-decoration: none; }
+  button, input, select { font: inherit; }
+  button { cursor: pointer; border: 1px solid transparent; }
+  button:disabled { cursor: not-allowed; }
+  button, a, input, select { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 3px solid #6ee7b7; outline-offset: 3px; }
+  input[type="range"], input[type="checkbox"] { accent-color: #059669; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: #059669; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 0 1px #a7f3d0; }
+  input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; background: #059669; border: 2px solid white; border-radius: 50%; }
+}
+
+@layer components {
+  .practice-panel { background: white; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px #0f172a03; }
+  .practice-selected { background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; }
+  .practice-selected:hover { background: #d1fae5; }
+  .practice-tint { background: #f8fafb; }
+  .practice-highlight { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+  .practice-neutral { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+  .practice-danger { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+  .practice-danger:hover { background: #fee2e2; }
+  .practice-player { background: #fffffffa; border-color: #e2e8f0; box-shadow: 0 -4px 24px #0f172a06; }
 }

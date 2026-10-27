@@ -94,17 +94,17 @@ const BluesPage: React.FC = () => {
     const scaleNotes = getScaleNotes();
     const openStrings: Note[] = ['E', 'B', 'G', 'D', 'A', 'E'];
     const positions: FretboardPosition[] = [];
-    
+
     // 遍历每根弦
     for (let stringIndex = 0; stringIndex < 6; stringIndex++) {
       const stringOpenNote = openStrings[stringIndex];
       const stringOpenIndex = notes.indexOf(stringOpenNote);
-      
+
       // 遍历每个品位（0-20品）
       for (let fret = 0; fret <= 20; fret++) {
         const noteIndex = (stringOpenIndex + fret) % 12;
         const note = notes[noteIndex];
-        
+
         // 如果这个音符在音阶中，就添加到位置列表
         if (scaleNotes.includes(note)) {
           positions.push({
@@ -152,7 +152,7 @@ const BluesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white pb-32">
+    <div className="blues-page min-h-screen pb-32">
       <div className="container mx-auto px-4 py-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -161,16 +161,17 @@ const BluesPage: React.FC = () => {
           className="max-w-6xl mx-auto"
         >
           {/* 标题 */}
-          <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-3">
-              🎸 Blues 即兴练习室
+          <div className="text-center mb-7 md:mb-9">
+            <div className="text-xs font-semibold tracking-[0.25em] text-emerald-700 mb-3">LITTLE GUITAR / PRACTICE</div>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
+              Blues 即兴练习室
             </h1>
-            <p className="text-lg md:text-xl text-gray-300">系统化训练 · 旋律 · 和弦 · 节奏</p>
+            <p className="text-sm text-slate-500">系统化训练 · 旋律 · 和弦 · 节奏</p>
           </div>
 
           {/* 练习模式选择 */}
-          <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 mb-6 border border-white/10">
-            <h2 className="text-xl md:text-2xl font-bold mb-4 text-center">选择练习模式</h2>
+          <div className="practice-panel rounded-2xl p-4 md:p-6 mb-6 border border-slate-200">
+            <h2 className="text-sm font-semibold text-slate-500 mb-4">选择练习模式</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {[
                 { id: 'chord' as PracticeMode, icon: '🎹', name: '和弦进行', desc: '熟悉和弦变化' },
@@ -184,21 +185,22 @@ const BluesPage: React.FC = () => {
                   whileTap={{ scale: 0.95 }}
                   className={`p-4 rounded-xl transition-all duration-200 ${
                     practiceMode === mode.id
-                      ? 'bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/50'
-                      : 'bg-white/10 hover:bg-white/20 border border-white/20'
+                      ? 'practice-selected shadow-sm '
+                      : 'bg-slate-50 hover:bg-slate-100 border border-slate-200'
                   }`}
+                  aria-pressed={practiceMode === mode.id}
                   onClick={() => setPracticeMode(mode.id)}
                 >
-                  <div className="text-3xl md:text-4xl mb-2">{mode.icon}</div>
+                  <div className="practice-mode-icon mb-2">{mode.icon}</div>
                   <div className="text-sm md:text-base font-bold mb-1">{mode.name}</div>
-                  <div className="text-xs text-gray-300">{mode.desc}</div>
+                  <div className="text-xs text-slate-600">{mode.desc}</div>
                 </motion.button>
               ))}
             </div>
           </div>
 
           {/* 调式和类型选择 */}
-          <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 mb-6 border border-white/10">
+          <div className="practice-panel rounded-2xl p-4 md:p-6 mb-6 border border-slate-200">
             <div className="grid md:grid-cols-2 gap-6">
               {/* 调式选择 */}
               <div>
@@ -211,9 +213,10 @@ const BluesPage: React.FC = () => {
                       whileTap={{ scale: 0.95 }}
                       className={`p-2 md:p-3 rounded-lg font-bold transition-all ${
                         selectedKey === note
-                          ? 'bg-blue-500 text-white shadow-lg'
-                          : 'bg-white/10 hover:bg-white/20'
+                          ? 'practice-selected text-slate-800 shadow-sm'
+                          : 'bg-slate-50 hover:bg-slate-100'
                       }`}
+                      aria-pressed={selectedKey === note}
                       onClick={() => setSelectedKey(note)}
                     >
                       {note}
@@ -237,13 +240,14 @@ const BluesPage: React.FC = () => {
                       whileTap={{ scale: 0.98 }}
                       className={`w-full p-3 rounded-lg text-left transition-all ${
                         bluesType === type.id
-                          ? 'bg-purple-500 text-white shadow-lg'
-                          : 'bg-white/10 hover:bg-white/20'
+                          ? 'practice-selected text-slate-800 shadow-sm'
+                          : 'bg-slate-50 hover:bg-slate-100'
                       }`}
+                      aria-pressed={bluesType === type.id}
                       onClick={() => setBluesType(type.id)}
                     >
                       <div className="font-bold">{type.name}</div>
-                      <div className="text-xs text-gray-300">{type.desc}</div>
+                      <div className="text-xs text-slate-600">{type.desc}</div>
                     </motion.button>
                   ))}
                 </div>
@@ -314,12 +318,12 @@ const BluesPage: React.FC = () => {
           </AnimatePresence>
 
           {/* 练习提示 */}
-          <div className="bg-black/30 backdrop-blur-lg rounded-3xl p-4 md:p-6 mt-6 border border-white/10">
-            <h3 className="text-lg md:text-xl font-bold mb-4 text-yellow-400">💡 练习提示</h3>
-            <ul className="space-y-2 text-sm md:text-base text-gray-300">
+          <div className="practice-panel rounded-2xl p-4 md:p-6 mt-6 border border-slate-200">
+            <h3 className="text-lg md:text-xl font-bold mb-4 text-amber-700">💡 练习提示</h3>
+            <ul className="space-y-2 text-sm md:text-base text-slate-600">
               {getPracticeTips().map((tip, index) => (
                 <li key={index} className="flex items-start">
-                  <span className="text-blue-400 mr-2">▸</span>
+                  <span className="text-emerald-700 mr-2">▸</span>
                   <span>{tip}</span>
                 </li>
               ))}
@@ -336,28 +340,28 @@ const BluesPage: React.FC = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="fixed bottom-0 left-0 right-0 z-50"
         >
-          <div className="bg-gradient-to-t from-black/98 via-black/95 to-transparent backdrop-blur-xl border-t border-purple-500/30 shadow-2xl">
+          <div className="practice-player  border-t border-emerald-200 shadow-sm">
             <div className="container mx-auto px-4 py-4 md:py-5">
               <div className="max-w-6xl mx-auto">
                 <div className="flex items-center justify-between gap-3 md:gap-6">
-                  
+
                   {/* 左侧：状态指示器 */}
-                  <div className="flex items-center gap-3 min-w-[120px] md:min-w-[180px]">
+                  <div className="flex items-center gap-3 min-w-0 md:min-w-[180px]">
                     <div className="relative">
                       <div className={`w-4 h-4 rounded-full transition-all duration-300 ${
-                        isPlaying 
-                          ? 'bg-green-500 shadow-lg shadow-green-500/50 animate-pulse' 
-                          : 'bg-gray-500'
+                        isPlaying
+                          ? 'bg-emerald-500 animate-pulse'
+                          : 'bg-slate-300'
                       }`}></div>
                       {isPlaying && (
-                        <div className="absolute inset-0 w-4 h-4 rounded-full bg-green-500 animate-ping"></div>
+                        <div className="absolute inset-0 w-4 h-4 rounded-full bg-emerald-500 animate-ping"></div>
                       )}
                     </div>
                     <div className="hidden md:block">
-                      <div className="text-sm font-bold text-white">
+                      <div className="text-sm font-bold text-slate-800">
                         {isPlaying ? '播放中' : '已暂停'}
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-slate-500">
                         {isPlaying ? `小节 ${currentChordIndex + 1}` : `${bpm} BPM`}
                       </div>
                     </div>
@@ -370,10 +374,10 @@ const BluesPage: React.FC = () => {
                       whileTap={{ scale: 0.95 }}
                       className={`
                         relative overflow-hidden px-6 md:px-10 py-3 md:py-4 rounded-2xl font-bold text-base md:text-lg
-                        transition-all duration-300 shadow-2xl
+                        transition-all duration-300 shadow-sm
                         ${isPlaying
-                          ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-red-500/50' 
-                          : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-green-500/50'
+                          ? 'practice-pause'
+                          : 'practice-play'
                         }
                       `}
                       onClick={() => {
@@ -411,7 +415,7 @@ const BluesPage: React.FC = () => {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="px-6 md:px-8 py-3 md:py-4 rounded-2xl font-bold text-base md:text-lg bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white shadow-xl transition-all duration-300"
+                      className="px-6 md:px-8 py-3 md:py-4 rounded-2xl font-bold text-base md:text-lg practice-neutral   text-slate-800 shadow-sm transition-all duration-300"
                       onClick={() => {
                         setIsPlaying(false);
                         setCurrentChordIndex(0);
@@ -428,17 +432,17 @@ const BluesPage: React.FC = () => {
 
                   {/* 右侧：当前信息 */}
                   <div className="hidden lg:flex items-center gap-4 min-w-[180px]">
-                    <div className="flex items-center gap-3 bg-gradient-to-r from-purple-500/20 to-blue-500/20 px-4 py-3 rounded-xl border border-purple-500/30">
+                    <div className="flex items-center gap-3 practice-tint px-4 py-3 rounded-xl border border-emerald-200">
                       <div className="text-center">
-                        <div className="text-xs text-gray-400">速度</div>
-                        <div className="text-xl font-bold text-yellow-400">
+                        <div className="text-xs text-slate-500">速度</div>
+                        <div className="text-xl font-bold text-amber-700">
                           {bpm}
                         </div>
                       </div>
-                      <div className="w-px h-10 bg-white/20"></div>
+                      <div className="w-px h-10 bg-slate-200"></div>
                       <div className="text-center">
-                        <div className="text-xs text-gray-400">小节</div>
-                        <div className="text-xl font-bold text-blue-400">
+                        <div className="text-xs text-slate-500">小节</div>
+                        <div className="text-xl font-bold text-emerald-700">
                           {currentChordIndex + 1}/{chordProgressions[progression].reduce((sum, section) => sum + section.bars, 0)}
                         </div>
                       </div>

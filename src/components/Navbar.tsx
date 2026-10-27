@@ -1,53 +1,18 @@
-import React, { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
-const Navbar: React.FC = () => {
-  const location = useLocation();
-  
-  // 检测是否是活跃路由
-  const isActive = (path: string): boolean => location.pathname === path;
-
-  // 应用黑色主题
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }, []);
-
+export default function Navbar() {
   return (
-    <div className="navbar bg-base-100 shadow-lg">
-      <div className="navbar-start">
-        <div className="dropdown">
-          <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
-            </svg>
-          </div>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-            <li><Link to="/blues" className={isActive('/blues') ? 'active' : ''}>🎵 Blues 即兴</Link></li>
-            <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>🎸 调音器</Link></li>
-          </ul>
+    <header className="site-header">
+      <nav aria-label="主导航" className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+        <NavLink to="/blues" className="site-brand" aria-label="Little Guitar 首页">
+          <span className="site-brand-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m16 3 5 5M17 4l-7 7M20 7l-7 7M10 11c-2-2-4-1-4 1-4 0-5 5-2 8s8 2 8-2c2 0 3-2 1-4"/><circle cx="8" cy="16" r="1.5"/></svg></span>
+          Little Guitar
+        </NavLink>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <NavLink to="/blues" className={({ isActive }) => `site-nav-link ${isActive ? 'active' : ''}`}>Blues 练习</NavLink>
+          <NavLink to="/tuner" className={({ isActive }) => `site-nav-link ${isActive ? 'active' : ''}`}>调音器</NavLink>
         </div>
-        <Link to="/tuner" className="btn btn-ghost text-xl normal-case">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" viewBox="0 0 512 512">
-            <path fill="#A0522D" d="M180 100h152v180H180z"/>
-            <ellipse fill="#D2691E" cx="256" cy="360" rx="140" ry="120"/>
-            <circle fill="#000" cx="256" cy="320" r="40"/>
-            <circle fill="#FFF" cx="256" cy="320" r="35"/>
-          </svg>
-          <span className="text-primary">Little</span>
-          <span className="text-secondary">Guitar</span>
-        </Link>
-      </div>
-      <div className="navbar-center hidden lg:flex">
-        <ul className="menu menu-horizontal px-1">
-          <li><Link to="/blues" className={isActive('/blues') ? 'active' : ''}>🎵 Blues 即兴</Link></li>
-          <li><Link to="/tuner" className={isActive('/tuner') ? 'active' : ''}>🎸 调音器</Link></li>
-        </ul>
-      </div>
-      <div className="navbar-end">
-        {/* 占位元素,保持导航栏平衡 */}
-      </div>
-    </div>
+      </nav>
+    </header>
   );
-};
-
-export default Navbar;
+}

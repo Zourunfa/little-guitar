@@ -56,7 +56,7 @@ const HomePage: React.FC = () => {
         transition={{ duration: 0.5 }}
         className="text-center mb-16"
       >
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
           Little Guitar
         </h1>
         <p className="text-lg md:text-xl max-w-2xl mx-auto opacity-80">
@@ -71,7 +71,7 @@ const HomePage: React.FC = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="flex-1"
         >
-          <div className="card bg-base-200 shadow-xl h-full">
+          <div className="card bg-base-200 shadow-sm h-full">
             <div className="card-body">
               <h2 className="card-title text-2xl mb-4">🎸 使用指南</h2>
               <div className="space-y-4 text-left">
@@ -104,7 +104,7 @@ const HomePage: React.FC = () => {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="flex-1"
         >
-          <div className="card bg-base-200 shadow-xl h-full">
+          <div className="card bg-base-200 shadow-sm h-full">
             <div className="card-body">
               <h2 className="card-title text-2xl mb-4">✨ 核心特性</h2>
               <div className="space-y-6">
@@ -141,7 +141,7 @@ const HomePage: React.FC = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.7 }}
-            className="card bg-base-200 shadow-xl"
+            className="card bg-base-200 shadow-sm"
           >
             <div className="card-body">
               <h3 className="card-title text-xl">吉他调音器</h3>
@@ -158,7 +158,7 @@ const HomePage: React.FC = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.8 }}
-            className="card bg-base-200 shadow-xl"
+            className="card bg-base-200 shadow-sm"
           >
             <div className="card-body">
               <h3 className="card-title text-xl">和弦查找器</h3>

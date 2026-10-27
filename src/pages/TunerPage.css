@@ -1,0 +1,23 @@
+.tuner-page { background: #f5f7f8; color: #1e293b; min-height: calc(100vh - 64px); }
+.tuner-panel { background: white; border: 1px solid #e5eaee; border-radius: 24px; box-shadow: 0 12px 40px #0f172a06; }
+.tuner-page button { font-family: inherit; line-height: 1.5; }
+.tuner-page .tuner-select { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px; font-size: 12px; }
+.tuner-dial { max-width: 600px; margin: 22px auto 0; position: relative; }
+.tuner-dial svg { width: 100%; overflow: visible; }
+.tuner-readout { position: absolute; top: 43%; left: 50%; transform: translateX(-50%); text-align: center; background: #ffffffed; padding: 8px 24px; border-radius: 16px; }
+.tuner-page .tuner-string { padding: 12px 2px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; transition: 150ms; }
+.tuner-page .tuner-string.is-selected { border-color: #10b981; color: #047857; background: #ecfdf5; box-shadow: 0 0 0 1px #10b981; }
+.tuner-page .tuner-mode { padding: 5px 10px; border: 1px solid transparent; border-radius: 7px; font-size: 12px; background: transparent; color: #64748b; }
+.tuner-page .tuner-mode.is-selected { color: #047857; background: #ecfdf5; }
+.tuner-page .tuner-primary { padding: 12px 30px; background: #059669; color: white; font-weight: 600; border-radius: 10px; border: 1px solid #059669; }
+.tuner-page .tuner-primary:hover { background: #047857; }
+.tuner-page .tuner-secondary { padding: 12px 22px; background: #fff; color: #475569; border: 1px solid #e2e8f0; border-radius: 10px; }
+.tuner-page button:disabled { opacity: .5; cursor: default; }
+.tuner-page button:focus-visible, .tuner-page select:focus-visible { outline: 3px solid #6ee7b7; outline-offset: 3px; }
+.tuner-keyboard { position: relative; height: 112px; width: 630px; margin: auto; }
+.tuner-page .tuner-key { position: absolute; top: 0; padding: 0; border-radius: 0 0 5px 5px; }
+.tuner-key.white { width: 30px; height: 108px; background: white; border: 1px solid #cbd5e1; z-index: 1; color: #64748b; }
+.tuner-key.black { width: 18px; height: 66px; background: #1e293b; border: 1px solid #0f172a; z-index: 2; color: #cbd5e1; }
+.tuner-key span { position: absolute; bottom: 7px; left: 0; width: 100%; font-size: 9px; }
+.tuner-key.sounding, .tuner-key:active { background: #6ee7b7 !important; color: #064e3b; }
+@media (max-width: 480px) { .tuner-dial { min-height: 190px; } .tuner-readout { top: 35%; padding: 6px 18px; } .tuner-readout > div:nth-child(2) { font-size: 44px; } .tuner-page .tuner-primary, .tuner-page .tuner-secondary { padding: 11px 18px; font-size: 14px; } }
